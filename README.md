@@ -6,13 +6,16 @@ Live: https://asemqaffaf.github.io/hiragana/
 
 ## How to use it
 
-- Four tabs at the bottom: **Today**, **Letters**, **Practice** (Quiz, Write, Words, Phrases) and **Me** (Progress, Profile).
+- A Back button is on every page except Today and stays at the top while you scroll. The browser or phone back gesture works too.
+- Four tabs at the bottom: **Today**, **Letters**, **Practice** (Quiz, Write, Words, Phrases) and **Progress**. The profile opens from the icon at the top.
 - **Today** runs a guided lesson, one step at a time: meet the new letters, write them, learn today's words, then a quick quiz. Reaching 90% in the quiz finishes the day.
 
 ## Daily words and phrases
 
-- 84 everyday words, 6 per plan day, each with an example sentence in hiragana, romaji, English and Arabic. Hear plays the word twice, then the sentence. Words on days 1 to 7 use only letters already learned.
-- 57 useful phrases in 9 groups: greetings, polite basics, meeting people, when you do not understand, shopping, food and halal, getting around, help and health, and work, home and things you will hear.
+- 168 everyday words, 12 per plan day, each with an example sentence in hiragana, romaji, English and Arabic. Hear plays the word twice, then the sentence. Words on days 1 to 7 use only letters already learned.
+- Every basic letter also has 3 example words (one played by Hear, two more with their own Hear buttons).
+- 117 useful phrases in 13 groups: greetings, polite basics, meeting people, when you do not understand, shopping, food and halal, getting around, help and health, work and home, city office and nursery, prayer and quiet rooms, time and dates, and on the phone.
+- 43 reading sentences.
 
 ## Languages
 
@@ -45,6 +48,7 @@ Live: https://asemqaffaf.github.io/hiragana/
 - One `index.html` (vanilla HTML, CSS and JavaScript) plus an `audio/` folder. No framework, no build step, no dependencies apart from Google Fonts.
 - Stroke order comes from KanjiVG and is drawn as inline SVG, animated with requestAnimationFrame.
 - The Write tab checks each stroke for order, direction, position and shape. Strokes are resampled to 32 points and compared with discrete Fréchet distance; loop direction (for ゜) uses the shoelace formula.
+- Works on iPhone and Android: safe areas, no zoom when typing, touch handwriting, sound that is not muted by the silent switch, and it can be added to the Home Screen as an app.
 - Audio in `audio/`, 128 kbps / 48 kHz MP3, loaded only when played: each letter on its own (held longer so it is clear), each letter twice followed by an example word (played by Hear), every word and sentence, each daily word with its example sentence, and every phrase. Readings were checked against Open JTalk so the audio matches the hiragana shown.
 
 ## Credits and terms
