@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hiragana in 14 days</title>
+<meta name="theme-color" content="#F5F7F3">
+<script>try{var __t=JSON.parse(localStorage.getItem('hiragana14-theme')||'null');if(__t){var __r=document.documentElement;if(__t.mode==='light'||__t.mode==='dark')__r.setAttribute('data-theme',__t.mode);if(/^(sand|sky|rose|lilac|slate|white)$/.test(__t.tint))__r.setAttribute('data-tint',__t.tint)}}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=Klee+One:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
@@ -31,6 +33,40 @@
   --grid:#3A5A4F; --guide:#6A4540; --jade:#7CC8B3; --jade-ink:#10201A; --jade-soft:#22403A;
   --red:#FF8574; --red-soft:#3A2622; --shadow:none; color-scheme:dark;
 }
+/* background colours: each has a light and a dark version */
+:root[data-tint="sand"]{--paper:#F8F4EC; --surface:#FFFFFF; --line:#E6DFD0; --grid:#D8CDB4;}
+:root[data-tint="sky"]{--paper:#F1F6FA; --surface:#FFFFFF; --line:#D9E3EC; --grid:#B4CADB;}
+:root[data-tint="rose"]{--paper:#FBF3F2; --surface:#FFFFFF; --line:#EBDDDA; --grid:#E0BDB8;}
+:root[data-tint="lilac"]{--paper:#F5F3FA; --surface:#FFFFFF; --line:#E2DEEC; --grid:#C8C0DD;}
+:root[data-tint="slate"]{--paper:#F3F4F5; --surface:#FFFFFF; --line:#DEE0E3; --grid:#BCC3C9;}
+:root[data-tint="white"]{--paper:#FFFFFF; --surface:#F6F7F5; --line:#E3E6E1; --grid:#C3D3CC;}
+@media (prefers-color-scheme:dark){
+  :root[data-tint="sand"]:not([data-theme="light"]){--paper:#211C14; --surface:#2A241A; --line:#3D3526; --grid:#5A4D36;}
+  :root[data-tint="sky"]:not([data-theme="light"]){--paper:#121D28; --surface:#192733; --line:#283A49; --grid:#3A5870;}
+  :root[data-tint="rose"]:not([data-theme="light"]){--paper:#241A1B; --surface:#2E2223; --line:#45302F; --grid:#5E4040;}
+  :root[data-tint="lilac"]:not([data-theme="light"]){--paper:#1B1826; --surface:#241F32; --line:#363049; --grid:#4E4670;}
+  :root[data-tint="slate"]:not([data-theme="light"]){--paper:#17191C; --surface:#1F2226; --line:#30343A; --grid:#474D55;}
+  :root[data-tint="white"]:not([data-theme="light"]){--paper:#000000; --surface:#111513; --line:#262B28; --grid:#3A4A43;}
+}
+:root[data-theme="dark"][data-tint="sage"]{--paper:#15221D; --surface:#1B2B25; --line:#2A3D36; --grid:#3A5A4F;}
+:root[data-theme="dark"][data-tint="sand"]{--paper:#211C14; --surface:#2A241A; --line:#3D3526; --grid:#5A4D36;}
+:root[data-theme="dark"][data-tint="sky"]{--paper:#121D28; --surface:#192733; --line:#283A49; --grid:#3A5870;}
+:root[data-theme="dark"][data-tint="rose"]{--paper:#241A1B; --surface:#2E2223; --line:#45302F; --grid:#5E4040;}
+:root[data-theme="dark"][data-tint="lilac"]{--paper:#1B1826; --surface:#241F32; --line:#363049; --grid:#4E4670;}
+:root[data-theme="dark"][data-tint="slate"]{--paper:#17191C; --surface:#1F2226; --line:#30343A; --grid:#474D55;}
+:root[data-theme="dark"][data-tint="white"]{--paper:#000000; --surface:#111513; --line:#262B28; --grid:#3A4A43;}
+.themebox{margin:6px 0 0}
+.themebox .seg{max-width:420px}
+.tints{border:0;padding:0;margin:14px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;max-width:520px}
+.tints legend{padding:0;margin-bottom:8px}
+.tint{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:44px;padding:8px 4px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-size:14px}
+.tint input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.tint .tp{width:100%;height:34px;border-radius:8px;border:1.5px solid var(--grid);background:var(--c);position:relative;pointer-events:none}
+.tint .tp::after{content:"";position:absolute;inset-inline-start:8px;top:8px;width:18px;height:18px;border-radius:5px;background:var(--s);border:1px solid var(--g)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tint .tp{--c:var(--cd)!important;--s:var(--sd)!important;--g:var(--gd)!important}}
+:root[data-theme="dark"] .tint .tp{--c:var(--cd)!important;--s:var(--sd)!important;--g:var(--gd)!important}
+.tint:has(input:checked){border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft);font-weight:700}
+.tint:has(input:focus-visible){outline:3px solid var(--jade);outline-offset:2px}
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));background:var(--paper)}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
@@ -1349,6 +1385,12 @@ Object.assign(STR.en, {
   'ph.intro': 'Short phrases you can use in Japan from day one. Tap Hear and repeat after the voice. Romaji and meaning are always shown.',
   'ph.count': '{n} phrases'
 });
+Object.assign(STR.en, {
+  'pf.look': 'Appearance', 'th.mode': 'Light or dark', 'th.bg': 'Background colour',
+  'th.system': 'Same as device', 'th.light': 'Light', 'th.dark': 'Dark',
+  'th.sage': 'Sage', 'th.sand': 'Sand', 'th.sky': 'Sky', 'th.rose': 'Rose', 'th.lilac': 'Lilac', 'th.slate': 'Grey', 'th.white': 'Plain',
+  'th.note': 'Changes apply straight away and are saved for this student. “Same as device” follows your phone or computer: dark at night if that is how it is set.'
+});
 Object.assign(STR.ar, {
   'tab.daily': 'كلمات اليوم', 'tab.phrases': 'عبارات',
   'step.words': 'تعلّم كلمات اليوم', 'step.wordsD': 'كلمات يومية، لكل منها جملة مثال',
@@ -1357,6 +1399,12 @@ Object.assign(STR.ar, {
   'daily.title': 'كلمات يومية', 'daily.today': 'اليوم {d} من الخطة', 'daily.sofar': v => 'الأيام السابقة (' + arN(v.n, 'word') + ')', 'daily.later': v => 'لاحقاً (' + arN(v.n, 'word') + ')',
   'ph.intro': 'عبارات قصيرة تستطيع استخدامها في اليابان من اليوم الأول. اضغط «استمع» وردّد بعد الصوت. النطق بالحروف اللاتينية والمعنى ظاهران دائماً.',
   'ph.count': v => arN(v.n, 'phrase')
+});
+Object.assign(STR.ar, {
+  'pf.look': 'المظهر', 'th.mode': 'فاتح أم داكن', 'th.bg': 'لون الخلفية',
+  'th.system': 'مثل الجهاز', 'th.light': 'فاتح', 'th.dark': 'داكن',
+  'th.sage': 'أخضر هادئ', 'th.sand': 'رملي', 'th.sky': 'سماوي', 'th.rose': 'وردي', 'th.lilac': 'بنفسجي فاتح', 'th.slate': 'رمادي', 'th.white': 'سادة',
+  'th.note': 'تُطبَّق التغييرات فوراً وتُحفظ لهذا الطالب. خيار «مثل الجهاز» يتبع إعداد هاتفك أو حاسوبك: داكن ليلاً إن كان مضبوطاً هكذا.'
 });
 /* ---------- advanced student profile: identity, goals, levels, achievements, detailed stats ---------- */
 const AGES = ['child', 'teen', 'adult'], NATIVES = ['ar', 'en', 'ja', 'other'], JLEVELS = ['new', 'some', 'all'];
@@ -1510,6 +1558,12 @@ function renderProfile() {
   h += '<div class="calx small muted"><span>' + fmt(last7[0].d) + '</span><span>' + fmt(last7[6].d) + '</span></div><p class="small muted">' + t('pf.minNote', {g: g.min}) + '</p>';
   const mix = Object.entries(state.mix || {}).sort((x, y) => y[1] - x[1]).slice(0, 5);
   h += '<h4>' + t('pf.mix') + '</h4>' + (mix.length ? '<ul class="mixl">' + mix.map(([key, n]) => { const [x, y] = key.split('>'); return '<li>' + t('pf.mixRow', {a: '<button class="link" data-open="' + x + '">' + K(x) + '</button>', b: '<button class="link" data-open="' + y + '">' + K(y) + '</button>', n}) + '</li>'; }).join('') + '</ul>' : '<p class="small muted">' + t('pf.mixNone') + '</p>');
+  /* appearance: applied at once and saved with the student */
+  const th = cleanTheme(p.theme);
+  /* [paper, surface, grid] for light, then for dark, so each preview matches the mode in use */
+  const TC = {sage: ['#F5F7F3', '#FFFFFF', '#B7D2C8', '#15221D', '#1B2B25', '#3A5A4F'], sand: ['#F8F4EC', '#FFFFFF', '#D8CDB4', '#211C14', '#2A241A', '#5A4D36'], sky: ['#F1F6FA', '#FFFFFF', '#B4CADB', '#121D28', '#192733', '#3A5870'], rose: ['#FBF3F2', '#FFFFFF', '#E0BDB8', '#241A1B', '#2E2223', '#5E4040'], lilac: ['#F5F3FA', '#FFFFFF', '#C8C0DD', '#1B1826', '#241F32', '#4E4670'], slate: ['#F3F4F5', '#FFFFFF', '#BCC3C9', '#17191C', '#1F2226', '#474D55'], white: ['#FFFFFF', '#F6F7F5', '#C3D3CC', '#000000', '#111513', '#3A4A43']};
+  h += '<h3>' + t('pf.look') + '</h3><div class="themebox"><span class="small muted">' + t('th.mode') + '</span><div class="seg" role="group" aria-label="' + t('th.mode') + '">' + MODES.map(m => '<button type="button" data-mode="' + m + '" aria-pressed="' + (th.mode === m) + '">' + t('th.' + m) + '</button>').join('') + '</div>';
+  h += '<fieldset class="tints"><legend class="small muted">' + t('th.bg') + '</legend>' + TINTS.map(k => '<label class="tint"><input type="radio" name="pfTint" value="' + k + '"' + (th.tint === k ? ' checked' : '') + '><span class="tp" style="--c:' + TC[k][0] + ';--s:' + TC[k][1] + ';--g:' + TC[k][2] + ';--cd:' + TC[k][3] + ';--sd:' + TC[k][4] + ';--gd:' + TC[k][5] + '"></span><span>' + t('th.' + k) + '</span></label>').join('') + '</fieldset><p class="small muted">' + t('th.note') + '</p></div>';
   /* details and goals */
   h += '<h3>' + t('pf.details') + '</h3><form id="pfForm" class="sform pform" novalidate autocomplete="off">';
   h += '<label class="field"><span class="small muted">' + t('f.name') + '</span><input id="pfName" maxlength="24" dir="auto" value="' + esc(p.name) + '"></label>';
@@ -1530,6 +1584,9 @@ function renderProfile() {
   const root = $('#tab-profile');
   root.innerHTML = h;
   pfMsg = '';
+  const setTheme = patch => { p.theme = Object.assign(cleanTheme(p.theme), patch); applyTheme(p.theme, true); saveStudents(); };
+  $$('[data-mode]', root).forEach(b => b.onclick = () => { setTheme({mode: b.dataset.mode}); $$('[data-mode]', root).forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
+  $$('input[name="pfTint"]', root).forEach(r => r.onchange = () => setTheme({tint: r.value}));
   const syncAv = () => { const v = (root.querySelector('input[name="pfAv"]:checked') || {}).value; root.querySelector('.avk').hidden = v !== 'kana'; root.querySelector('.avp').hidden = v !== 'photo'; };
   $$('input[name="pfAv"]', root).forEach(r => r.onchange = syncAv); syncAv();
   $('#pfPhotoBtn', root).onclick = () => $('#pfPhoto', root).click();
@@ -1574,6 +1631,7 @@ function applyStudent() {
   const p = me(); if (!p) return;
   const g = goalOf(p);
   document.body.classList.toggle('kid', p.age === 'child');
+  applyTheme(p.theme, true);
   $('#appSub').textContent = t('app.subP', {days: g.pace, min: g.min});
   planCache.key = '';
 }
@@ -1598,6 +1656,8 @@ const MARK_SVG = '<svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><ci
 const PKEY = 'hiragana14-students-v1';
 const progKey = id => 'hiragana14-progress-' + id;
 const COLORS = ['#2A7361', '#CC3226', '#3C5A99', '#95601A', '#7A4E9C', '#4F6B2E'];
+const TINTS = ['sage', 'sand', 'sky', 'rose', 'lilac', 'slate', 'white'], MODES = ['system', 'light', 'dark'];
+const cleanTheme = x => ({mode: MODES.includes(x && x.mode) ? x.mode : 'system', tint: TINTS.includes(x && x.tint) ? x.tint : 'sage'});
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const num = v => (typeof v === 'number' && isFinite(v)) ? v : 0;
 function cleanObjMap(o, keys, f) {
@@ -1634,22 +1694,37 @@ function normalize(s) {
 function storageWorks() { try { const k = 'hiragana14-probe'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; } catch (e) { return false; } }
 const canStore = storageWorks();
 const LANGS = ['en', 'ar'];
+function cleanStudent(p) {
+  return {id: p.id, name: p.name.trim().slice(0, 24), color: COLORS.includes(p.color) ? p.color : COLORS[0], created: ISO.test(p.created) ? p.created : todayISO(), last: num(p.last), lang: LANGS.includes(p.lang) ? p.lang : null,
+          age: ['child', 'teen', 'adult'].includes(p.age) ? p.age : 'adult', native: ['ar', 'en', 'ja', 'other'].includes(p.native) ? p.native : '', jlevel: ['new', 'some', 'all'].includes(p.jlevel) ? p.jlevel : 'new',
+          rate: p.rate === 0.75 ? 0.75 : 1, theme: cleanTheme(p.theme),
+          goal: {pace: [7, 14, 21].includes(p.goal && p.goal.pace) ? p.goal.pace : 14, min: [10, 20, 30].includes(p.goal && p.goal.min) ? p.goal.min : 30, reason: ['jlpt', 'travel', 'work', 'school', 'fun'].includes(p.goal && p.goal.reason) ? p.goal.reason : 'jlpt'},
+          av: p.av && typeof p.av === 'object' ? {t: ['initial', 'kana', 'photo'].includes(p.av.t) ? p.av.t : 'initial', k: typeof p.av.k === 'string' ? p.av.k : 'あ', img: typeof p.av.img === 'string' && p.av.img.length < 200000 ? p.av.img : ''} : {t: 'initial', k: 'あ', img: ''}};
+}
 function loadStudents() {
   try {
     const s = JSON.parse(localStorage.getItem(PKEY) || 'null');
     if (s && Array.isArray(s.list)) {
       const list = s.list.filter(p => p && typeof p.id === 'string' && typeof p.name === 'string' && p.name.trim())
-        .map(p => ({id: p.id, name: p.name.trim().slice(0, 24), color: COLORS.includes(p.color) ? p.color : COLORS[0], created: ISO.test(p.created) ? p.created : todayISO(), last: num(p.last), lang: LANGS.includes(p.lang) ? p.lang : null,
-          age: ['child', 'teen', 'adult'].includes(p.age) ? p.age : 'adult', native: ['ar', 'en', 'ja', 'other'].includes(p.native) ? p.native : '', jlevel: ['new', 'some', 'all'].includes(p.jlevel) ? p.jlevel : 'new',
-          rate: p.rate === 0.75 ? 0.75 : 1,
-          goal: {pace: [7, 14, 21].includes(p.goal && p.goal.pace) ? p.goal.pace : 14, min: [10, 20, 30].includes(p.goal && p.goal.min) ? p.goal.min : 30, reason: ['jlpt', 'travel', 'work', 'school', 'fun'].includes(p.goal && p.goal.reason) ? p.goal.reason : 'jlpt'},
-          av: p.av && typeof p.av === 'object' ? {t: ['initial', 'kana', 'photo'].includes(p.av.t) ? p.av.t : 'initial', k: typeof p.av.k === 'string' ? p.av.k : 'あ', img: typeof p.av.img === 'string' && p.av.img.length < 200000 ? p.av.img : ''} : {t: 'initial', k: 'あ', img: ''}}));
+        .map(cleanStudent);
       return {v: 1, list, current: list.some(p => p.id === s.current) ? s.current : null, lang: LANGS.includes(s.lang) ? s.lang : null};
     }
   } catch (e) {}
   return {v: 1, list: [], current: null, lang: null};
 }
 let students = loadStudents();
+function deviceTheme() { try { return cleanTheme(JSON.parse(localStorage.getItem('hiragana14-theme') || 'null')); } catch (e) { return cleanTheme(null); } }
+/* apply a theme to the page and remember it for this device (used before anyone signs in) */
+function applyTheme(th, remember) {
+  th = cleanTheme(th);
+  const r = document.documentElement;
+  if (th.mode === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', th.mode);
+  if (th.tint === 'sage') r.removeAttribute('data-tint'); else r.setAttribute('data-tint', th.tint);
+  if (remember) { try { localStorage.setItem('hiragana14-theme', JSON.stringify(th)); } catch (e) {} }
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', getComputedStyle(document.body).backgroundColor);
+}
+if (window.matchMedia) { try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyTheme(deviceTheme())); } catch (e) {} }
 function saveStudents() { try { localStorage.setItem(PKEY, JSON.stringify(students)); } catch (e) {} }
 const me = () => students.list.find(p => p.id === students.current) || null;
 function loadProgress(id) { try { const s = localStorage.getItem(progKey(id)); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
@@ -2930,7 +3005,7 @@ function showLogin() {
     if (nameTaken(name)) { msg.textContent = t('err.taken', {name}); $('#nsName', root).focus(); return; }
     const age = $('#nsAge', root).value;
     const p = {id: newId(), name, color, created: todayISO(), last: Date.now(), lang: LANG, age, jlevel: $('#nsJl', root).value, native: LANG, rate: age === 'child' ? 0.75 : 1,
-      goal: {pace: +$('#nsPace', root).value, min: +$('#nsMin', root).value, reason: $('#nsReason', root).value}, av: {t: 'initial', k: 'あ', img: ''}};
+      goal: {pace: +$('#nsPace', root).value, min: +$('#nsMin', root).value, reason: $('#nsReason', root).value}, av: {t: 'initial', k: 'あ', img: ''}, theme: deviceTheme()};
     students.list.push(p); students.current = p.id; saveStudents();
     state = normalize({start: ISO.test(start) ? start : todayISO()});
     commit();
@@ -2948,7 +3023,7 @@ function showLogin() {
       const base = cleanName(d.student.name) || 'Student';
       let name = base, i = 2;
       while (nameTaken(name)) name = base.slice(0, 19) + ' (' + (i++) + ')';
-      const p = {id: newId(), name, color: COLORS.includes(d.student.color) ? d.student.color : COLORS[0], created: ISO.test(d.student.created) ? d.student.created : todayISO(), last: Date.now(), lang: LANGS.includes(d.student.lang) ? d.student.lang : LANG};
+      const p = cleanStudent(Object.assign({}, d.student, {id: newId(), name, last: Date.now()})); if (!p.lang) p.lang = LANG;
       students.list.push(p); students.current = p.id; saveStudents();
       state = normalize(d.progress);
       commit();
@@ -2992,7 +3067,7 @@ let profileEdit = false, delArmed = false, delTimer = null;
 function exportStudent() {
   const p = me();
   if (!p) return;
-  const data = {app: 'hiragana14', kind: 'student', v: 1, exported: new Date().toISOString(), student: {name: p.name, color: p.color, created: p.created, lang: p.lang || LANG}, progress: state};
+  const data = {app: 'hiragana14', kind: 'student', v: 1, exported: new Date().toISOString(), student: {name: p.name, color: p.color, created: p.created, lang: p.lang || LANG, age: p.age, native: p.native, jlevel: p.jlevel, rate: p.rate, goal: p.goal, av: p.av, theme: p.theme}, progress: state};
   const url = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: 'application/json'}));
   const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'student';
   const a = document.createElement('a');

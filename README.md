@@ -29,6 +29,7 @@ Live: https://asemqaffaf.github.io/hiragana/
 - Details and goals: name, picture (initial, a hiragana, or a photo kept only in the browser), age group, native language, Japanese level, interface language, audio speed, plan length (7, 14 or 21 days), minutes a day, and reason for learning.
 - The plan adapts: 7 days merges pairs of days, 21 days adds review days, and task times scale to the daily minutes. The roadmap's last step follows the reason for learning.
 - Child mode (age group: child): bigger text and buttons, slow audio, shorter drills and a little more room in the stroke check.
+- Appearance: light, dark or same as the device, and 7 background colours (Sage, Sand, Sky, Rose, Lilac, Grey, Plain), each with a light and a dark version. Changes apply at once and are saved per student; new students start with the device's last choice.
 - Levels and points from real activity, and 14 achievements with a notice when one is earned.
 - Detailed stats: weakest letters with a one-tap drill, accuracy by row, average answer time, minutes studied over the last 7 days against the daily goal, and the letters mixed up most often.
 
