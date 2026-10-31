@@ -574,6 +574,8 @@ body.signed-out #homeBtn{cursor:default;pointer-events:none}
 html{--sx:22px}
 html[dir="rtl"]{--sx:-22px}
 /* page change: the page's blocks slide in one after another; going back slides from the other side */
+.tab.enter{overflow-x:hidden}
+@supports (overflow:clip){.tab.enter{overflow-x:clip}}
 .tab.enter > *{animation:slideIn .38s cubic-bezier(.2,.7,.2,1) backwards}
 .tab.enter.back > *{--sx:-22px}
 [dir="rtl"] .tab.enter.back > *{--sx:22px}
