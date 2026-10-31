@@ -4,6 +4,16 @@ A study kit for all 104 hiragana, in English and Arabic,: a 14-day plan, a chart
 
 Live: https://asemqaffaf.github.io/hiragana/
 
+## How to use it
+
+- Four tabs at the bottom: **Today**, **Letters**, **Practice** (Quiz, Write, Words, Phrases) and **Me** (Progress, Profile).
+- **Today** runs a guided lesson, one step at a time: meet the new letters, write them, learn today's words, then a quick quiz. Reaching 90% in the quiz finishes the day.
+
+## Daily words and phrases
+
+- 84 everyday words, 6 per plan day, each with an example sentence in hiragana, romaji, English and Arabic. Hear plays the word twice, then the sentence. Words on days 1 to 7 use only letters already learned.
+- 57 useful phrases in 9 groups: greetings, polite basics, meeting people, when you do not understand, shopping, food and halal, getting around, help and health, and work, home and things you will hear.
+
 ## Languages
 
 - English and Arabic (right-to-left). Each student has their own language; the switch on the first screen sets it for new students.
@@ -32,9 +42,9 @@ Live: https://asemqaffaf.github.io/hiragana/
 ## How it works
 
 - One `index.html` (vanilla HTML, CSS and JavaScript) plus an `audio/` folder. No framework, no build step, no dependencies apart from Google Fonts.
-- Stroke order comes from KanjiVG and is drawn as inline SVG, animated with the Web Animations API.
+- Stroke order comes from KanjiVG and is drawn as inline SVG, animated with requestAnimationFrame.
 - The Write tab checks each stroke for order, direction, position and shape. Strokes are resampled to 32 points and compared with discrete Fréchet distance; loop direction (for ゜) uses the shoelace formula.
-- Audio in `audio/`, 128 kbps / 48 kHz MP3, loaded only when played: each letter on its own (held longer so it is clear), each letter twice followed by an example word (played by Hear), and every word and sentence.
+- Audio in `audio/`, 128 kbps / 48 kHz MP3, loaded only when played: each letter on its own (held longer so it is clear), each letter twice followed by an example word (played by Hear), every word and sentence, each daily word with its example sentence, and every phrase. Readings were checked against Open JTalk so the audio matches the hiragana shown.
 
 ## Credits and terms
 
