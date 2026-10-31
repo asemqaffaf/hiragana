@@ -41,6 +41,7 @@ img,svg{max-width:100%}
 .wrap{max-width:720px;margin:0 auto;padding:18px 16px 110px}
 header.top{max-width:720px;margin:0 auto;padding:18px 16px 0;display:flex;align-items:flex-start;gap:12px}
 header.top .ttl{flex:1;min-width:0;display:flex;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+.who[aria-current="page"]{border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft)}
 .who{flex:0 1 auto;max-width:48%;display:flex;align-items:center;gap:8px;min-height:44px;padding-block:4px;padding-inline:4px 14px;border-radius:999px;border:1.5px solid var(--grid);background:var(--surface);margin-top:2px}
 .who[hidden]{display:none}
 .who .nm{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -516,7 +517,7 @@ html[lang="ar"] .dhead{flex-direction:row}
     <button role="tab" data-nav="home" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7M6 9.5V20h4.5v-5.5h3V20H18V9.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tl">Today</span></button>
     <button role="tab" data-nav="letters" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.9"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.9"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.9"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.9"/></svg><span class="tl">Letters</span></button>
     <button role="tab" data-nav="practice" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4.5l5 5L9 20H4v-5z M12.5 6.5l5 5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tl">Practice</span></button>
-    <button role="tab" data-nav="me" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M4.5 20.5c1.2-4 4.2-6 7.5-6s6.3 2 7.5 6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg><span class="tl">Me</span></button>
+    <button role="tab" data-nav="progress" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M7 16.5v-4M12 16.5V8M17 16.5V4.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg><span class="tl">Progress</span></button>
   </div>
 </nav>
 <div id="sheetRoot"></div>
@@ -1153,7 +1154,7 @@ const REVIEW_AR = {t: 'يوم مراجعة', tasks: [
 function arMin(m) { return m === 1 ? 'دقيقة واحدة' : m === 2 ? 'دقيقتان' : m <= 10 ? m + ' دقائق' : m + ' دقيقة'; }
 
 Object.assign(STR.en, {
-  'nav.home': 'Today', 'nav.letters': 'Letters', 'nav.practice': 'Practice', 'nav.me': 'Me',
+  'nav.home': 'Today', 'nav.letters': 'Letters', 'nav.practice': 'Practice', 'nav.progress': 'Progress',
   'tab.meet': 'Meet the letters',
   'step.meet': 'Meet the letters', 'step.meetD': 'Hear each one and see how it is written',
   'step.write': 'Write them', 'step.writeD': 'Write each letter once, stroke by stroke',
@@ -1165,7 +1166,7 @@ Object.assign(STR.en, {
   'plan.letters': 'Today’s letters', 'plan.tasksT': 'Today’s plan in detail', 'plan.settingsT': 'Plan settings and help'
 });
 Object.assign(STR.ar, {
-  'nav.home': 'اليوم', 'nav.letters': 'الأحرف', 'nav.practice': 'تمرين', 'nav.me': 'أنا',
+  'nav.home': 'اليوم', 'nav.letters': 'الأحرف', 'nav.practice': 'تمرين', 'nav.progress': 'التقدّم',
   'tab.meet': 'تعرّف على الأحرف',
   'step.meet': 'تعرّف على الأحرف', 'step.meetD': 'استمع إلى كل حرف وشاهد طريقة كتابته',
   'step.write': 'اكتبها', 'step.writeD': 'اكتب كل حرف مرة واحدة، خطاً بعد خط',
@@ -2026,9 +2027,9 @@ const strokeCount = k => KVG[k] ? KVG[k].p.length : null;
 /* Each tab change is a browser history entry (#plan, #write ...), so the phone's back gesture moves between
    pages. An open card (sheet) is its own entry, so back closes the card first. */
 const TABS = ['plan', 'meet', 'daily', 'progress', 'chart', 'drill', 'write', 'read', 'phrases', 'profile'];
-const GROUP = {plan: 'home', meet: 'home', daily: 'home', phrases: 'practice', chart: 'letters', drill: 'practice', write: 'practice', read: 'practice', progress: 'me', profile: 'me'};
-const SUBTABS = {practice: ['drill', 'write', 'read', 'phrases'], me: ['progress', 'profile']};
-let lastSub = {practice: 'drill', me: 'progress'};
+const GROUP = {plan: 'home', meet: 'home', daily: 'home', phrases: 'practice', chart: 'letters', drill: 'practice', write: 'practice', read: 'practice', progress: 'progress', profile: 'profile'};
+const SUBTABS = {practice: ['drill', 'write', 'read', 'phrases']};
+let lastSub = {practice: 'drill'};
 function renderSubnav(name) {
   const el = $('#subnav'), g = GROUP[name], subs = SUBTABS[g];
   if (!el) return;
@@ -2048,6 +2049,7 @@ function showTab(name, opts) {
   rootView = opts.fromHistory ? (name === 'plan' || name === 'chart') : !!opts.root;
   currentTab = name;
   $$('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.nav === GROUP[name] ? 'true' : 'false'));
+  const wb = $('#whoBtn'); if (wb) { if (name === 'profile') wb.setAttribute('aria-current', 'page'); else wb.removeAttribute('aria-current'); }
   renderSubnav(name);
   $$('.tab').forEach(s => { s.hidden = s.id !== 'tab-' + name; });
   if (name === 'write') renderWrite();
@@ -2081,7 +2083,7 @@ window.addEventListener('popstate', e => {
 });
 function markSheetOpen() { if (!sheetPushed) { sheetPushed = true; setHist({tab: currentTab, sheet: true}); } }
 $$('nav.tabs button').forEach(b => b.addEventListener('click', () => {
-  const g = b.dataset.nav, target = g === 'home' ? 'plan' : g === 'letters' ? 'chart' : lastSub[g];
+  const g = b.dataset.nav, target = g === 'home' ? 'plan' : g === 'letters' ? 'chart' : g === 'progress' ? 'progress' : lastSub[g];
   if (target !== currentTab) showTab(target, {root: true}); else window.scrollTo(0, 0);
 }));
 
