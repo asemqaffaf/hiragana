@@ -116,7 +116,7 @@ button.sq:active{transform:translateY(1px)}
 
 /* bottom tab bar */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1.5px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-nav.tabs .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+nav.tabs .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
 nav.tabs button{min-height:58px;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font-size:13px;color:var(--pencil)}
 nav.tabs button .g{font-family:var(--kana);font-size:21px;line-height:1.1;color:var(--pencil)}
 nav.tabs button[aria-selected="true"]{color:var(--ink);font-weight:700}
@@ -334,6 +334,57 @@ html[lang="ar"] .word .kana,html[lang="ar"] .word .ro{align-self:flex-start;text
 .langseg button{font-size:15px}
 .langrow{display:flex;align-items:center;gap:12px;margin:14px 0 0}
 .langrow .seg{flex:1;max-width:280px}
+/* progress page: one jade ramp, light to dark, for magnitude; text stays in ink colours */
+:root{--s0:var(--line);--s1:#CFE5DD;--s2:#8CC3B1;--s3:#4E9A84;--s4:#2A7361}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--s1:#24423A;--s2:#2F6A5A;--s3:#4E9A84;--s4:#7CC8B3}}
+nav.tabs button{font-size:12px}
+.pstat{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:14px 10px;margin:16px 0 4px}
+.pstat div{display:flex;flex-direction:column;gap:2px;border-inline-start:3px solid var(--s3);padding-inline-start:10px}
+.pstat b{font-size:28px;line-height:1.1;font-weight:700}
+.pstat span{font-size:13px;color:var(--pencil);line-height:1.3}
+.road{list-style:none;margin:14px 0 0;padding:0;position:relative}
+.road li{position:relative;display:grid;grid-template-columns:34px 1fr;gap:12px;padding-bottom:18px}
+.road li::before{content:"";position:absolute;inset-inline-start:16px;top:30px;bottom:0;border-inline-start:2px solid var(--line)}
+.road li:last-child::before{display:none}
+.road li.done::before{border-color:var(--s3)}
+.road .node{width:34px;height:34px;border-radius:50%;border:2px solid var(--grid);background:var(--surface);position:relative}
+.road .node svg{position:absolute;inset:-4px;width:42px;height:42px;overflow:visible}
+.road .node circle{fill:none;stroke:var(--red);stroke-width:3;stroke-linecap:round}
+.road li.done .node{border-color:var(--s3)}
+.road li.now .node{border:3px solid var(--jade);box-shadow:0 0 0 4px var(--jade-soft)}
+.road li.later .node{border-style:dashed}
+.rhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.rbar{height:8px;border-radius:4px;background:var(--s0);overflow:hidden;margin:6px 0 4px}
+.rbar i{display:block;height:100%;border-radius:4px;background:var(--s4)}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:0 8px;border-radius:999px;border:1.5px solid var(--grid);margin-inline-start:6px}
+.tag.now{border-color:var(--jade);color:var(--jade)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;margin:6px 0 4px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.mapt{margin:12px 0 4px;color:var(--pencil)}
+.cmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:2px}
+.cmap.yo{grid-template-columns:repeat(auto-fill,minmax(46px,1fr))}
+.cmap button{aspect-ratio:1/1;border:0;border-radius:4px;font-family:var(--kana);font-size:17px;padding:0;color:var(--ink)}
+.cmap.yo button{aspect-ratio:auto;min-height:34px;font-size:15px}
+.lv-new{background:var(--s0)}
+.lv-learning{background:var(--s2)}
+.lv-solid{background:var(--s4);color:var(--jade-ink) !important}
+.cal{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:2px;margin-top:10px;max-width:520px}
+.cal i{display:block;min-width:0;aspect-ratio:1/1;border-radius:4px;background:var(--s0)}
+.cal i.a1{background:var(--s1)}.cal i.a2{background:var(--s2)}.cal i.a3{background:var(--s3)}.cal i.a4{background:var(--s4)}
+.cal i.today{outline:2px solid var(--ink);outline-offset:1px}
+.calx{display:flex;justify-content:space-between;max-width:520px;margin-top:4px}
+.rounds{position:relative;display:flex;align-items:flex-end;gap:2px;height:120px;margin-top:12px;border-bottom:1.5px solid var(--grid);max-width:520px}
+.rounds i{flex:1;max-width:30px;background:var(--s4);border-radius:4px 4px 0 0}
+.rounds .goal{position:absolute;inset-inline:0;border-top:1.5px dashed var(--pencil)}
+/* completed letters: a small red まる in the corner */
+.strip .sq.cl::after,.kb.cl .sq::after,.cmap button.cl::after{content:"";position:absolute;top:3px;inset-inline-end:3px;width:9px;height:9px;border-radius:50%;border:2px solid var(--red);background:var(--surface);z-index:2}
+.cmap button{position:relative}
+.legend i.lv-cl{background:var(--surface);border:2px solid var(--red);border-radius:50%}
+.wcomp{margin:4px 0 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:22px}
+.tag.done{border-color:var(--red);color:var(--red);margin-inline-start:0}
+.wdone{flex-wrap:wrap}
+.btn[hidden],.tool[hidden]{display:none}
 </style>
 </head>
 <body class="signed-out">
@@ -345,6 +396,7 @@ html[lang="ar"] .word .kana,html[lang="ar"] .word .ro{align-self:flex-start;text
   <section id="login" aria-label="Choose a student" hidden></section>
   <div class="backbar" id="backBar" hidden><button class="back" id="backBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="backLabel">Back</span></button></div>
   <section class="tab" id="tab-plan" aria-label="Plan"></section>
+  <section class="tab" id="tab-progress" aria-label="Progress" hidden></section>
   <section class="tab" id="tab-chart" aria-label="Chart" hidden></section>
   <section class="tab" id="tab-drill" aria-label="Drill" hidden></section>
   <section class="tab" id="tab-write" aria-label="Write" hidden></section>
@@ -353,6 +405,7 @@ html[lang="ar"] .word .kana,html[lang="ar"] .word .ro{align-self:flex-start;text
 <nav class="tabs" aria-label="Sections">
   <div class="in" role="tablist">
     <button role="tab" data-tab="plan" aria-selected="true"><span class="g">日</span><span class="tl">Plan</span></button>
+    <button role="tab" data-tab="progress" aria-selected="false"><span class="g">進</span><span class="tl">Progress</span></button>
     <button role="tab" data-tab="chart" aria-selected="false"><span class="g">あ</span><span class="tl">Chart</span></button>
     <button role="tab" data-tab="drill" aria-selected="false"><span class="g">○</span><span class="tl">Drill</span></button>
     <button role="tab" data-tab="write" aria-selected="false"><span class="g">筆</span><span class="tl">Write</span></button>
@@ -686,9 +739,9 @@ Object.assign(STR.en, {
   'write.guide': 'Guide', 'write.nums': 'Numbers', 'write.check': 'Check strokes',
   'write.silent': 'Small っ has no sound of its own: it is a pause.',
   'write.howTitle': 'How writing practice works',
-  'write.howCheck': 'Each stroke is checked when you lift your finger: order, direction, where it sits and its shape. A write is clean when every stroke is right the first time. Get 5 clean writes of each new character: start with the guide on, then turn it off and write from memory. With the guide off the check gives you more room.',
+  'write.howCheck': 'Each stroke is checked when you lift your finger: order, direction, where it sits and its shape. A write is clean when every stroke is right the first time. Listen to each new character and get 3 clean writes, then mark it complete. Start with the guide on, then turn it off and write from memory. With the guide off the check gives you more room.',
   'write.howFree': 'Free tracing: nothing is checked. On paper, keep each character inside a square like this one.',
-  'clean': v => v.p >= 5 ? v.p + ' clean writes, goal reached' : v.p + ' of 5 clean writes',
+  'clean': v => v.p >= 3 ? v.p + ' clean writes, goal reached' : v.p + ' of 3 clean writes',
   'w.start': v => 'Draw stroke 1 of ' + v.n + '.' + (v.nums ? ' Start next to the red 1.' : ''),
   'w.watch': 'Watch, then draw stroke 1 of {n}.', 'w.draw': 'Draw stroke {i} of {n}.', 'w.right': 'Stroke {i} is right. Now stroke {j} of {n}.',
   'w.allRight': v => (v.n === 1 ? 'Right on the first try. ' : 'All ' + v.n + ' strokes right on the first try. ') + v.clean + '.',
@@ -779,9 +832,9 @@ Object.assign(STR.ar, {
   'write.guide': 'الدليل', 'write.nums': 'الأرقام', 'write.check': 'تحقّق من الخطوط',
   'write.silent': 'っ الصغيرة ليس لها صوت خاص: إنها وقفة قصيرة.',
   'write.howTitle': 'كيف يعمل تمرين الكتابة',
-  'write.howCheck': 'يتم التحقق من كل خط عند رفع إصبعك: ترتيبه واتجاهه ومكانه وشكله. تكون الكتابة نظيفة إذا كان كل خط صحيحاً من المحاولة الأولى. احصل على 5 كتابات نظيفة لكل حرف جديد: ابدأ والدليل ظاهر، ثم أخفِه واكتب من الذاكرة. عند إخفاء الدليل يكون التحقق أكثر تساهلاً.',
+  'write.howCheck': 'يتم التحقق من كل خط عند رفع إصبعك: ترتيبه واتجاهه ومكانه وشكله. تكون الكتابة نظيفة إذا كان كل خط صحيحاً من المحاولة الأولى. استمع إلى كل حرف جديد واحصل على 3 كتابات نظيفة، ثم سجّله كمكتمل. ابدأ والدليل ظاهر، ثم أخفِه واكتب من الذاكرة. عند إخفاء الدليل يكون التحقق أكثر تساهلاً.',
   'write.howFree': 'رسم حرّ: لا يتم التحقق من شيء. على الورق، اكتب كل حرف داخل مربع مثل هذا.',
-  'clean': v => v.p >= 5 ? 'الكتابات النظيفة: ' + v.p + '، تحقّق الهدف' : 'الكتابات النظيفة: ' + v.p + ' من 5',
+  'clean': v => v.p >= 3 ? 'الكتابات النظيفة: ' + v.p + '، تحقّق الهدف' : 'الكتابات النظيفة: ' + v.p + ' من 3',
   'w.start': v => 'ارسم الخط 1 من ' + v.n + '.' + (v.nums ? ' ابدأ عند الرقم الأحمر 1.' : ''),
   'w.watch': 'شاهد، ثم ارسم الخط 1 من {n}.', 'w.draw': 'ارسم الخط {i} من {n}.', 'w.right': 'الخط {i} صحيح. الآن الخط {j} من {n}.',
   'w.allRight': v => 'كل الخطوط صحيحة من المحاولة الأولى. ' + v.clean + '.',
@@ -818,6 +871,64 @@ Object.assign(STR.ar, {
   'p.writingV': v => 'عدد الكتابات ' + v.n + '، منها ' + v.p + ' نظيفة', 'p.days': 'أيام الدراسة',
   'p.daysV': v => arN(v.d, 'day') + '. السلسلة الحالية: ' + arN(v.s, 'day') + '.', 'p.created': 'تاريخ إنشاء الملف',
   'p.langNote': 'لكل طالب لغته الخاصة. المفتاح في الشاشة الأولى يحدد لغة الطلاب الجدد.'
+});
+
+Object.assign(STR.en, {
+  'tab.progress': 'Progress', 'plan.seeProgress': 'Progress and roadmap',
+  'pg.intro': '{name}’s progress on this device, and the road from here to JLPT N5.',
+  'pg.solid': 'of 104 solid', 'pg.accuracy': 'drill accuracy', 'pg.clean': v => v.n === 1 ? 'clean write' : 'clean writes', 'pg.streak': 'day streak', 'pg.days': v => v.n === 1 ? 'study day' : 'study days',
+  'pg.road': 'Roadmap', 'pg.roadIntro': 'A step is complete when its bar is full. The steps follow the 14-day plan.',
+  'rm.days': 'Days {d}', 'rm.day': 'Day {d}', 'rm.of': '{v} of {m}', 'rm.done': 'Done', 'rm.now': 'You are here',
+  'rm.m1': 'Meet the 46 basic characters', 'rm.m1d': 'Drilled at least once',
+  'rm.m2': 'Make the 46 solid', 'rm.solidD': 'Solid in drills', 'rm.m3': '゛ and ゜: 25 more', 'rm.m4': 'Small ゃ ゅ ょ: 33 combinations',
+  'rm.m5': 'Read words and sentences', 'rm.m5d': 'Days 10 to 12 marked done', 'rm.m6': 'Speed and final test', 'rm.m6d': 'Days 13 and 14 marked done',
+  'rm.after': 'After hiragana', 'rm.kata': 'Katakana',
+  'rm.kataD': '46 basic characters used for foreign words and names, with the same rules for ゛, ゜ and small letters. About 7 to 10 days with the same method. Not in this site yet.',
+  'rm.n5': 'JLPT N5 kanji and vocabulary',
+  'rm.n5D': 'Commonly estimated at about 100 kanji and 800 words; the JLPT has not published official lists since 2010. Not in this site yet.',
+  'pg.map': 'Every character', 'pg.mapIntro': 'Tap a character to open it.',
+  'lv.solid': 'Solid', 'lv.learning': 'Learning', 'lv.new': 'Not drilled yet',
+  'pg.activity': 'Last 28 days', 'pg.calSum': 'studied on {n} days', 'pg.actN': v => enN(v.n, 'answer or write', 'answers and writes'),
+  'pg.actLegend': 'Darker squares mean more drill answers and writes that day. Hover or press a square for the count.',
+  'pg.rounds': 'Recent drill rounds', 'pg.noRounds': 'No rounds finished yet. Finish a drill round and it shows here.',
+  'pg.roundTip': v => v.date + ': ' + enN(v.n, 'question') + ', ' + v.p + '% right',
+  'pg.roundsNote': 'Each bar is one round, oldest on the left: its height is the share right on the first try. The line marks 90%.'
+});
+Object.assign(STR.ar, {
+  'tab.progress': 'التقدّم', 'plan.seeProgress': 'التقدّم وخريطة الطريق',
+  'pg.intro': 'تقدّم {name} على هذا الجهاز، والطريق من هنا إلى JLPT N5.',
+  'pg.solid': 'متقنة من 104', 'pg.accuracy': 'دقة التدريب', 'pg.clean': 'الكتابات النظيفة', 'pg.streak': 'الأيام المتتالية', 'pg.days': 'أيام الدراسة',
+  'pg.road': 'خريطة الطريق', 'pg.roadIntro': 'تكتمل المرحلة عندما يمتلئ شريطها. المراحل تتبع خطة الـ14 يوماً.',
+  'rm.days': 'الأيام {d}', 'rm.day': 'اليوم {d}', 'rm.of': '{v} من {m}', 'rm.done': 'مكتملة', 'rm.now': 'أنت هنا',
+  'rm.m1': 'تعرّف على الأحرف الأساسية الـ46', 'rm.m1d': 'دُرّب كل منها مرة على الأقل',
+  'rm.m2': 'أتقن الأحرف الـ46', 'rm.solidD': 'متقنة في التدريب', 'rm.m3': '゛ و ゜: 25 حرفاً إضافياً', 'rm.m4': 'ゃ ゅ ょ الصغيرة: 33 تركيباً',
+  'rm.m5': 'اقرأ الكلمات والجُمل', 'rm.m5d': 'الأيام 10 إلى 12 مسجّلة كمُنجزة', 'rm.m6': 'السرعة والاختبار النهائي', 'rm.m6d': 'اليومان 13 و14 مسجّلان كمُنجزين',
+  'rm.after': 'بعد الهيراغانا', 'rm.kata': 'الكاتاكانا',
+  'rm.kataD': '46 حرفاً أساسياً تُستخدم للكلمات الأجنبية والأسماء، بالقواعد نفسها لـ ゛ و ゜ والأحرف الصغيرة. نحو 7 إلى 10 أيام بالطريقة نفسها. ليست في هذا الموقع بعد.',
+  'rm.n5': 'كانجي ومفردات JLPT N5',
+  'rm.n5D': 'تُقدَّر عادةً بنحو 100 كانجي و800 كلمة، ولم ينشر اختبار JLPT قوائم رسمية منذ 2010. ليست في هذا الموقع بعد.',
+  'pg.map': 'كل الأحرف', 'pg.mapIntro': 'اضغط أي حرف لفتحه.',
+  'lv.solid': 'متقن', 'lv.learning': 'قيد التعلّم', 'lv.new': 'لم يُدرَّب بعد',
+  'pg.activity': 'آخر 28 يوماً', 'pg.calSum': 'دراسة في {n} من الأيام', 'pg.actN': v => 'عدد الإجابات والكتابات: ' + v.n,
+  'pg.actLegend': 'المربع الأغمق يعني إجابات وكتابات أكثر في ذلك اليوم. مرّر المؤشر أو اضغط مطوّلاً على مربع لترى العدد.',
+  'pg.rounds': 'آخر جولات التدريب', 'pg.noRounds': 'لم تُنهِ أي جولة بعد. أنهِ جولة تدريب وستظهر هنا.',
+  'pg.roundTip': v => v.date + ': ' + arN(v.n, 'question') + '، ' + v.p + '% صحيحة',
+  'pg.roundsNote': 'كل عمود جولة واحدة، والأقدم في البداية: ارتفاعه نسبة الإجابات الصحيحة من المحاولة الأولى. الخط عند 90%.'
+});
+
+Object.assign(STR.en, {
+  'cl.btn': 'Mark {k} complete', 'cl.done': 'Completed', 'cl.undo': 'Undo', 'cl.ok': 'done', 'cl.todo': 'not yet',
+  'cl.need': v => 'To complete: listen (' + v.heard + '), ' + v.p + ' of ' + v.g + ' clean writes',
+  'cl.ready': 'You listened to {k} and wrote it cleanly 3 times. You can mark it complete.',
+  'cl.listen': '3 clean writes done. Tap Hear once to unlock Complete.',
+  'cl.saved': '{k} is complete. Well done.', 'pg.completed': v => v.n === 1 ? 'letter completed' : 'letters completed'
+});
+Object.assign(STR.ar, {
+  'cl.btn': 'سجّل {k} كمكتمل', 'cl.done': 'مكتمل', 'cl.undo': 'تراجع', 'cl.ok': 'تمّ', 'cl.todo': 'ليس بعد',
+  'cl.need': v => 'للإكمال: الاستماع (' + v.heard + ')، والكتابات النظيفة ' + v.p + ' من ' + v.g,
+  'cl.ready': 'استمعت إلى {k} وكتبته بشكل نظيف 3 مرات. يمكنك تسجيله كمكتمل.',
+  'cl.listen': 'أنجزت 3 كتابات نظيفة. اضغط «استمع» مرة واحدة لتفعيل الإكمال.',
+  'cl.saved': 'اكتمل الحرف {k}. أحسنت.', 'pg.completed': 'الأحرف المكتملة'
 });
 
 /* ---------- Arabic content ---------- */
@@ -1010,9 +1121,12 @@ function cleanObjMap(o, keys, f) {
   if (o && typeof o === 'object') for (const k of Object.keys(o)) if (keys.includes(k) && o[k] && typeof o[k] === 'object') out[k] = f(o[k]);
   return out;
 }
+const LETTERS = () => ALL.concat(['ゃ', 'ゅ', 'ょ', 'っ']);
+function cleanNum(o) { const out = {}; if (o && typeof o === 'object') for (const k of Object.keys(o)) if (LETTERS().includes(k) && num(o[k]) > 0) out[k] = num(o[k]); return out; }
+function cleanDates(o) { const out = {}; if (o && typeof o === 'object') for (const k of Object.keys(o)) if (LETTERS().includes(k) && ISO.test(o[k])) out[k] = o[k]; return out; }
 /* Shapes every saved or imported progress record, dropping anything unexpected */
 function normalize(s) {
-  const f = {v:1, start:todayISO(), done:{}, stats:{}, ws:{}, act:{}, updated:0};
+  const f = {v:1, start:todayISO(), done:{}, stats:{}, ws:{}, act:{}, rounds:[], heard:{}, cl:{}, updated:0};
   if (!s || typeof s !== 'object') return f;
   const done = {}, act = {};
   if (s.done && typeof s.done === 'object') for (const k of Object.keys(s.done)) if (/^([1-9]|1[0-4])$/.test(k) && typeof s.done[k] === 'string') done[k] = s.done[k];
@@ -1024,6 +1138,8 @@ function normalize(s) {
     stats: cleanObjMap(s.stats, ALL, v => ({b: Math.min(5, Math.max(0, num(v.b))), c: num(v.c), w: num(v.w), t: num(v.t)})),
     ws: cleanObjMap(s.ws, ALL.concat(['っ']), v => ({n: num(v.n), p: num(v.p)})),
     act,
+    heard: cleanNum(s.heard), cl: cleanDates(s.cl),
+    rounds: Array.isArray(s.rounds) ? s.rounds.filter(r => r && ISO.test(r.d)).map(r => ({d: r.d, n: num(r.n), p: Math.min(100, num(r.p))})).slice(-50) : [],
     updated: num(s.updated)
   };
 }
@@ -1113,6 +1229,7 @@ function deviceSpeak(text) {
 }
 const hasClip = t => !!AUD[t];
 function speak(text) {
+  if (me() && LETTERS().includes(text)) { state.heard = Object.assign({}, state.heard, {[text]: (state.heard[text] || 0) + 1}); commit(); }
   if (AUD[text]) { playClip(text); return true; }
   return deviceSpeak(text);
 }
@@ -1375,7 +1492,7 @@ const strokeCount = k => KVG[k] ? KVG[k].p.length : null;
 /* ---------- tabs and back navigation ---------- */
 /* Each tab change is a browser history entry (#plan, #write ...), so the phone's back gesture moves between
    pages. An open card (sheet) is its own entry, so back closes the card first. */
-const TABS = ['plan', 'chart', 'drill', 'write', 'read'];
+const TABS = ['plan', 'progress', 'chart', 'drill', 'write', 'read'];
 let currentTab = 'plan', navStack = [], sheetPushed = false;
 function setHist(st, replace) { try { history[replace ? 'replaceState' : 'pushState'](st, '', '#' + st.tab); } catch (e) {} }
 function showTab(name, opts) {
@@ -1390,6 +1507,7 @@ function showTab(name, opts) {
   if (name === 'drill' && (!session || session.done)) renderDrill();
   if (name === 'chart') renderChart();
   if (name === 'plan') renderPlan();
+  if (name === 'progress') renderProgress();
   renderBack();
   window.scrollTo(0, 0);
 }
@@ -1416,7 +1534,7 @@ $$('nav.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.d
 let resetArmed = false;
 function circle(done) { return done ? '<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19" transform="rotate(-110 22 22)"/></svg>' : ''; }
 function kb(k, cls, bar) {
-  return '<button class="kb' + (cls || '') + '" data-open="' + k + '" aria-label="' + k + ', ' + rom(k) + '"><span class="sq"><span class="k">' + k + '</span></span><span class="r">' + rom(k) + '</span>' + (bar ? '<span class="m" style="--m:' + ((st(k).b || 0) / 5) + '"></span>' : '') + '</button>';
+  return '<button class="kb' + (cls || '') + (isComplete(k) ? ' cl' : '') + '" data-open="' + k + '" aria-label="' + k + ', ' + rom(k) + (isComplete(k) ? ', ' + t('cl.done') : '') + '"><span class="sq"><span class="k">' + k + '</span></span><span class="r">' + rom(k) + '</span>' + (bar ? '<span class="m" style="--m:' + ((st(k).b || 0) / 5) + '"></span>' : '') + '</button>';
 }
 function kanaSquares(list, dense) {
   return '<div class="focus' + (dense ? ' dense' : '') + (list.some(k => k.length === 2) ? ' yo' : '') + '">' + list.map(k => kb(k)).join('') + '</div>';
@@ -1444,6 +1562,7 @@ function renderPlan() {
   h += '</div>';
   h += '<h3>' + t('plan.progress') + '</h3><div class="meter" role="img" aria-label="' + t('counts104', cv) + '"><i class="s" style="width:' + (counts.solid / 104 * 100) + '%"></i><i class="l" style="width:' + (counts.learning / 104 * 100) + '%"></i></div>';
   h += '<p class="small muted">' + t('counts104', cv) + '. ' + t('plan.steps') + '</p>';
+  h += '<div class="btnrow"><button class="btn" id="goProgress">' + t('plan.seeProgress') + '</button></div>';
   h += '<h3>' + t('plan.all14') + '</h3><div class="days">';
   PLAN.forEach((_, i) => {
     const p = planOf(i), dn = i + 1, fk = focusKana(dn), isCur = n >= 1 && n <= 14 && dn === n;
@@ -1461,6 +1580,7 @@ function renderPlan() {
   if (go) go.onclick = () => { drillSel = new Set([n > 14 ? 'weak' : 'today']); session = null; showTab('drill'); };
   const gw = $('#goWrite', root);
   if (gw) gw.onclick = () => { writeK = focus[0][0]; writeGroup = groupOf(writeK); showTab('write'); };
+  $('#goProgress', root).onclick = () => showTab('progress');
   const md = $('#markDone', root);
   if (md) md.onclick = () => { if (state.done[day]) delete state.done[day]; else state.done[day] = todayISO(); commit(); renderPlan(); };
   $$('[data-toggle-day]', root).forEach(b => b.onclick = () => { const dn = +b.dataset.toggleDay; if (state.done[dn]) delete state.done[dn]; else state.done[dn] = todayISO(); commit(); renderPlan(); });
@@ -1470,6 +1590,66 @@ function renderPlan() {
     resetArmed = false; state = normalize(null); commit(); renderAll();
   };
 }
+/* ---------- progress and roadmap ---------- */
+function renderProgress() {
+  const p = me(); if (!p) return;
+  const lv = {solid: 0, learning: 0, 'new': 0};
+  ALL.forEach(k => lv[level(k)]++);
+  let ans = 0, right = 0, wp = 0;
+  Object.values(state.stats).forEach(s => { ans += s.c + s.w; right += s.c; });
+  Object.values(state.ws).forEach(w => { wp += w.p; });
+  const days = Object.keys(state.act).length, streak = streakOf(state.act), today = dayNumber();
+  const solidIn = list => list.filter(k => level(k) === 'solid').length;
+  const seenIn = list => list.filter(k => level(k) !== 'new').length;
+  let h = '<h2>' + t('tab.progress') + '</h2><p class="muted">' + t('pg.intro', {name: esc(p.name)}) + '</p>';
+  /* headline numbers */
+  const nCl = Object.keys(state.cl || {}).length;
+  const tiles = [[nCl, t('pg.completed', {n: nCl})], [lv.solid, t('pg.solid')], [ans ? Math.round(right / ans * 100) + '%' : '-', t('pg.accuracy')], [wp, t('pg.clean', {n: wp})], [streak, t('pg.streak', {n: streak})], [days, t('pg.days', {n: days})]];
+  h += '<div class="pstat">' + tiles.map(x => '<div><b>' + x[0] + '</b><span>' + x[1] + '</span></div>').join('') + '</div>';
+  /* roadmap */
+  const ms = [
+    {k: 'm1', d: '1-5', v: seenIn(A46), m: 46, sub: 'rm.m1d'},
+    {k: 'm2', d: '6-7', v: solidIn(A46), m: 46, sub: 'rm.solidD'},
+    {k: 'm3', d: '8', v: solidIn(DAK25), m: 25, sub: 'rm.solidD'},
+    {k: 'm4', d: '9', v: solidIn(YOON33), m: 33, sub: 'rm.solidD'},
+    {k: 'm5', d: '10-12', v: [10, 11, 12].filter(x => state.done[x]).length, m: 3, sub: 'rm.m5d'},
+    {k: 'm6', d: '13-14', v: [13, 14].filter(x => state.done[x]).length, m: 2, sub: 'rm.m6d'}
+  ];
+  let cur = ms.findIndex(x => x.v < x.m);
+  h += '<h3>' + t('pg.road') + '</h3><p class="small muted">' + t('pg.roadIntro') + '</p><ol class="road">';
+  ms.forEach((x, i) => {
+    const st = x.v >= x.m ? 'done' : i === cur ? 'now' : 'next';
+    const pct = Math.round(x.v / x.m * 100);
+    h += '<li class="' + st + '"><span class="node" aria-hidden="true">' + (st === 'done' ? '<svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" transform="rotate(-110 22 22)"/></svg>' : '') + '</span><div class="rbody">'
+      + '<div class="rhead"><b>' + t('rm.' + x.k) + '</b><span class="small muted">' + t(x.d.includes('-') ? 'rm.days' : 'rm.day', {d: x.d}) + '</span></div>'
+      + '<div class="rbar" role="img" aria-label="' + t('rm.of', {v: x.v, m: x.m}) + '"><i style="width:' + pct + '%"></i></div>'
+      + '<div class="small"><span class="muted">' + t(x.sub) + ': </span>' + t('rm.of', {v: x.v, m: x.m}) + (st === 'done' ? ' <span class="tag">' + t('rm.done') + '</span>' : st === 'now' ? ' <span class="tag now">' + t('rm.now') + '</span>' : '') + '</div></div></li>';
+  });
+  h += '<li class="later"><span class="node" aria-hidden="true"></span><div class="rbody"><div class="rhead"><b>' + t('rm.kata') + '</b><span class="small muted">' + t('rm.after') + '</span></div><p class="small muted">' + t('rm.kataD') + '</p></div></li>';
+  h += '<li class="later"><span class="node" aria-hidden="true"></span><div class="rbody"><div class="rhead"><b>' + t('rm.n5') + '</b></div><p class="small muted">' + t('rm.n5D') + '</p></div></li></ol>';
+  /* every character, by mastery */
+  h += '<h3>' + t('pg.map') + '</h3><p class="small muted">' + t('pg.mapIntro') + '</p>';
+  h += '<div class="legend">' + ['solid', 'learning', 'new'].map(l => '<span><i class="lv-' + l + '"></i>' + t('lv.' + l) + ' (' + lv[l] + ')</span>').join('') + '<span><i class="lv-cl"></i>' + t('cl.done') + ' (' + nCl + ')</span></div>';
+  [[t('chart.basic'), A46], [t('chart.dak'), DAK25], [t('chart.yoon'), YOON33]].forEach(([title, list]) => {
+    h += '<p class="small mapt">' + title + '</p><div class="cmap' + (list === YOON33 ? ' yo' : '') + '">' + list.map(k => '<button class="lv-' + level(k) + (isComplete(k) ? ' cl' : '') + '" data-open="' + k + '" title="' + k + ' ' + rom(k) + ': ' + t('lv.' + level(k)) + '">' + k + '</button>').join('') + '</div>';
+  });
+  /* last 28 days */
+  const start = addDays(todayISO(), -27), cells = [];
+  for (let i = 0; i < 28; i++) { const d = addDays(start, i), n = state.act[d] || 0; cells.push({d, n}); }
+  const lvl = n => n === 0 ? 0 : n < 10 ? 1 : n < 30 ? 2 : n < 60 ? 3 : 4;
+  h += '<h3>' + t('pg.activity') + '</h3><div class="cal" role="img" aria-label="' + t('pg.activity') + ': ' + t('pg.calSum', {n: cells.filter(c => c.n).length}) + '">' + cells.map(c => '<i class="a' + lvl(c.n) + (c.d === todayISO() ? ' today' : '') + '" title="' + fmt(c.d) + ': ' + t('pg.actN', {n: c.n}) + '"></i>').join('') + '</div>';
+  h += '<div class="calx small muted"><span>' + fmt(start) + '</span><span>' + fmt(todayISO()) + '</span></div><p class="small muted">' + t('pg.actLegend') + '</p>';
+  /* recent drill rounds */
+  const rd = (state.rounds || []).slice(-14);
+  h += '<h3>' + t('pg.rounds') + '</h3>';
+  if (!rd.length) h += '<p class="small muted">' + t('pg.noRounds') + '</p>';
+  else {
+    h += '<div class="rounds" role="img" aria-label="' + t('pg.rounds') + ': ' + rd.map(x => x.p + '%').join(', ') + '"><span class="goal" style="bottom:90%"></span>' + rd.map(x => '<i style="height:' + Math.max(2, x.p) + '%" title="' + t('pg.roundTip', {date: fmt(x.d), n: x.n, p: x.p}) + '"></i>').join('') + '</div>';
+    h += '<p class="small muted">' + t('pg.roundsNote') + '</p>';
+  }
+  $('#tab-progress').innerHTML = h;
+}
+
 /* ---------- chart ---------- */
 let chartView = 'basic';
 function cell(k) {
@@ -1747,6 +1927,7 @@ function renderResults(root) {
   const okTimes = r.filter(x => x.ok).map(x => x.ms);
   const avg = okTimes.length ? okTimes.reduce((a, b) => a + b, 0) / okTimes.length / 1000 : 0;
   const n = dayNumber(), day = curDay();
+  if (!s.logged && r.length) { s.logged = true; state.rounds = (state.rounds || []).concat([{d: todayISO(), n: r.length, p: pct}]).slice(-50); commit(); }
   let h = '<h2>' + t('res.title') + '</h2><div class="result">' + right + ' / ' + r.length + '</div>';
   h += '<p>' + t('res.pct', {pct, avg: okTimes.length ? avg.toFixed(1) : ''}) + '</p>';
   if (pct >= 90) h += '<p class="muted">' + t(r.length < 10 ? 'res.clearShort' : 'res.clear') + '</p>';
@@ -1767,7 +1948,29 @@ function renderResults(root) {
 
 /* ---------- write ---------- */
 const WGROUPS = [...ROWS.map(r => ({id:r.id, label:r.kana[0], kana:r.kana.filter(Boolean)})), ...DROWS.map(r => ({id:r.id, label:r.kana[0], kana:r.kana})), {id:'sm', label:'ゃ', kana:['ゃ','ゅ','ょ','っ']}];
-const CLEAN_GOAL = 5;
+const CLEAN_GOAL = 3;
+/* A letter can be completed once the student has listened to it and written it cleanly CLEAN_GOAL times */
+const isComplete = k => !!(state.cl || {})[k];
+const canComplete = k => !isComplete(k) && (state.heard[k] || 0) > 0 && wsOf(k).p >= CLEAN_GOAL;
+function completeLetter(k, on) {
+  const cl = Object.assign({}, state.cl);
+  if (on) cl[k] = todayISO(); else delete cl[k];
+  state.cl = cl; commit();
+}
+function completeHtml(k) {
+  if (isComplete(k)) return '<span class="tag done">' + t('cl.done') + '</span><button class="link" id="wUncomplete" type="button">' + t('cl.undo') + '</button>';
+  const heard = (state.heard[k] || 0) > 0, p = wsOf(k).p;
+  return '<span class="cl-need small muted">' + t('cl.need', {heard: heard ? t('cl.ok') : t('cl.todo'), p: Math.min(p, CLEAN_GOAL), g: CLEAN_GOAL}) + '</span>';
+}
+function refreshComplete() {
+  const box = $('#wComplete'), k = writeK;
+  if (!box) return;
+  box.innerHTML = completeHtml(k);
+  const u = $('#wUncomplete'); if (u) u.onclick = () => { completeLetter(k, false); refreshComplete(); markStrip(k); };
+  const btn = $('#wCompleteBtn');
+  if (btn) { btn.hidden = !canComplete(k); btn.textContent = t('cl.btn', {k}); }
+}
+function markStrip(k) { const b = $('.strip [data-wk="' + k + '"]'); if (b) b.classList.toggle('cl', isComplete(k)); }
 let writeGroup = 'a', writeK = 'あ', writeGuide = true, writeNums = true, writeCheck = true;
 let pad = null, writeSvg = null, padObserver = null, wq = null, demoShown = false;
 function groupOf(k) { const g = WGROUPS.find(g => g.kana.includes(k)); return g ? g.id : 'a'; }
@@ -1806,6 +2009,9 @@ function finishWrite() {
   const c = $('#wCount'); if (c) c.textContent = cleanText(wq.k);
   const bar = $('.strip [data-wk="' + wq.k + '"] .wm'); if (bar) bar.style.setProperty('--m', Math.min(wsOf(wq.k).p, CLEAN_GOAL) / CLEAN_GOAL);
   const dn = $('#wDone'); if (dn) dn.hidden = false;
+  refreshComplete();
+  if (canComplete(wq.k)) wSay(t('cl.ready', {k: wq.k}), 'good');
+  else if (!isComplete(wq.k) && !(state.heard[wq.k] > 0) && wsOf(wq.k).p >= CLEAN_GOAL) wSay(t('cl.listen'), 'good');
 }
 const writeHandler = {
   begin() {
@@ -1846,9 +2052,9 @@ function renderWrite(play) {
   const n = strokeCount(writeK), nx = nextWrite();
   let h = '<h2>' + t('tab.write') + '</h2>';
   h += '<div class="chips rowpick" role="group" aria-label="' + t('write.rows') + '">' + WGROUPS.map(x => '<button class="chip" data-wg="' + x.id + '" aria-pressed="' + (x.id === g.id) + '"><span class="kana">' + x.label + '</span></button>').join('') + '</div>';
-  h += '<div class="strip">' + g.kana.map(k => '<button class="sq" data-wk="' + k + '" aria-pressed="' + (k === writeK) + '" aria-label="' + k + ', ' + rom(k) + ', ' + cleanText(k) + '"><span class="k">' + k + '</span><span class="wm" style="--m:' + (Math.min(wsOf(k).p, CLEAN_GOAL) / CLEAN_GOAL) + '"></span></button>').join('') + '</div>';
+  h += '<div class="strip">' + g.kana.map(k => '<button class="sq' + (isComplete(k) ? ' cl' : '') + '" data-wk="' + k + '" aria-pressed="' + (k === writeK) + '" aria-label="' + k + ', ' + rom(k) + ', ' + cleanText(k) + (isComplete(k) ? ', ' + t('cl.done') : '') + '"><span class="k">' + k + '</span><span class="wm" style="--m:' + (Math.min(wsOf(k).p, CLEAN_GOAL) / CLEAN_GOAL) + '"></span></button>').join('') + '</div>';
   h += '<div class="wgrid"><div class="wleft">';
-  h += '<p class="wmeta"><b>' + rom(writeK) + '</b><span class="muted small">' + t('strokes', {n}) + '</span>' + (writeCheck ? '<span class="muted small" id="wCount">' + cleanText(writeK) + '</span>' : '') + '</p>';
+  h += '<p class="wmeta"><b>' + rom(writeK) + '</b><span class="muted small">' + t('strokes', {n}) + '</span>' + (writeCheck ? '<span class="muted small" id="wCount">' + cleanText(writeK) + '</span>' : '') + '</p>' + (writeCheck ? '<p class="wcomp" id="wComplete"></p>' : '');
   h += '<div class="sq wsq" id="wsq"><canvas id="wpad" aria-label="' + t('write.area', {k: writeK}) + '"></canvas>' + MARK_SVG + '</div>';
   h += '</div><div class="wright">';
   h += '<p class="wstat" id="wStat" role="status" aria-live="polite">' + (writeCheck ? '' : t('write.free')) + '</p>';
@@ -1857,7 +2063,7 @@ function renderWrite(play) {
     ? tool('wHint', ICON.hint, t('write.hint')) + tool('wUndo', ICON.undo, t('write.undo')) + tool('wClear', ICON.restart, t('write.restart'))
     : tool('wUndo', ICON.undo, t('write.undo')) + tool('wClear', ICON.clear, t('write.clear'));
   h += '</div>';
-  h += '<div class="btnrow wdone" id="wDone" hidden><button class="btn primary" id="wAgain">' + t('write.again') + '</button><button class="btn" id="wNext">' + t('write.next') + ' <span class="kana">' + nx.k + '</span></button></div>';
+  h += '<div class="btnrow wdone" id="wDone" hidden><button class="btn red" id="wCompleteBtn" hidden></button><button class="btn primary" id="wAgain">' + t('write.again') + '</button><button class="btn" id="wNext">' + t('write.next') + ' <span class="kana">' + nx.k + '</span></button></div>';
   h += '<div class="toggles opts"><label><input type="checkbox" id="wGuide"' + (writeGuide ? ' checked' : '') + '> ' + t('write.guide') + '</label><label><input type="checkbox" id="wNums"' + (writeNums ? ' checked' : '') + '> ' + t('write.nums') + '</label><label><input type="checkbox" id="wCheck"' + (writeCheck ? ' checked' : '') + '> ' + t('write.check') + '</label></div>';
   h += '<details class="more wtips"><summary>' + t('write.howTitle') + '</summary><p class="small">' + (writeCheck ? t('write.howCheck') : t('write.howFree')) + '</p></details>';
   h += '</div></div>';
@@ -1882,7 +2088,7 @@ function renderWrite(play) {
     if (writeCheck && wq) { restartAttempt(); demoShown = true; wSay(t('w.watch', {n: wq.tpl.pts.length})); }
     if (writeSvg) writeSvg.play();
   };
-  const ws = $('#wSay', root); if (!hasClip(writeK)) { ws.disabled = true; ws.title = t('write.silent'); } else ws.onclick = () => speak(writeK);
+  const ws = $('#wSay', root); if (!hasClip(writeK)) { ws.disabled = true; ws.title = t('write.silent'); } else ws.onclick = () => { speak(writeK); refreshComplete(); if (wq && wq.done && canComplete(writeK)) wSay(t('cl.ready', {k: writeK}), 'good'); };
   const hb = $('#wHint', root);
   if (hb) hb.onclick = () => { if (wq && !wq.done && writeSvg) { if (demoShown) { demoShown = false; writeSvg.showUpTo(wq.i); } writeSvg.hint(wq.i); } };
   $('#wUndo', root).onclick = () => {
@@ -1899,6 +2105,9 @@ function renderWrite(play) {
     restartAttempt();
   };
   $('#wAgain', root).onclick = () => restartAttempt();
+  const cb = $('#wCompleteBtn', root);
+  if (cb) cb.onclick = () => { completeLetter(writeK, true); cb.hidden = true; refreshComplete(); markStrip(writeK); wSay(t('cl.saved', {k: writeK}), 'good'); };
+  if (writeCheck) refreshComplete();
   $('#wNext', root).onclick = () => { writeGroup = nx.g; writeK = nx.k; renderWrite(true); };
   if (play && writeSvg) { demoShown = !!wq; if (wq) wSay(t('w.watch', {n: wq.tpl.pts.length})); writeSvg.play(); }
 }
@@ -2199,6 +2408,7 @@ function boot() {
 
 function renderAll() {
   renderPlan(); renderChart(); renderRead();
+  if (currentTab === 'progress') renderProgress();
   if (currentTab === 'drill' && !session) renderDrill();
   if (currentTab === 'write') renderWrite();
 }

@@ -9,6 +9,11 @@ Live: https://asemqaffaf.github.io/hiragana/
 - English and Arabic (right-to-left). Each student has their own language; the switch on the first screen sets it for new students.
 - The Arabic version has its own memory hooks built on Arabic sounds and words, and Arabic meanings for every word and sentence.
 
+## Progress and roadmap
+
+- A Progress page per student: letters completed, solid characters, drill accuracy, clean writes, streak and study days; a roadmap through the 14-day plan and on to katakana and JLPT N5; a mastery map of all 104 characters; a 28-day activity calendar; and recent drill rounds.
+- A letter can be marked complete once the student has listened to it and written it cleanly 3 times. Completed letters show a small red circle everywhere they appear.
+
 ## Students
 
 - Passwordless login: pick your name on the first screen, or add a new student (name, colour, start date).
