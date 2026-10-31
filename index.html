@@ -552,11 +552,80 @@ html[lang="ar"] .dhead{flex-direction:row}
 .mx .say{position:static;width:44px;height:44px;display:grid;place-items:center;border:0;background:none;color:var(--jade);padding:0}
 .mx .say svg{width:24px;height:24px}
 @media (max-width:420px){.mx{grid-template-columns:auto 1fr 44px}.mx .mean{grid-column:1 / 3;grid-row:2;margin-top:-4px}.mx .say{grid-row:1 / 3;grid-column:3}}
+
+/* ---------- motion ---------- */
+#homeBtn{cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:6px;transition:transform .15s ease}
+#homeBtn:active{transform:scale(.94)}
+#homeBtn:focus-visible{outline:2px solid var(--jade);outline-offset:3px}
+body.signed-out #homeBtn{cursor:default;pointer-events:none}
+#homeBtn.bounce{animation:homeBounce .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes homeBounce{0%{transform:scale(1)}35%{transform:scale(1.12) rotate(-2deg)}100%{transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes slideIn{from{opacity:0;transform:translateX(var(--sx,22px))}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+@keyframes popIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes navPop{0%{transform:none}40%{transform:scale(1.28) translateY(-3px)}100%{transform:none}}
+@keyframes growX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes drawC{from{stroke-dashoffset:110}to{stroke-dashoffset:0}}
+@keyframes tick{from{stroke-dashoffset:26}to{stroke-dashoffset:0}}
+@keyframes nowRing{0%,100%{box-shadow:0 0 0 4px var(--jade-soft)}50%{box-shadow:0 0 0 9px transparent}}
+@keyframes cardIn{from{opacity:0;transform:translateX(var(--sx,22px)) scale(.98)}to{opacity:1;transform:none}}
+html{--sx:22px}
+html[dir="rtl"]{--sx:-22px}
+/* page change: the page's blocks slide in one after another; going back slides from the other side */
+.tab.enter > *{animation:slideIn .38s cubic-bezier(.2,.7,.2,1) backwards}
+.tab.enter.back > *{--sx:-22px}
+[dir="rtl"] .tab.enter.back > *{--sx:22px}
+.tab.enter.first > *{animation-name:rise}
+.tab.enter > *:nth-child(2){animation-delay:.04s}.tab.enter > *:nth-child(3){animation-delay:.08s}
+.tab.enter > *:nth-child(4){animation-delay:.12s}.tab.enter > *:nth-child(5){animation-delay:.16s}
+.tab.enter > *:nth-child(6){animation-delay:.2s}.tab.enter > *:nth-child(7){animation-delay:.24s}
+.tab.enter > *:nth-child(n+8){animation-delay:.28s}
+/* progress: bars fill, numbers pop, roadmap draws in */
+.tab.enter .rbar i{transform-origin:0 50%;animation:growX .9s cubic-bezier(.2,.8,.2,1) .25s backwards}
+[dir="rtl"] .tab.enter .rbar i{transform-origin:100% 50%}
+.tab.enter .pstat div{animation:rise .5s cubic-bezier(.2,.7,.2,1) backwards}
+.tab.enter .pstat div:nth-child(2){animation-delay:.06s}.tab.enter .pstat div:nth-child(3){animation-delay:.12s}
+.tab.enter .pstat div:nth-child(4){animation-delay:.18s}.tab.enter .pstat div:nth-child(5){animation-delay:.24s}
+.tab.enter .pstat div:nth-child(6){animation-delay:.3s}
+.tab.enter .road li{animation:rise .5s cubic-bezier(.2,.7,.2,1) backwards}
+.tab.enter .road li:nth-child(1){animation-delay:.2s}.tab.enter .road li:nth-child(2){animation-delay:.3s}
+.tab.enter .road li:nth-child(3){animation-delay:.4s}.tab.enter .road li:nth-child(4){animation-delay:.5s}
+.tab.enter .road li:nth-child(n+5){animation-delay:.6s}
+.tab.enter .road .node circle{stroke-dasharray:110;animation:drawC .7s ease-out .5s backwards}
+.tab.enter .cmap button,.tab.enter .cal i{animation:popIn .35s cubic-bezier(.3,1.4,.5,1) backwards;animation-delay:calc(var(--i,0) * 14ms + 350ms)}
+/* today's lesson: ticks draw, the current step breathes */
+.tab.enter .steps li.done .snum path{stroke-dasharray:26;animation:tick .45s ease-out .35s backwards}
+.steps li.now .snum{animation:nowRing 2.4s ease-in-out infinite}
+.lessondone{animation:popIn .5s cubic-bezier(.3,1.4,.5,1) .4s backwards}
+/* sheets */
+.scrim{animation:fadeIn .2s ease-out}
+.sheet{animation:sheetUp .3s cubic-bezier(.2,.8,.2,1)}
+#sheetRoot.swap .scrim,#sheetRoot.swap .sheet{animation:none}
+/* feedback and meeting cards */
+.fb{animation:rise .3s ease-out}
+.qsq .k.flip,.meetcard.flip{animation:cardIn .3s cubic-bezier(.2,.7,.2,1)}
+.mark.no{animation:shake .4s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+/* taps */
+.btn,nav.tabs button,.cmap button,.cell,.tool,.say,.sbody{transition:transform .12s ease,background-color .2s,border-color .2s,color .2s}
+.btn:active,nav.tabs button:active,.cmap button:active,.cell:active,.tool:active,.say:active,.sbody:active{transform:scale(.96)}
+nav.tabs button[aria-selected="true"] .g{display:inline-block;animation:navPop .42s cubic-bezier(.3,1.5,.5,1)}
+html.themeanim body,html.themeanim body *{transition:background-color .35s,color .35s,border-color .35s,fill .35s,stroke .35s !important}
+@media (prefers-reduced-motion:reduce){
+  .tab.enter > *,.tab.enter .rbar i,.tab.enter .pstat div,.tab.enter .road li,.tab.enter .road .node circle,.tab.enter .cmap button,.tab.enter .cal i,
+  .tab.enter .steps li.done .snum path,.steps li.now .snum,.lessondone,.scrim,.sheet,.fb,.qsq .k.flip,.meetcard.flip,.mark.no,
+  nav.tabs button[aria-selected="true"] .g,#homeBtn.bounce{animation:none !important}
+  .btn,nav.tabs button,.cmap button,.cell,.tool,.say,.sbody,#homeBtn{transition:none}
+  .btn:active,nav.tabs button:active,.cmap button:active,.cell:active,.tool:active,.say:active,.sbody:active,#homeBtn:active{transform:none}
+  html.themeanim body,html.themeanim body *{transition:none !important}
+}
 </style>
 </head>
 <body class="signed-out">
 <header class="top">
-  <div class="ttl"><h1>ひらがな</h1><p id="appSub">Read all hiragana in 14 days, 30 minutes a day</p></div>
+  <div class="ttl"><h1 id="homeBtn" role="link" tabindex="0">ひらがな</h1><p id="appSub">Read all hiragana in 14 days, 30 minutes a day</p></div>
   <button class="who" id="whoBtn" type="button" aria-haspopup="dialog" hidden></button>
 </header>
 <main class="wrap">
@@ -1748,6 +1817,8 @@ function deviceTheme() { try { return cleanTheme(JSON.parse(localStorage.getItem
 function applyTheme(th, remember) {
   th = cleanTheme(th);
   const r = document.documentElement;
+  if (themeReady && !reduceAnim()) { r.classList.add('themeanim'); clearTimeout(applyTheme.t); applyTheme.t = setTimeout(() => r.classList.remove('themeanim'), 500); }
+  themeReady = true;
   if (th.mode === 'system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', th.mode);
   if (th.tint === 'sage') r.removeAttribute('data-tint'); else r.setAttribute('data-tint', th.tint);
   if (remember) { try { localStorage.setItem('hiragana14-theme', JSON.stringify(th)); } catch (e) {} }
@@ -2213,12 +2284,41 @@ function renderSubnav(name) {
 }
 let currentTab = 'plan', navStack = [], sheetPushed = false, rootView = true;
 function setHist(st, replace) { try { history[replace ? 'replaceState' : 'pushState'](st, '', '#' + st.tab); } catch (e) {} }
+
+/* ---------- motion ---------- */
+const reduceAnim = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+let enterTimer = 0, firstTab = true;
+function enterAnim(name, opts, prevTab) {
+  const el = $('#tab-' + name); if (!el) return;
+  const first = firstTab; firstTab = false;
+  if (reduceAnim() || (name === prevTab && !first && !opts.fromHistory)) return;
+  el.classList.remove('enter', 'back', 'first'); void el.offsetWidth;
+  /* give map and calendar cells their wave order */
+  $$('.cmap, .cal', el).forEach(g => Array.from(g.children).forEach((c, i) => c.style.setProperty('--i', Math.min(i, 40))));
+  el.classList.add('enter'); if (opts.fromHistory) el.classList.add('back'); if (first || opts.initial) el.classList.add('first');
+  if (name === 'progress') countUp(el);
+  clearTimeout(enterTimer);
+  enterTimer = setTimeout(() => $$('.tab.enter').forEach(x => x.classList.remove('enter', 'back', 'first')), 1900);
+}
+function countUp(root) {
+  $$('.pstat b', root).forEach(b => {
+    const m = /^(\d+)(%?)$/.exec(b.textContent.trim()); if (!m) return;
+    const to = +m[1], suf = m[2], t0 = performance.now(), dur = 800;
+    if (!to) return;
+    const step = now => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3); b.textContent = Math.round(to * e) + suf; if (k < 1) requestAnimationFrame(step); else b.textContent = to + suf; };
+    b.textContent = '0' + suf; requestAnimationFrame(step);
+  });
+}
+/* restart a one-shot animation class on an element (next question, next card) */
+function replay(el, cls) { if (!el || reduceAnim()) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+let themeReady = false;
 function showTab(name, opts) {
   opts = opts || {};
   if (!TABS.includes(name)) name = 'plan';
   if (opts.initial) { navStack = []; setHist({tab: name}, true); }
   else if (!opts.fromHistory && name !== currentTab) { navStack.push(currentTab); setHist({tab: name}, !!opts.replace); }
   rootView = opts.fromHistory ? (name === 'plan' || name === 'chart') : !!opts.root;
+  const prevTab = currentTab;
   currentTab = name;
   $$('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.nav === GROUP[name] ? 'true' : 'false'));
   const wb = $('#whoBtn'); if (wb) { if (name === 'profile') wb.setAttribute('aria-current', 'page'); else wb.removeAttribute('aria-current'); }
@@ -2236,6 +2336,7 @@ function showTab(name, opts) {
   if (name === 'read' && lessonOn()) { const x = lesson(); if (!x.r) { x.r = true; saveLesson(x); } }
   renderBack();
   window.scrollTo(0, 0);
+  enterAnim(name, opts, prevTab);
 }
 function renderBack() {
   const bar = $('#backBar'), prev = navStack[navStack.length - 1];
@@ -2354,6 +2455,8 @@ function renderMeet() {
   h += '<div class="btnrow meetnav"><button class="btn" id="meetPrev"' + (meetI ? '' : ' disabled') + '>' + t('meet.prev') + '</button><button class="btn primary" id="meetNext">' + (last ? t('meet.finish') : t('meet.next')) + '</button></div>';
   const root = $('#tab-meet');
   root.innerHTML = '<h2>' + t('tab.meet') + '</h2>' + h;
+  if (renderMeet.last !== undefined && renderMeet.last !== meetI && currentTab === 'meet') replay($('.meetcard', root), 'flip');
+  renderMeet.last = meetI;
   if (k.length === 1) { const svg = strokeSVG(k, {guide: true}); if (svg) { $('#meetSq', root).appendChild(svg); setTimeout(() => svg.play(), 200); } }
   $('#meetHear', root).onclick = () => speakFull(k);
   bindSay(root);
@@ -2517,6 +2620,7 @@ function openSheet(k) {
   h += '<div class="btnrow"><button class="btn primary" id="shWrite">' + t('card.write') + '</button><button class="btn" data-close>' + t('close') + '</button></div>';
   h += '</div></div>';
   const root = $('#sheetRoot');
+  root.classList.toggle('swap', replacing);
   root.innerHTML = h;
   bindSay(root);
   let svg = null;
@@ -2653,7 +2757,7 @@ function renderQuestion(root) {
     $('#qEnd', root).onclick = endSession;
     const qsq = $('#qsq', root);
     const isTwo = k.length === 2;
-    $('#qk', root).textContent = k;
+    $('#qk', root).textContent = k; replay($('#qk', root), 'flip');
     qsq.classList.toggle('yo', isTwo);
     $('.mark', qsq).setAttribute('class', 'mark');
     $('#qflash', root).textContent = '';
@@ -3249,6 +3353,18 @@ function openProfile() {
   };
   $('#pSwitch', root).focus();
 }
+(function () {
+  const hb = document.getElementById('homeBtn'); if (!hb) return;
+  const go = () => {
+    if (document.body.classList.contains('signed-out')) return;
+    closeSheet('silent');
+    if (currentTab === 'plan') window.scrollTo({top: 0, behavior: reduceAnim() ? 'auto' : 'smooth'});
+    else { navStack = []; showTab('plan', {root: true}); }
+    replay(hb, 'bounce'); setTimeout(() => hb.classList.remove('bounce'), 600);
+  };
+  hb.addEventListener('click', go);
+  hb.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+})();
 document.getElementById('whoBtn').addEventListener('click', () => { if (currentTab !== 'profile') showTab('profile'); });
 function boot() {
   initTracking();
