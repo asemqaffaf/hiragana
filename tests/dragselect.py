@@ -1,4 +1,4 @@
-"""Press and drag on the tab bar and the segmented controls: the highlight follows the finger, the item under it is chosen on release."""
+"""Press and drag on the tab bar (the glass lens) and the segmented controls: the item under the finger is chosen on release; while the finger is down nothing is chosen yet."""
 import os, asyncio, json
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 from playwright.async_api import async_playwright
@@ -26,7 +26,7 @@ async def main():
             home, letters, practice, progress = [await c(n) for n in ('home', 'letters', 'practice', 'progress')]
             R[lang + '_start'] = await pg.evaluate(SEL)
             # drag from Today to Progress: preview while the finger is down, chosen on release
-            mid = await drag(pg, cdp, *home, *progress, hold_check="[document.querySelector('nav.tabs [aria-selected=true]').dataset.nav, document.querySelector('nav.tabs .in').classList.contains('dragging'), location.hash]")
+            mid = await drag(pg, cdp, *home, *progress, hold_check="[document.querySelector('nav.tabs [aria-selected=true]').dataset.nav, document.querySelectorAll('nav.tabs .lens').length, (document.querySelector('nav.tabs .lens .on')||{}).dataset?.nav, location.hash]")
             R[lang + '_drag_home_to_progress'] = [mid, await pg.evaluate(SEL), await pg.evaluate('location.hash')]
             # drag and come back to where it started: nothing changes
             home, progress = [await c(n) for n in ('home', 'progress')]

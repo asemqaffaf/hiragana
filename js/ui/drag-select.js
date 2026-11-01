@@ -1,3 +1,5 @@
+import {reduceAnim} from '../core/motion.js';
+import {createLens} from './lens.js';
 import {moveThumb} from './thumb.js';
 
 /* Press and drag, as on the iOS 26 tab bar and segmented controls. Put a finger on the bar and the glass lifts: it grows, brightens
@@ -8,7 +10,7 @@ import {moveThumb} from './thumb.js';
 const LIFT = 1.13;
 const BARS = 'nav.tabs .in, .seg';
 const KEYS = c => c.matches('nav.tabs .in') ? 'tabs' : c.closest('#subnav') ? 'subnav' : null;
-let drag = null, swallowUntil = 0;
+let drag = null, swallow = null;
 
 const items = c => Array.from(c.querySelectorAll(':scope > button')).filter(b => !b.disabled && b.offsetWidth);
 const hit = (c, x) => { const bs = items(c); if (!bs.length) return null; return bs.find(b => { const r = b.getBoundingClientRect(); return x >= r.left && x <= r.right; }) || bs.reduce((a, b) => Math.abs(x - (b.getBoundingClientRect().left + b.offsetWidth / 2)) < Math.abs(x - (a.getBoundingClientRect().left + a.offsetWidth / 2)) ? b : a); };
@@ -32,12 +34,20 @@ document.addEventListener('pointerdown', e => {
   if (e.button !== 0 || !e.isPrimary || drag) return;
   const b = e.target.closest && e.target.closest('button'), c = b && b.closest(BARS);
   if (!c || b.parentElement !== c || b.disabled) return;
+  /* the tab bar: the lens (lens.js) follows the finger from the first touch; a tap is the same gesture, only shorter */
+  if (c.matches('nav.tabs .in') && !reduceAnim()) {
+    /* the lens only comes up when the finger slides or stays down (as on iOS), so quick taps in a row cost nothing extra */
+    const d = drag = {c, id: e.pointerId, lens: null, tab: true, x0: e.clientX, x: e.clientX};
+    d.timer = setTimeout(() => { if (drag === d && !d.lens) d.lens = createLens(c, d.x); }, 130);
+    return;
+  }
   const saved = new Map(); items(c).forEach(x => { const v = {}; ['aria-selected', 'aria-pressed'].forEach(a => { if (x.hasAttribute(a)) v[a] = x.getAttribute(a); }); saved.set(x, v); });
   drag = {c, b, id: e.pointerId, x0: e.clientX, lx: e.clientX, lt: performance.now(), v: 0, on: false, saved, to: b, th: thumbOf(c)};
 }, true);
 
 document.addEventListener('pointermove', e => {
   const d = drag; if (!d || e.pointerId !== d.id) return;
+  if (d.tab) { d.x = e.clientX; if (!d.lens && Math.abs(e.clientX - d.x0) >= 6) d.lens = createLens(d.c, e.clientX); if (d.lens) d.lens.move(e.clientX); return; }
   if (!d.on) {
     if (Math.abs(e.clientX - d.x0) < 8) return;
     d.on = true; d.c.classList.add('dragging');
@@ -55,15 +65,24 @@ document.addEventListener('pointermove', e => {
 
 const end = (e, cancel) => {
   const d = drag; if (!d || e.pointerId !== d.id) return;
+  if (d.tab) {
+    drag = null; clearTimeout(d.timer);
+    if (!d.lens) return;                                       /* a quick tap: the browser's click does the rest */
+    const chosen = d.lens.release(e.clientX, cancel);
+    /* a tap is left to the browser's own click (nothing is swallowed, so quick taps in a row all count);
+       after a drag the chosen tab gets the click, since the browser's click then lands on the bar itself */
+    if (chosen && Math.abs(e.clientX - d.x0) >= 8 && chosen.getAttribute('aria-selected') !== 'true') chosen.click();
+    return;
+  }
   drag = null; d.c.classList.remove('dragging'); clearTimeout(d.relax);
   try { d.c.releasePointerCapture(e.pointerId); } catch (x) {}
   if (d.th) { d.th.style.transition = ''; d.th.style.scale = ''; }      /* back to the springs in the stylesheet */
   if (!d.on) return;                              /* a tap: leave it to the click */
-  swallowUntil = Date.now() + 450;                /* the click that follows a drag is not another tap */
+  swallow = {c: d.c, until: Date.now() + 450};    /* the click that follows a drag is not another tap */
   const chosen = cancel ? null : d.to;
   restore(d);
   if (chosen && chosen.getAttribute('aria-selected') !== 'true' && chosen.getAttribute('aria-pressed') !== 'true') chosen.click();
 };
 document.addEventListener('pointerup', e => end(e, false), true);
 document.addEventListener('pointercancel', e => end(e, true), true);
-document.addEventListener('click', e => { if (Date.now() < swallowUntil && e.isTrusted) { e.stopPropagation(); e.preventDefault(); } }, true);
+document.addEventListener('click', e => { if (swallow && Date.now() < swallow.until && e.isTrusted && swallow.c.contains(e.target)) { e.stopPropagation(); e.preventDefault(); } }, true);
