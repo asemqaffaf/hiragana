@@ -50,7 +50,8 @@ export function renderProgress() {
   });
   h += '<li class="later"><span class="node" aria-hidden="true"></span><div class="rbody"><div class="rhead"><b>' + t('rm.kata') + '</b><span class="small muted">' + t('rm.after') + '</span></div><p class="small muted">' + t('rm.kataD') + '</p></div></li>';
   const rs = goalOf().reason;
-  h += '<li class="later"><span class="node" aria-hidden="true"></span><div class="rbody"><div class="rhead"><b>' + t(rs === 'jlpt' ? 'rm.n5' : 'rm.goal.' + rs) + '</b><span class="small muted">' + t('goal.reason.' + rs) + '</span></div><p class="small muted">' + t(rs === 'jlpt' ? 'rm.n5D' : 'rm.goalD.' + rs) + '</p></div></li></ol>';
+  if (rs !== 'all') h += '<li class="later"><span class="node" aria-hidden="true"></span><div class="rbody"><div class="rhead"><b>' + t(rs === 'jlpt' ? 'rm.n5' : 'rm.goal.' + rs) + '</b><span class="small muted">' + t('goal.reason.' + rs) + '</span></div><p class="small muted">' + t(rs === 'jlpt' ? 'rm.n5D' : 'rm.goalD.' + rs) + '</p></div></li>';
+  h += '</ol>';
   /* every character, by mastery */
   h += '<h3>' + t('pg.map') + '</h3><p class="small muted">' + t('pg.mapIntro') + '</p>';
   h += '<div class="legend">' + ['solid', 'learning', 'new'].map(l => '<span><i class="lv-' + l + '"></i>' + t('lv.' + l) + ' (' + lv[l] + ')</span>').join('') + '<span><i class="lv-cl"></i>' + t('cl.done') + ' (' + nCl + ')</span></div>';

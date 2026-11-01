@@ -91,7 +91,7 @@ html{--pd:1}
 html[dir="rtl"]{--pd:-1}
 .tab.enter.slide{position:relative;background:var(--paper)}
 .tab.enter.slide > *{animation:none}
-.tab.slide::before,.pagesnap::before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:20px;z-index:2;pointer-events:none;background:linear-gradient(calc(90deg * var(--pd)),rgba(0,0,0,.16),transparent)}
+.tab.slide::before,.pagesnap::before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:20px;z-index:2;pointer-events:none;background:linear-gradient(calc(90deg * var(--pd)),rgba(0,0,0,.16),transparent);animation:edgeFade .52s var(--slide) both}
 .tab.slide.pop::before,.pagesnap.push::before{display:none}
 .tab.slide.push{z-index:6;animation:pageIn .52s var(--slide) both}
 .tab.slide.pop{z-index:4;animation:pageUnder .52s var(--slide) both}
@@ -106,6 +106,7 @@ html[dir="rtl"]{--pd:-1}
 @keyframes pageUnder{from{transform:translateX(calc(var(--pd) * -30vw))}to{transform:none}}
 @keyframes snapAway{to{transform:translateX(calc(var(--pd) * -30vw))}}
 @keyframes snapOff{to{transform:translateX(calc(var(--pd) * 100vw))}}
+@keyframes edgeFade{from{opacity:1}to{opacity:0}}
 @keyframes dimIn{from{opacity:0}to{opacity:.16}}
 @keyframes dimOut{from{opacity:.16}to{opacity:0}}
 #toast{bottom:calc(var(--dock) + 12px);border-radius:22px}

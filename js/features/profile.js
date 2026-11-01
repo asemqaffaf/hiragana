@@ -3,29 +3,34 @@ import {dayNumber, goalOf, planCache} from '../core/plan.js';
 import {renderAll} from '../core/render-all.js';
 import {level, minutesToday, rowAcc, todayText, weakest} from '../core/stats.js';
 import {LANGS, MODES, TINTS, applyTheme, cleanTheme, me, progKey, saveStudents, state, students, syncText} from '../core/storage.js';
+import {REASONS, sectionsFor} from '../core/goals.js';
 import {ui} from '../core/ui-state.js';
+import {PHRASES} from '../data/daily.js';
 import {A46, ALL, DROWS, ROWS, YOON33} from '../data/letters.js';
 import {startDrill} from './drill.js';
 import {BADGES, levelName, levelOf, progressCtx, xpOf} from './gamify.js';
 import {langSeg, setLang} from './language.js';
 import {avatar, cleanName, nameTaken, renderWho, showLogin, streakOf, swatches, switchStudent} from './login.js';
 import {kb, renderPlan} from './plan.js';
-import {K, LANG, t} from '../i18n/core.js';
+import {K, LANG, isAr, t} from '../i18n/core.js';
 import {fmt} from '../i18n/helpers.js';
 import {closeSheet} from '../ui/sheet.js';
 import {$, $$, addDays, esc, todayISO} from '../util.js';
 
 /* ---------- advanced student profile: identity, goals, levels, achievements, detailed stats ---------- */
 const AGES = ['child', 'teen', 'adult'], NATIVES = ['ar', 'en', 'ja', 'other'], JLEVELS = ['new', 'some', 'all'];
-const PACES = [7, 14, 21], MINS = [10, 20, 30], REASONS = ['jlpt', 'travel', 'work', 'school', 'fun'];
-export function sel(id, opts, cur, label) {
-  return '<label class="field"><span class="small muted">' + label + '</span><select id="' + id + '">' + opts.map(o => '<option value="' + o[0] + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label>';
+const PACES = [7, 14, 21], MINS = [10, 20, 30];
+export function sel(id, opts, cur, label, hint) {
+  return '<label class="field"><span class="small muted">' + label + '</span><select id="' + id + '"' + (hint ? ' aria-describedby="' + id + 'Hint"' : '') + '>' + opts.map(o => '<option value="' + o[0] + '"' + (String(o[0]) === String(cur) ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>' + (hint ? '<span class="small muted goalhint" id="' + id + 'Hint" aria-live="polite">' + hint + '</span>' : '') + '</label>';
 }
 export const paceOpts = () => PACES.map(x => [x, t('pace.' + x)]);
 export const minOpts = () => MINS.map(x => [x, t('min.n', {n: x})]);
 export const ageOpts = () => AGES.map(x => [x, t('age.' + x)]);
 export const jlOpts = () => JLEVELS.map(x => [x, t('jl.' + x)]);
 export const reasonOpts = () => REASONS.map(x => [x, t('goal.reason.' + x)]);
+/* under the "Why are you learning?" box: which phrase sections that goal opens (all of them for Everything) */
+export const goalHint = r => r === 'all' ? t('goal.hintAll') : t('goal.hint', {list: sectionsFor(r, PHRASES).map(g => isAr() ? g.ar : g.en).join(isAr() ? '، ' : ', ')});
+document.addEventListener('change', e => { const s = e.target; if (s && (s.id === 'pfReason' || s.id === 'nsReason')) { const h = document.getElementById(s.id + 'Hint'); if (h) h.textContent = goalHint(s.value); } });
 /* shrink a photo to a 160 px square JPEG so it fits comfortably in localStorage */
 function photoToDataUrl(file) {
   return new Promise((res, rej) => {
@@ -84,7 +89,7 @@ export function renderProfile() {
   h += swatches('pfColor', p.color);
   h += '<div class="fgrid">' + sel('pfAge', ageOpts(), p.age || 'adult', t('f.age')) + sel('pfNative', NATIVES.map(x => [x, t('nat.' + x)]), p.native || (LANG === 'ar' ? 'ar' : 'en'), t('f.native'))
     + sel('pfJl', jlOpts(), p.jlevel || 'new', t('f.jlevel')) + sel('pfLang', LANGS.map(x => [x, t('lang.' + x)]), p.lang || LANG, t('f.uiLang'))
-    + sel('pfRate', [[1, t('rate.1')], [0.75, t('rate.slow')]], p.rate === 0.75 ? 0.75 : 1, t('f.rate')) + sel('pfReason', reasonOpts(), g.reason, t('f.reason'))
+    + sel('pfRate', [[1, t('rate.1')], [0.75, t('rate.slow')]], p.rate === 0.75 ? 0.75 : 1, t('f.rate')) + sel('pfReason', reasonOpts(), g.reason, t('f.reason'), goalHint(g.reason))
     + sel('pfPace', paceOpts(), g.pace, t('f.pace')) + sel('pfMin', minOpts(), g.min, t('f.min')) + '</div>';
   h += '<p class="small muted">' + t('pace.change') + '</p><p class="fmsg" id="pfMsg" role="alert">' + esc(pfMsg) + '</p>';
   h += '<div class="btnrow"><button class="btn primary" type="submit">' + t('pf.save') + '</button></div></form>';

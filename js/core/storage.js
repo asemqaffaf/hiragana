@@ -4,6 +4,7 @@ import {ALL} from '../data/letters.js';
 import {checkBadges} from '../features/gamify.js';
 import {t} from '../i18n/core.js';
 import {esc, todayISO} from '../util.js';
+import {REASONS} from './goals.js';
 
 /* ---------- students and saving: this browser only, no server or database ---------- */
 const PKEY = 'hiragana14-students-v1';
@@ -51,7 +52,7 @@ export function cleanStudent(p) {
   return {id: p.id, name: p.name.trim().slice(0, 24), color: COLORS.includes(p.color) ? p.color : COLORS[0], created: ISO.test(p.created) ? p.created : todayISO(), last: num(p.last), lang: LANGS.includes(p.lang) ? p.lang : null,
           age: ['child', 'teen', 'adult'].includes(p.age) ? p.age : 'adult', native: ['ar', 'en', 'ja', 'other'].includes(p.native) ? p.native : '', jlevel: ['new', 'some', 'all'].includes(p.jlevel) ? p.jlevel : 'new',
           rate: p.rate === 0.75 ? 0.75 : 1, theme: cleanTheme(p.theme),
-          goal: {pace: [7, 14, 21].includes(p.goal && p.goal.pace) ? p.goal.pace : 14, min: [10, 20, 30].includes(p.goal && p.goal.min) ? p.goal.min : 30, reason: ['jlpt', 'travel', 'work', 'school', 'fun'].includes(p.goal && p.goal.reason) ? p.goal.reason : 'jlpt'},
+          goal: {pace: [7, 14, 21].includes(p.goal && p.goal.pace) ? p.goal.pace : 14, min: [10, 20, 30].includes(p.goal && p.goal.min) ? p.goal.min : 30, reason: REASONS.includes(p.goal && p.goal.reason) ? p.goal.reason : 'jlpt'},
           av: p.av && typeof p.av === 'object' ? {t: ['initial', 'kana', 'photo'].includes(p.av.t) ? p.av.t : 'initial', k: typeof p.av.k === 'string' ? p.av.k : 'あ', img: typeof p.av.img === 'string' && p.av.img.length < 200000 ? p.av.img : ''} : {t: 'initial', k: 'あ', img: ''}};
 }
 function loadStudents() {

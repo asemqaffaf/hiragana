@@ -67,6 +67,7 @@ js/
     stats.js          per-letter statistics, weakest letters
     audio.js          clip playback (the iOS rules are documented inline), device voice as fallback
     plan.js           the base plan reshaped for the student's pace and daily minutes
+    goals.js          the learning goals and which phrase sections each opens ("all" opens everything)
     nav.js            tabs, history entries, back navigation
     motion.js         page and element animation helpers; pageSnapshot() keeps a copy of the page being left so
                       the Back / push slide can show both pages at once (skipped on #test pages)

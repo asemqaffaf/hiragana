@@ -27,7 +27,7 @@ async def main():
             await pg.evaluate("window.__hira.phrasesFor('ぬ')"); await pg.wait_for_timeout(300)
             # show all
             await pg.tap('#phAll'); await pg.wait_for_timeout(300)
-            R[lang+'_after_show_all'] = await pg.evaluate("[document.querySelectorAll('#tab-phrases .word').length, !!document.querySelector('#tab-phrases .phfilter')]")
+            R[lang+'_after_show_all'] = await pg.evaluate("[document.querySelectorAll('#tab-phrases .word').length, !!document.querySelector('#tab-phrases .phfilter:not(.goalbar)')]")
             # and back again: the banner offers the letter
             R[lang+'_banner_after_all'] = await pg.evaluate("[document.querySelector('#tab-phrases .phfilter').innerText.replace(/\\n/g,' | '), !!document.querySelector('#phOnly')]")
             await pg.tap('#phOnly'); await pg.wait_for_timeout(300)
@@ -35,11 +35,11 @@ async def main():
             await pg.tap('#phAll'); await pg.wait_for_timeout(300)
             # from Quiz tab -> Phrases: unfiltered
             await pg.tap('#subnav [data-sub="drill"]'); await pg.wait_for_timeout(300); await pg.tap('#subnav [data-sub="phrases"]'); await pg.wait_for_timeout(400)
-            R[lang+'_from_quiz'] = await pg.evaluate("[document.querySelectorAll('#tab-phrases .word').length, !!document.querySelector('#tab-phrases .phfilter')]")
+            R[lang+'_from_quiz'] = await pg.evaluate("[document.querySelectorAll('#tab-phrases .word').length, !!document.querySelector('#tab-phrases .phfilter:not(.goalbar)')]")
             # from Write via nav tab: unfiltered
             await open_write('あ'); await pg.tap('#subnav [data-sub="phrases"]'); await pg.wait_for_timeout(400)
             await pg.tap('nav [data-nav="home"]'); await pg.wait_for_timeout(150); await pg.tap('nav [data-nav="practice"]'); await pg.wait_for_timeout(400)
-            R[lang+'_nav_back_to_practice'] = await pg.evaluate("[document.querySelector('.tab:not([hidden])').id, document.querySelectorAll('#tab-phrases .word').length, !!document.querySelector('#tab-phrases .phfilter')]")
+            R[lang+'_nav_back_to_practice'] = await pg.evaluate("[document.querySelector('.tab:not([hidden])').id, document.querySelectorAll('#tab-phrases .word').length, !!document.querySelector('#tab-phrases .phfilter:not(.goalbar)')]")
             if lang=='en': await pg.screenshot(path='shots/phfilter_en.png')
             await ctx.close()
         R['errors'] = errs; print(json.dumps(R, ensure_ascii=False, indent=1)); await b.close()

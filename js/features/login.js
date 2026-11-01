@@ -6,7 +6,7 @@ import {ui} from '../core/ui-state.js';
 import {A46, ALL} from '../data/letters.js';
 import {checkBadges} from './gamify.js';
 import {deviceLang, langSeg, setLang} from './language.js';
-import {ageOpts, applyStudent, jlOpts, minOpts, paceOpts, reasonOpts, sel} from './profile.js';
+import {ageOpts, applyStudent, goalHint, jlOpts, minOpts, paceOpts, reasonOpts, sel} from './profile.js';
 import {LANG, t} from '../i18n/core.js';
 import {fmt} from '../i18n/helpers.js';
 import {closeSheet} from '../ui/sheet.js';
@@ -52,7 +52,7 @@ export function showLogin() {
   h += '<label class="field"><span class="small muted">' + t('f.name') + '</span><input id="nsName" maxlength="24" dir="auto" autocapitalize="words" spellcheck="false"></label>';
   h += swatches('nsColor', COLORS[list.length % COLORS.length]);
   h += '<label class="field"><span class="small muted">' + t('f.start') + '</span><input type="date" id="nsStart" value="' + todayISO() + '"></label>';
-  h += '<div class="fgrid">' + sel('nsAge', ageOpts(), 'adult', t('f.age')) + sel('nsJl', jlOpts(), 'new', t('f.jlevel')) + sel('nsPace', paceOpts(), 14, t('f.pace')) + sel('nsMin', minOpts(), 30, t('f.min')) + sel('nsReason', reasonOpts(), 'jlpt', t('f.reason')) + '</div>';
+  h += '<div class="fgrid">' + sel('nsAge', ageOpts(), 'adult', t('f.age')) + sel('nsJl', jlOpts(), 'new', t('f.jlevel')) + sel('nsPace', paceOpts(), 14, t('f.pace')) + sel('nsMin', minOpts(), 30, t('f.min')) + sel('nsReason', reasonOpts(), 'jlpt', t('f.reason'), goalHint('jlpt')) + '</div>';
   h += '<p class="fmsg" id="nsMsg" role="alert"></p>';
   h += '<div class="btnrow"><button class="btn primary" type="submit">' + t('login.createBtn') + '</button></div></form>';
   h += '<p class="small imp"><button class="link" id="importBtn" type="button">' + t('login.import') + '</button><span class="muted">' + t('login.importHint') + '</span></p><input type="file" id="importFile" accept="application/json,.json" hidden>';

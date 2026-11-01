@@ -7,6 +7,7 @@ export const ui = {
   sheetPushed: false,
   rootView: true,
   phFilter: null,
+  phScope: 'goal',
   phLetter: null,
   rdFilter: null,
   rdLetter: null,

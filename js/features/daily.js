@@ -1,7 +1,8 @@
 import {flash, speak} from '../core/audio.js';
 import {replay} from '../core/motion.js';
 import {showTab} from '../core/nav.js';
-import {PL, curDay} from '../core/plan.js';
+import {sectionsFor} from '../core/goals.js';
+import {PL, curDay, goalOf} from '../core/plan.js';
 import {ui} from '../core/ui-state.js';
 import {WORDS} from '../data/content.js';
 import {DAILY, DAILY_ALL, EXTRA, PHRASES} from '../data/daily.js';
@@ -70,13 +71,17 @@ export function renderPhrases() {
     /* showing everything, but we know which letter the user came from: one tap goes back to it */
     if (ui.phLetter) h += '<div class="phfilter all"><span class="kana" dir="ltr">' + ui.phLetter + '</span><span class="phft">' + t('ph.showingAll') + '</span><button class="btn primary" id="phOnly" type="button">' + t('ph.only', {k: ui.phLetter}) + '</button></div>';
     h += '<p class="muted">' + t('ph.intro') + '</p>';
-    PHRASES.forEach(g => {
-      h += '<h3>' + (isAr() ? g.ar : g.en) + ' <span class="muted small">' + t('ph.count', {n: g.items.length}) + '</span></h3><div class="sentences phr">' + g.items.map(p => wordCard([p[0], p[1], isAr() ? p[3] : p[2]], ' open')).join('') + '</div>';
+    /* the person's goal decides which sections open first; "Everything" shows all of them with no bar */
+    const reason = goalOf().reason, mine = sectionsFor(reason, PHRASES), scoped = reason !== 'all' && ui.phScope !== 'all';
+    if (reason !== 'all') h += '<div class="phfilter goalbar' + (scoped ? '' : ' all') + '"><span class="phft">' + t(scoped ? 'ph.goalBar' : 'ph.goalBarAll', {n: mine.length, m: PHRASES.length, goal: t('goal.reason.' + reason)}) + '</span><button class="btn' + (scoped ? '' : ' primary') + '" id="phScope" type="button">' + t(scoped ? 'ph.showAllSec' : 'ph.showMine') + '</button></div>';
+    (scoped ? mine : PHRASES).forEach(g => {
+      h += '<h3>' + (isAr() ? g.ar : g.en) + (reason !== 'all' && !scoped && mine.includes(g) ? ' <span class="tag now">' + t('ph.forGoal') + '</span>' : '') + ' <span class="muted small">' + t('ph.count', {n: g.items.length}) + '</span></h3><div class="sentences phr">' + g.items.map(p => wordCard([p[0], p[1], isAr() ? p[3] : p[2]], ' open')).join('') + '</div>';
     });
   }
   const root = $('#tab-phrases');
   root.innerHTML = h;
   const all = $('#phAll', root); if (all) all.onclick = () => { ui.phFilter = null; renderPhrases(); window.scrollTo(0, 0); replay($('.phfilter', root), 'swap'); };
+  const sc = $('#phScope', root); if (sc) sc.onclick = () => { ui.phScope = ui.phScope === 'all' ? 'goal' : 'all'; renderPhrases(); window.scrollTo(0, 0); replay($('.phfilter', root), 'swap'); };
   const only = $('#phOnly', root); if (only) only.onclick = () => { ui.phFilter = ui.phLetter; renderPhrases(); window.scrollTo(0, 0); replay($('.phfilter', root), 'swap'); };
   root.onclick = e => { const c = e.target.closest('[data-word]'), sb = e.target.closest('[data-say]') || (c && $('[data-say]', c)); if (sb) { e.stopPropagation(); speak(sb.dataset.say); flash(c || sb.closest('.word')); } };
 }
