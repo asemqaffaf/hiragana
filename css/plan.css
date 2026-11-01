@@ -31,7 +31,7 @@ ol.tasks li{margin:0 0 8px;padding-inline-start:4px}
 .days .body{padding-block:0 14px;padding-inline:56px 2px}
 .days details.cur summary .t{color:var(--red)}
 .field{display:flex;flex-direction:column;gap:6px;margin-top:10px}
-.field input{min-height:46px;padding:0 12px;border-radius:8px;border:1.5px solid var(--grid);background:var(--surface);max-width:220px}
+.field input{min-height:46px;padding:0 12px;border-radius:8px;border:1.5px solid var(--ctl,var(--grid));background:var(--surface);max-width:220px}
 .note{border-inline-start:3px solid var(--grid);padding-block:4px;padding-inline:14px 0;margin:12px 0;color:var(--ink)}
 footer.credit{margin-top:34px;font-size:13px;color:var(--pencil)}
 footer.credit a{color:inherit}

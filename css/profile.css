@@ -24,7 +24,7 @@
 .mixl{margin:0;padding-inline-start:20px}
 .mixl li{margin:4px 0}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 14px}
-.field select{min-height:46px;padding:0 10px;border-radius:8px;border:1.5px solid var(--grid);background:var(--surface);width:100%;max-width:none}
+.field select{min-height:46px;padding:0 10px;border-radius:8px;border:1.5px solid var(--ctl,var(--grid));background:var(--surface);width:100%;max-width:none}
 .pform{max-width:640px}
 .avpick{border:0;padding:0;margin:14px 0 0;display:flex;flex-wrap:wrap;gap:4px 16px}
 .avpick legend{padding:0;margin-bottom:6px}

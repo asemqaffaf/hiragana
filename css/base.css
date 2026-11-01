@@ -45,7 +45,12 @@
 :root[data-theme="dark"][data-tint="white"]{--paper:#000000; --surface:#111513; --line:#262B28; --grid:#3A4A43;}
 .themebox{margin:6px 0 0}
 .themebox .seg{max-width:420px}
-.tints{border:0;padding:0;margin:14px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;max-width:520px}
+/* Control outlines: at least 3:1 against the page (WCAG 1.4.11). Mixed from the text and page colours, so every background and both modes follow. */
+:root{--ctl:color-mix(in srgb,var(--ink) 52%,var(--paper))}
+fieldset{min-inline-size:0;min-width:0;max-width:100%;box-sizing:border-box}
+.tints{border:0;padding:0;margin:14px 0 0}
+.tintgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:520px}
+@media (min-width:560px){.tintgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .tints legend{padding:0;margin-bottom:8px}
 .tint{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:44px;padding:8px 4px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-size:14px}
 .tint input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
