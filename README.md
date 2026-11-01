@@ -1,6 +1,6 @@
 # Hiragana in 14 days
 
-A study kit for all 104 hiragana, in English and Arabic,: a 14-day plan, a chart with memory hooks and animated stroke order, drills (read, choose, listen), handwriting practice that checks every stroke, and JLPT N5-level reading practice with recorded audio.
+A study kit for all 104 hiragana, in English and Arabic: a 14-day plan, a chart with memory hooks and animated stroke order, drills (read, choose, listen), handwriting practice that checks every stroke, and JLPT N5-level reading practice with recorded audio.
 
 Live: https://asemqaffaf.github.io/hiragana/
 
@@ -21,6 +21,7 @@ Live: https://asemqaffaf.github.io/hiragana/
 
 - English and Arabic (right-to-left). Each student has their own language; the switch on the first screen sets it for new students.
 - The Arabic version has its own memory hooks built on Arabic sounds and words, and Arabic meanings for every word and sentence.
+- Languages are registered in `js/i18n/locales.js`. To add one, run `python3 scripts/add_language.py fr Français`, then translate the generated locale module. Missing translations use English. See [Adding a language](docs/languages.md) for content dictionaries, RTL support and translation audits.
 
 ## Progress and roadmap
 
@@ -59,12 +60,18 @@ css/                  one file per area (base, components, plan, drill, write, m
                       ios.css is loaded last and holds the iOS 26 look: filled-tint buttons, glass bars, spring motion,
                       the glass Back capsule and the push / pop page slide
 js/
-  main.js             entry point: imports everything and starts the app
+  main.js             entry point: registers screens and entry actions, subscribes achievement notifications,
+                      then starts the app
   util.js             DOM and date helpers, shared SVG snippets
   core/
-    storage.js        students, progress state, normalising and saving, theme
+    storage.js        browser JSON persistence only; no application or UI imports
+    store.js          students and progress state, v1 normalization, student operations, progress subscriptions
+    progress.js       explicit progress actions: answers, writes, listening, completion, rounds, study time
+    lesson.js         lesson selectors and actions; completion is saved when an action finishes the lesson
+    daily.js          vocabulary selection for the current plan
+    pages.js          screen registry supplied by main.js; separates navigation from feature implementations
     ui-state.js       shared view state: current tab, open drill, letter being written ...
-    stats.js          per-letter statistics, weakest letters
+    stats.js          read-only statistics, weakest letters and streaks
     audio.js          clip playback (the iOS rules are documented inline), device voice as fallback
     plan.js           the base plan reshaped for the student's pace and daily minutes
     goals.js          the learning goals and which phrase sections each opens ("all" opens everything)
@@ -74,21 +81,28 @@ js/
     render-all.js     re-render the visible pages
   features/           one file per page: plan, lesson, daily, drill, write, read, chart,
                       progress, profile, login, language, gamify (levels, badges, toasts)
-  ui/                 bottom sheets, swipe to close, the ひらがな home button, thumb.js (the gliding highlight
+  ui/                 shared card renderers, profile fields, student helpers, appearance, bottom-sheet lifecycle,
+                      swipe to close, the ひらがな home button, thumb.js (the gliding highlight
                       behind the selected tab or segment),
                       drag-select.js (press and drag along the tab bar or a segmented control),
                       lens.js (the iOS 26 tab bar lens: spring-driven glass that magnifies, stretches with speed and settles on a tab)
   strokes/            stroke drawing (draw.js) and stroke checking (check.js)
-  i18n/               core.js (t(), plurals), en.js, ar.js, ar-content.js, helpers.js
+  i18n/               locales.js (language registration), core.js (lookup and English fallback),
+                      en.js and ar.js (locale definitions), format.js (formatting helpers),
+                      ar-content.js, ar-explain.js, helpers.js (localized content), audit.js
   data/               letters, plan, words, phrases, KanjiVG stroke paths, audio manifest
 audio/                the clips, keyed by js/data/audio-manifest.js
-tests/                Playwright (Python) suites that run in Chromium
+scripts/              locale scaffolding and translation audits
+tests/                dependency checks, Node core tests, Python script tests and Playwright browser suites
 ```
 
 Conventions:
 
-- Shared view state lives in `ui` (`core/ui-state.js`). The data model (`state`, `students`, `LANG`) is exported by the module that owns it; other modules read it and replace it with `replaceState` and `replaceLang`.
+- Shared view state lives in `ui` (`core/ui-state.js`). Screens read progress from `core/store.js` and change it through `core/progress.js` or `core/lesson.js`; student changes use store operations. Only the store persists state. The v1 storage keys and export format remain compatible with existing students.
+- `core/` and shared `ui/` modules do not import feature screens. Navigation and bulk rendering use the registry wired in `main.js`. Screen entry actions record visits; rendering does not award progress or save rounds. The dependency check rejects circular imports.
+- Storage never calculates achievements or schedules notifications. The entry point subscribes the achievement feature to progress changes; badge writes do not recursively notify the subscriber.
 - Interface text lives only in `js/i18n/`, and every key used in code exists in both English and Arabic.
+- Locale metadata controls language choices, direction, dates and validation. Learning content uses keyed dictionaries with English fallback. Plan tasks keep durations as numeric data rather than embedding values that code must parse from translated text.
 - Everything animated is switched off under `prefers-reduced-motion`.
 - The look follows iOS 26: Liquid Glass is approximated with blur, translucency and an edge highlight (CSS has no refraction). The bars fall back to solid fills when `backdrop-filter` is missing or the device asks to reduce transparency.
 - Tap targets are at least 44 px. Page height is budgeted with `svh` and `env(safe-area-inset-*)`.
@@ -101,12 +115,27 @@ python3 -m http.server 8000     # then open http://127.0.0.1:8000/
 
 Adding `#test` to the URL exposes `window.__hira` for the tests.
 
-```
-pip install playwright && playwright install chromium
-tests/run_all.sh                # serves the repo on port 8767 (PORT=... to change) and runs every suite
+Development checks use Node.js 22+ and Python with Playwright. Neither is needed to serve the app on GitHub Pages.
+
+```sh
+python3 -m venv .venv
+.venv/bin/pip install -r tests/requirements.txt
+.venv/bin/python -m playwright install chromium
+PYTHON=.venv/bin/python tests/run_all.sh --jobs 3
 ```
 
-The suites cover swipe to close and the scroll lock, tap to play, the phrase filter, animations, the guided lesson, profiles with export and import, themes, Arabic layout, overflow at several phone sizes, and audio (every clip in the manifest exists and plays). They run in Chromium with touch emulation, so WebKit and real iPhone behaviour are not covered. `tests/sweep.py`, `tests/fit.py` and `tests/budget.py` are slower layout sweeps to run by hand.
+The runner serves the repo on port 8767 (`PORT=...` to change), checks module dependencies, runs core and script tests, audits locales, and runs every browser suite. It returns a failure status for failed scripts, timeouts or reported browser errors, and saves full per-suite logs in the system temporary directory (`HIRA_TEST_OUTPUT=...` to choose a directory).
+
+Run a subset or just the core checks:
+
+```sh
+PYTHON=.venv/bin/python tests/run_all.sh lessontest pftest localetest
+node --test tests/core.test.mjs tests/i18n.test.mjs
+python3 tests/architecture.py
+node scripts/check-locales.mjs --strict
+```
+
+The suites cover swipe to close and the scroll lock, tap to play, the phrase filter, animations, the guided lesson, profiles with export and import, themes, Arabic layout, overflow at several phone sizes, and audio. The locale test injects additional languages to check registration, fallback, direction and persistence; the rendering test checks that re-rendering does not change progress. Existing browser suites run in Chromium with touch emulation. The new locale and rendering tests also support `BROWSER=webkit` after installing that Playwright browser; this does not replace testing on a real iPhone. `tests/sweep.py`, `tests/fit.py` and `tests/budget.py` are slower layout sweeps to run by hand.
 
 ## Credits and terms
 

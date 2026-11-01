@@ -65,6 +65,13 @@ async def main():
             await pg.go_back(); await pg.wait_for_timeout(150); R[lang + '_back'] = await pg.evaluate('location.hash')
             await pg.screenshot(path=f'shots/letters_{lang}.png')
             await pg.close()
+        for lang in ['en', 'ar']:
+            assert R[lang + '_done'][1] == 'day 1 marked done', R[lang + '_done']
+            assert R[lang + '_after_meet'][0] == '#plan'
+            assert R[lang + '_after_write'][0] == '#plan'
+            assert R[lang + '_daily'][1] == 12
+            assert R[lang + '_quiz'][0] == '10 / 10'
+        assert not errs, errs
         R['errors'] = errs
         print(json.dumps(R, ensure_ascii=False, indent=1)); await b.close()
 asyncio.run(main())

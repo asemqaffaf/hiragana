@@ -24,5 +24,6 @@ async def main():
               document.querySelectorAll('body *').forEach(e => { const r = e.getBoundingClientRect(); if (r.width && r.right > W + 1 && !e.closest('.strip,.rowpick')) out.push((e.className && e.className.baseVal === undefined ? e.className : e.tagName) + ' ' + Math.round(r.right)); });
               return [document.documentElement.scrollWidth, out.slice(0, 6)]; }""")
             print(tab, r)
+            assert r[0] <= 390, (tab, r)
         await b.close()
 asyncio.run(main())

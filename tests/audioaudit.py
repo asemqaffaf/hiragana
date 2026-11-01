@@ -32,6 +32,11 @@ async def main():
         # files
         ctx = await b.new_context(); pg = await ctx.new_page(); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
         files = await pg.evaluate("""async () => { const a = (await import('./js/data/audio-manifest.js')).AUD; const vals = [...new Set(Object.values(a))]; const bad = []; let tiny = 0; for (const f of vals) { const r = await fetch('audio/' + f, {cache:'no-store'}); if (!r.ok) { bad.push(f + ' ' + r.status); continue; } const n = (await r.arrayBuffer()).byteLength; if (n < 3000) tiny++; } return {keys: Object.keys(a).length, files: vals.length, bad, tiny}; }""")
+        assert not files['bad'], files['bad']
+        assert files['tiny'] == 0, files
+        for lang in ['en', 'ar']:
+            assert R[lang]['n_without_clip'] == 0, R[lang]
+            assert not R[lang]['errors'], R[lang]['errors']
         R['files'] = files
         print(json.dumps(R, ensure_ascii=False, indent=1)); await b.close()
 asyncio.run(main())

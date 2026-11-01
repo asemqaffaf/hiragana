@@ -8,7 +8,9 @@ html[lang="ar"] .hook{line-height:1.8}
 .kb .r,.cell .r,.prompt,#qflash,.word .ro,.word .kana{direction:ltr;unicode-bidi:isolate}
 html[lang="ar"] .word{align-items:flex-start}
 html[lang="ar"] .word .kana,html[lang="ar"] .word .ro{align-self:flex-start;text-align:start}
-.langseg{max-width:260px;margin:4px 0 14px;margin-inline-start:auto}
+.langseg{max-width:100%;width:fit-content;margin:4px 0 14px;margin-inline-start:auto}
+.language-options{overflow-x:auto;max-width:100%}
+.language-options button{flex:0 0 auto;min-width:100px;padding-inline:16px;white-space:nowrap}
 .langseg button{font-size:15px}
 .langrow{display:flex;align-items:center;gap:12px;margin:14px 0 0}
 .langrow .seg{flex:1;max-width:280px}

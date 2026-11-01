@@ -67,7 +67,8 @@ async def main():
         await pg.select_option('#pfPace', '21'); await pg.select_option('#pfAge', 'adult'); await pg.select_option('#pfLang', 'ar'); await pg.check('input[name="pfAv"][value="kana"]'); await pg.select_option('#pfKana', 'ね')
         await pg.click('#pfForm button[type=submit]'); await pg.wait_for_timeout(250)
         R['after_save'] = [await pg.evaluate("document.documentElement.dir"), await pg.text_content('#appSub'), await pg.evaluate("document.body.classList.contains('kid')"), await pg.text_content('#whoBtn .av'), await pg.text_content('#pfMsg')]
-        await pg.check('input[name="pfAv"][value="photo"]'); await pg.set_input_files('#pfPhoto', '/tmp/face.png'); await pg.wait_for_timeout(300)
+        avatar = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'icon-192.png')
+        await pg.check('input[name="pfAv"][value="photo"]'); await pg.set_input_files('#pfPhoto', avatar); await pg.wait_for_timeout(300)
         await pg.click('#pfForm button[type=submit]'); await pg.wait_for_timeout(250)
         R['photo'] = await pg.evaluate("(document.querySelector('#whoBtn .av img')||{}).src ? document.querySelector('#whoBtn .av img').src.slice(0,30) + ' len=' + document.querySelector('#whoBtn .av img').src.length : null")
         await pg.screenshot(path='shots/pf_ar.png', full_page=True)
@@ -81,6 +82,12 @@ async def main():
             await pg.click('#pfDrillWeak'); await pg.wait_for_timeout(200); R['drill_these'] = [await pg.evaluate('location.hash'), await pg.locator('#qtopWrap, .prompt, #qk').count()]
         await pg.reload(); await pg.wait_for_timeout(400)
         R['reload'] = [await pg.evaluate("document.documentElement.lang"), await pg.locator('#whoBtn .av img').count()]
+        assert R['after_save'][0] == 'rtl', R['after_save']
+        assert R['after_save'][2] is False, R['after_save']
+        assert R['photo'] and R['photo'].startswith('data:image/jpeg;base64,'), R['photo']
+        assert R['plan21'][1] == 21, R['plan21']
+        assert R['reload'] == ['ar', 1], R['reload']
+        assert not errs, errs
         R['errors'] = errs
         print(json.dumps(R, ensure_ascii=False, indent=1)); await b.close()
 asyncio.run(main())

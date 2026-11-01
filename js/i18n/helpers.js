@@ -1,26 +1,43 @@
-import {PLAN} from '../data/content.js';
-import {baseOf, explainEn, rom} from '../data/letters.js';
-import {DNOTE_AR, DRULE_AR, HOOK_AR, MEAN_AR, PLAN_AR, SENT_AR, WTITLE_AR} from './ar-content.js';
-import {isAr, iso, t} from './core.js';
-import {isoToUTC} from '../util.js';
+import { EXAMPLES } from '../data/content.js';
+import { explainEn } from '../data/letters.js';
+import { localeFor } from './core.js';
+import { isoToUTC } from '../util.js';
 
-/* language-aware content accessors */
-const planOf = i => isAr() ? PLAN_AR[i] : PLAN[i];
-export const meanOf = w => isAr() ? (MEAN_AR[w[0]] || SENT_AR[w[0]] || w[2]) : w[2];
-export const wtitleOf = g => isAr() ? WTITLE_AR[g.id] : g.title;
-export function explain(k) {
-  if (!isAr()) return explainEn(k);
-  if (HOOK_AR[k]) return HOOK_AR[k];
-  const d = baseOf(k);
-  if (d) return iso(d.base + ' (' + rom(d.base) + ') + ' + (d.row.id === 'p' ? '゜' : '゛') + ' = ' + k + ' (' + rom(k) + ')') + '. ' + DRULE_AR[d.row.id] + (DNOTE_AR[k] ? ' ' + DNOTE_AR[k] : '');
-  if (k.length === 2) {
-    const b = k[0], s = k[1], big = {'ゃ': 'や', 'ゅ': 'ゆ', 'ょ': 'よ'}[s];
-    return iso(b + ' (' + rom(b) + ') + ' + s + ' = ' + k + ' (' + rom(k) + ')') + '، تُنطق نبضة واحدة لأن ' + s + ' صغيرة. لو كُتبت بحجم كامل ' + b + big + ' لصارت نبضتين: ' + iso(rom(b) + '-' + rom(big)) + '.';
-  }
-  return '';
+// Japanese text is the dictionary key. Locale content can be translated incrementally.
+export function meanOf(word, section = 'meanings') {
+  const content = localeFor().content;
+  return (
+    content[section]?.[word[0]] ??
+    content.meanings?.[word[0]] ??
+    content.sentences?.[word[0]] ??
+    word[2]
+  );
 }
-const fmtLocale = () => t('date.locale');
+
+export function exampleMeaning(kana) {
+  const word = EXAMPLES[kana];
+  return localeFor().content.examples?.[kana] ?? meanOf(word);
+}
+
+export function dailySentenceMeaning(word) {
+  const content = localeFor().content;
+  return content.dailySentences?.[word[0]] ?? content.sentences?.[word[5]] ?? word[7];
+}
+
+export const wtitleOf = (group) => localeFor().content.wordTitles?.[group.id] ?? group.title;
+export const phraseTitle = (group) => localeFor().content.phraseTitles?.[group.id] ?? group.en;
+
+export function explain(kana) {
+  const content = localeFor().content;
+  return content.hooks?.[kana] ?? content.explain?.(kana) ?? explainEn(kana);
+}
+
 export function fmt(iso, long) {
-  const t = new Date(isoToUTC(iso));
-  return t.toLocaleDateString(fmtLocale(), long ? {weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone:'UTC'} : {weekday:'short', day:'numeric', month:'short', timeZone:'UTC'});
+  const date = new Date(isoToUTC(iso));
+  return date.toLocaleDateString(
+    localeFor().dateLocale,
+    long
+      ? { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }
+      : { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' },
+  );
 }
