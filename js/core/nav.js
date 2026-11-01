@@ -250,5 +250,6 @@ $$('nav.tabs button').forEach((b) =>
   window.addEventListener('resize', () => {
     moveThumb($('nav.tabs .in'), 'tabs', true);
     moveThumb($('#subnav .seg'), 'subnav', true);
+    moveThumb($('#login .langseg:not(.many)'), 'lang', true);
   });
 })();

@@ -1,6 +1,7 @@
 import { isTab, renderBack } from '../core/nav.js';
 import { me, students } from '../core/store.js';
 import { applyStudent } from '../ui/appearance.js';
+import { moveThumb } from '../ui/thumb.js';
 import {
   LANG,
   detectLocale,
@@ -10,7 +11,7 @@ import {
   replaceLang,
   t,
 } from '../i18n/core.js';
-import { $$, esc, must } from '../util.js';
+import { $, $$, esc, must } from '../util.js';
 
 /* ---------- language ---------- */
 /** The language for people who have not signed in: the saved device choice, else the browser's. */
@@ -45,11 +46,20 @@ export function setLang(l) {
   });
   renderBack();
 }
+/** Up to this many languages fit in one pill. */
+const MAX_PILL = 3;
+const GLOBE_SVG =
+  '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 12h17M12 3c2.6 2.6 3.8 5.6 3.8 9S14.6 18.4 12 21c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
 /** The language buttons. @param {string} cur the selected language @param {string} [cls] */
 export function langSeg(cur, cls) {
+  const many = localeIds().length > MAX_PILL;
   return (
-    '<div class="seg language-options ' +
+    '<div class="langpick"><span class="langcue" aria-hidden="true">' +
+    GLOBE_SVG +
+    esc(t('lang')) +
+    '</span><div class="seg language-options ' +
     (cls || '') +
+    (many ? ' many' : '') +
     '" role="group" aria-label="' +
     esc(t('lang')) +
     '">' +
@@ -69,6 +79,11 @@ export function langSeg(cur, cls) {
           '</button>',
       )
       .join('') +
-    '</div>'
+    '</div></div>'
   );
+}
+/** Gives the language pill its gliding glass thumb; with many languages the buttons wrap and mark themselves. @param {ParentNode} root */
+export function glideLangSeg(root) {
+  const seg = $('.langseg', root);
+  if (seg && !seg.classList.contains('many')) moveThumb(seg, 'lang');
 }

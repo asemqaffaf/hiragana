@@ -17,6 +17,8 @@ export function pageSnapshot(el, opts) {
   if (!el || el.hidden || reduceAnim() || opts.initial || opts.root) return null;
   if (/test/.test(location.hash) && !window.__hiraSnap) return null; /* the test pages look for one copy of each element */
   const r = el.getBoundingClientRect(); if (r.height < 40 || r.bottom < 0) return null;
+  /* the slide copies the old page beside the new one, so it only works when a page fills the screen (a phone); on a wide window the copy would show next to the page */
+  if (r.width < innerWidth - 40) return null;
   const c = /** @type {HTMLElement} */ (el.cloneNode(true));
   c.removeAttribute('id'); $$('[id]', c).forEach(n => n.removeAttribute('id')); $$('[for]', c).forEach(n => n.removeAttribute('for'));
   c.className = 'pagesnap' + (opts.fromHistory ? ' pop' : ' push'); c.hidden = false; c.inert = true; c.setAttribute('aria-hidden', 'true');

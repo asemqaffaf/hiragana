@@ -18,7 +18,7 @@ import { reconcileLessonCompletion } from '../core/lesson.js';
 import { ui } from '../core/ui-state.js';
 import { ALL } from '../data/letters.js';
 import { checkBadges } from './gamify.js';
-import { deviceLang, langSeg, setLang } from './language.js';
+import { deviceLang, glideLangSeg, langSeg, setLang } from './language.js';
 import {
   ageOpts,
   goalHint,
@@ -151,6 +151,7 @@ export function showLogin() {
     '</span></p><input type="file" id="importFile" accept="application/json,.json" hidden>';
   h += '<footer class="credit"><p>' + t('credits') + '</p></footer>';
   root.innerHTML = h;
+  glideLangSeg(root);
   ui.loginMsg = '';
   $$('[data-lang]', root).forEach(
     (b) =>
