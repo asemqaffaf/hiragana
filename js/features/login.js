@@ -33,6 +33,7 @@ import { avatar, cleanName, nameTaken, swatches } from '../ui/student.js';
 import { LANG, t } from '../i18n/core.js';
 import { fmt } from '../i18n/helpers.js';
 import { closeSheet } from '../ui/sheet-state.js';
+import { reduceAnim } from '../core/motion.js';
 import { $, $$, esc, isObject, isoToUTC, must, todayISO } from '../util.js';
 
 /* ---------- students: passwordless login and profile ---------- */
@@ -98,8 +99,16 @@ export function showLogin() {
         (b.onclick = () => {
           setDeviceLanguage(b.dataset.lang);
           ui.langStep = false;
-          showLogin();
-          window.scrollTo(0, 0);
+          /* the step fades away, then the form rises in */
+          const step = $('.langstep', root);
+          const next = () => {
+            showLogin();
+            window.scrollTo(0, 0);
+          };
+          if (step && !reduceAnim()) {
+            step.classList.add('leaving');
+            setTimeout(next, 220);
+          } else next();
         }),
     );
     return;
