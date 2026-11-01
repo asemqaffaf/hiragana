@@ -6,18 +6,33 @@ const MAG = 1.24;                /* magnification inside the lens */
 const K = 380, C = 26;           /* position spring: slightly underdamped, so it overshoots and settles */
 const KL = 300, CL = 21;         /* lift spring: the lens grows out of the pill with a small pop */
 
+/** @param {number} v @param {number} a @param {number} b */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+/** A pointer x position in the bar's own (unscaled) pixels. @param {HTMLElement} c @param {number} clientX */
 export const toLocal = (c, clientX) => { const r = c.getBoundingClientRect(); return (clientX - r.left) / (r.width / (c.offsetWidth || 1)); };
 
+/**
+ * @typedef {object} Lens
+ * @property {(clientX: number) => void} move
+ * @property {(clientX: number, cancel?: boolean) => HTMLButtonElement | null} release the tab to settle on
+ * @property {() => void} abort
+ */
+/**
+ * @param {HTMLElement} c the tab bar
+ * @param {number} clientX
+ * @returns {Lens | null}
+ */
 export function createLens(c, clientX) {
-  const items = Array.from(c.querySelectorAll(':scope > button')).filter(b => !b.disabled && b.offsetWidth);
+  const items = /** @type {HTMLButtonElement[]} */ (Array.from(c.querySelectorAll(':scope > button'))).filter(b => !b.disabled && b.offsetWidth);
   if (!items.length) return null;
   const sel = items.find(b => b.getAttribute('aria-selected') === 'true') || items[0];
   const itemW = sel.offsetWidth, itemH = sel.offsetHeight, cw = c.offsetWidth, cy = sel.offsetTop + itemH / 2;
+  /** @param {HTMLElement} b */
   const centre = b => b.offsetLeft + b.offsetWidth / 2;
+  /** @param {number} x */
   const nearest = x => items.reduce((a, b) => Math.abs(x - centre(b)) < Math.abs(x - centre(a)) ? b : a);
 
-  const lens = document.createElement('div'), inner = c.cloneNode(true);
+  const lens = document.createElement('div'), inner = /** @type {HTMLElement} */ (c.cloneNode(true));
   lens.className = 'lens'; lens.setAttribute('aria-hidden', 'true');
   inner.querySelectorAll('.thumb, .lens').forEach(n => n.remove());
   inner.removeAttribute('id'); inner.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
@@ -28,8 +43,10 @@ export function createLens(c, clientX) {
   lens.appendChild(inner); c.appendChild(lens); c.classList.add('lensing');
 
   const S = {x: centre(sel), v: 0, L: 0, vL: 0, tx: centre(sel), Lt: 1, released: false, done: false, on: -1, last: performance.now(), raf: 0};
+  /** @param {number} x */
   const limit = x => clamp(x, itemW / 2 - 6, cw - itemW / 2 + 6);
 
+  /** @param {number} now */
   const frame = now => {
     const dt = Math.min(0.032, (now - S.last) / 1000) || 0.016; S.last = now;
     S.v += (-K * (S.x - S.tx) - C * S.v) * dt; S.x += S.v * dt;
@@ -41,7 +58,7 @@ export function createLens(c, clientX) {
     const a = Math.min(1, l * 1.7);
     lens.style.cssText = 'width:' + w + 'px;height:' + h + 'px;opacity:' + a + ';transform:translate3d(' + lx + 'px,' + ly + 'px,0)';
     inner.style.transform = 'translate(' + (-lx + cx - M * cx) + 'px,' + (-ly + cy - M * cy) + 'px) scale(' + M + ')';
-    c.style.setProperty('--thumb-o', 1 - a);
+    c.style.setProperty('--thumb-o', String(1 - a));
     const i = items.indexOf(nearest(cx)); if (i !== S.on) { S.on = i; copies.forEach((b, j) => b.classList.toggle('on', j === i)); }
     if (S.released && S.L < 0.015 && Math.abs(S.x - S.tx) < 0.35 && Math.abs(S.v) < 8 && Math.abs(S.vL) < 0.05) return end();
     S.raf = requestAnimationFrame(frame);

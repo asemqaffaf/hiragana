@@ -12,7 +12,7 @@ import {
   updateStudent,
 } from '../core/store.js';
 import { ui } from '../core/ui-state.js';
-import { A46, DROWS, ROWS, YOON33 } from '../data/letters.js';
+import { A46, DROWS, ROWS, YOON33, kanaOf } from '../data/letters.js';
 import { startDrill } from './drill.js';
 import { BADGES, levelName, levelOf, progressCtx, xpOf } from './gamify.js';
 import { setLang } from './language.js';
@@ -22,29 +22,38 @@ import {
   ageOpts,
   goalHint,
   jlOpts,
+  languageOpts,
   minOpts,
   nativeOpts,
   paceOpts,
+  rateOpts,
   reasonOpts,
   sel,
 } from '../ui/profile-fields.js';
 import { applyStudent, applyTheme } from '../ui/appearance.js';
 import { kb } from '../ui/letter-button.js';
-import { K, LANG, localeIds, localeLabel, t } from '../i18n/core.js';
+import { K, LANG, t } from '../i18n/core.js';
 import { fmt } from '../i18n/helpers.js';
-import { $, $$, addDays, esc, todayISO } from '../util.js';
+import { $, $$, addDays, entriesOf, esc, must, todayISO, valuesOf } from '../util.js';
 
 /* ---------- advanced student profile: identity, goals, levels, achievements, detailed stats ---------- */
 /* shrink a photo to a 160 px square JPEG so it fits comfortably in localStorage */
+/** @param {File} file @returns {Promise<string>} */
 function photoToDataUrl(file) {
   return new Promise((res, rej) => {
     const img = new Image(),
       url = URL.createObjectURL(file);
     img.onload = () => {
       const s = Math.min(img.naturalWidth, img.naturalHeight),
-        c = document.createElement('canvas');
+        c = document.createElement('canvas'),
+        ctx = c.getContext('2d');
       c.width = c.height = 160;
-      c.getContext('2d').drawImage(
+      if (!ctx) {
+        URL.revokeObjectURL(url);
+        rej(new Error('no canvas'));
+        return;
+      }
+      ctx.drawImage(
         img,
         (img.naturalWidth - s) / 2,
         (img.naturalHeight - s) / 2,
@@ -65,9 +74,12 @@ function photoToDataUrl(file) {
     img.src = url;
   });
 }
+/** @type {readonly import('../../types/app').Avatar['t'][]} */
+const AVATAR_TYPES = ['initial', 'kana', 'photo'];
 let pfMsg = '',
-  pfDelArmed = false,
-  pendingPhoto = null;
+  pfDelArmed = false;
+/** A chosen photo, as a data URL, waiting for Save. @type {string | null} */
+let pendingPhoto = null;
 export function renderProfile() {
   const p = me();
   if (!p) return;
@@ -75,7 +87,7 @@ export function renderProfile() {
     c = progressCtx(),
     xp = xpOf(c),
     lv = levelOf(xp),
-    av = p.av || { t: 'initial' };
+    av = p.av;
   let h =
     '<div class="phero">' +
     avatar(p, 'xl') +
@@ -119,7 +131,7 @@ export function renderProfile() {
     t('pf.todayNote') +
     '</p>';
   /* achievements */
-  const earned = BADGES.filter((b) => (state.badges || {})[b.id]).length;
+  const earned = BADGES.filter((b) => state.badges[b.id]).length;
   h +=
     '<h3>' +
     t('pf.badges') +
@@ -128,16 +140,16 @@ export function renderProfile() {
     '</span></h3><div class="badges">';
   h +=
     BADGES.map((b) => {
-      const d = (state.badges || {})[b.id];
+      const d = state.badges[b.id];
       return (
         '<div class="badge' +
         (d ? ' got' : '') +
         '"><span class="bk" aria-hidden="true">' +
         b.k +
         '</span><b>' +
-        t('b.' + b.id) +
+        t(`b.${b.id}`) +
         '</b><span class="small muted">' +
-        (d ? t('pf.earnedOn', { date: fmt(d) }) : t('bd.' + b.id)) +
+        (d ? t('pf.earnedOn', { date: fmt(d) }) : t(`bd.${b.id}`)) +
         '</span></div>'
       );
     }).join('') + '</div>';
@@ -155,10 +167,12 @@ export function renderProfile() {
         t('pf.drillThese') +
         '</button></div>'
       : '<p class="small muted">' + t('pf.weakNone') + '</p>');
-  const groups = ROWS.map((r) => [r.kana[0], r.kana.filter(Boolean)]).concat(
-    DROWS.map((r) => [r.kana[0], r.kana]),
-    [['きゃ…', YOON33]],
-  );
+  /** @type {[string, string[]][]} */
+  const groups = [
+    ...ROWS.map((r) => /** @type {[string, string[]]} */ ([kanaOf(r)[0], kanaOf(r)])),
+    ...DROWS.map((r) => /** @type {[string, string[]]} */ ([r.kana[0], r.kana])),
+    ['きゃ…', YOON33],
+  ];
   h +=
     '<h4>' +
     t('pf.rows') +
@@ -180,7 +194,7 @@ export function renderProfile() {
       })
       .join('') +
     '</div>';
-  const ts = Object.values(state.stats)
+  const ts = valuesOf(state.stats)
     .map((s) => s.t)
     .filter((x) => x > 0);
   h +=
@@ -193,7 +207,7 @@ export function renderProfile() {
     '</p>';
   const last7 = Array.from({ length: 7 }, (_, i) => addDays(todayISO(), i - 6)).map((d) => ({
     d,
-    m: Math.floor(((state.time || {})[d] || 0) / 60),
+    m: Math.floor((state.time[d] || 0) / 60),
   }));
   const top = Math.max(g.min, ...last7.map((x) => x.m));
   h +=
@@ -227,7 +241,7 @@ export function renderProfile() {
     '</span></div><p class="small muted">' +
     t('pf.minNote', { g: g.min }) +
     '</p>';
-  const mix = Object.entries(state.mix || {})
+  const mix = entriesOf(state.mix)
     .sort((x, y) => y[1] - x[1])
     .slice(0, 5);
   h +=
@@ -255,6 +269,7 @@ export function renderProfile() {
   /* appearance: applied at once and saved with the student */
   const th = cleanTheme(p.theme);
   /* [paper, surface, grid] for light, then for dark, so each preview matches the mode in use */
+  /** @type {Record<import('../../types/app').Tint, string[]>} */
   const TC = {
     sage: ['#F5F7F3', '#FFFFFF', '#B7D2C8', '#15221D', '#1B2B25', '#3A5A4F'],
     sand: ['#F8F4EC', '#FFFFFF', '#D8CDB4', '#211C14', '#2A241A', '#5A4D36'],
@@ -279,7 +294,7 @@ export function renderProfile() {
         '" aria-pressed="' +
         (th.mode === m) +
         '">' +
-        t('th.' + m) +
+        t(`th.${m}`) +
         '</button>',
     ).join('') +
     '</div>';
@@ -306,7 +321,7 @@ export function renderProfile() {
         ';--gd:' +
         TC[k][5] +
         '"></span><span>' +
-        t('th.' + k) +
+        t(`th.${k}`) +
         '</span></label>',
     ).join('') +
     '</div></fieldset><p class="small muted">' +
@@ -327,15 +342,14 @@ export function renderProfile() {
     '<fieldset class="avpick"><legend class="small muted">' +
     t('f.avatar') +
     '</legend>' +
-    ['initial', 'kana', 'photo']
-      .map(
+    AVATAR_TYPES.map(
         (x) =>
           '<label><input type="radio" name="pfAv" value="' +
           x +
           '"' +
           (av.t === x ? ' checked' : '') +
           '> ' +
-          t('av.' + x) +
+          t(`av.${x}`) +
           '</label>',
       )
       .join('') +
@@ -358,21 +372,8 @@ export function renderProfile() {
     sel('pfAge', ageOpts(), p.age || 'adult', t('f.age')) +
     sel('pfNative', nativeOpts(), p.native || LANG, t('f.native')) +
     sel('pfJl', jlOpts(), p.jlevel || 'new', t('f.jlevel')) +
-    sel(
-      'pfLang',
-      localeIds().map((id) => [id, localeLabel(id)]),
-      p.lang || LANG,
-      t('f.uiLang'),
-    ) +
-    sel(
-      'pfRate',
-      [
-        [1, t('rate.1')],
-        [0.75, t('rate.slow')],
-      ],
-      p.rate === 0.75 ? 0.75 : 1,
-      t('f.rate'),
-    ) +
+    sel('pfLang', languageOpts(), p.lang || LANG, t('f.uiLang')) +
+    sel('pfRate', rateOpts(), p.rate, t('f.rate')) +
     sel('pfReason', reasonOpts(), g.reason, t('f.reason'), goalHint(g.reason)) +
     sel('pfPace', paceOpts(), g.pace, t('f.pace')) +
     sel('pfMin', minOpts(), g.min, t('f.min')) +
@@ -399,9 +400,10 @@ export function renderProfile() {
     '<div class="btnrow"><button class="btn red" id="pDelete">' +
     (pfDelArmed ? t('p.deleteConfirm', { name: esc(p.name) }) : t('p.delete')) +
     '</button></div>';
-  const root = $('#tab-profile');
+  const root = must('#tab-profile');
   root.innerHTML = h;
   pfMsg = '';
+  /** @param {Partial<import('../../types/app').Theme>} patch */
   const setTheme = (patch) => {
     updateStudent(p.id, { theme: { ...cleanTheme(p.theme), ...patch } });
     applyTheme(p.theme, true);
@@ -409,33 +411,45 @@ export function renderProfile() {
   $$('[data-mode]', root).forEach(
     (b) =>
       (b.onclick = () => {
-        setTheme({ mode: b.dataset.mode });
+        const mode = MODES.find((m) => m === b.dataset.mode);
+        if (mode) setTheme({ mode });
         $$('[data-mode]', root).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
       }),
   );
-  $$('input[name="pfTint"]', root).forEach((r) => (r.onchange = () => setTheme({ tint: r.value })));
+  $$('input[name="pfTint"]', root, HTMLInputElement).forEach(
+    (r) =>
+      (r.onchange = () => {
+        const tint = TINTS.find((k) => k === r.value);
+        if (tint) setTheme({ tint });
+      }),
+  );
+  /** The value of a radio group, if one is chosen. @param {string} name */
+  const checked = (name) => $(`input[name="${name}"]:checked`, root, HTMLInputElement)?.value;
   const syncAv = () => {
-    const v = (root.querySelector('input[name="pfAv"]:checked') || {}).value;
-    root.querySelector('.avk').hidden = v !== 'kana';
-    root.querySelector('.avp').hidden = v !== 'photo';
+    const v = checked('pfAv');
+    must('.avk', root).hidden = v !== 'kana';
+    must('.avp', root).hidden = v !== 'photo';
   };
-  $$('input[name="pfAv"]', root).forEach((r) => (r.onchange = syncAv));
+  $$('input[name="pfAv"]', root, HTMLInputElement).forEach((r) => (r.onchange = syncAv));
   syncAv();
-  $('#pfPhotoBtn', root).onclick = () => $('#pfPhoto', root).click();
-  $('#pfPhoto', root).onchange = async (e) => {
-    const f = e.target.files && e.target.files[0];
+  const photoInput = must('#pfPhoto', root, HTMLInputElement);
+  must('#pfPhotoBtn', root).onclick = () => photoInput.click();
+  photoInput.onchange = async () => {
+    const f = photoInput.files && photoInput.files[0];
     if (!f) return;
     try {
       pendingPhoto = await photoToDataUrl(f);
-      $('#pfPhotoBtn', root).textContent = t('av.ready');
+      must('#pfPhotoBtn', root).textContent = t('av.ready');
     } catch (err) {
-      $('#pfMsg', root).textContent = t('av.bad');
+      must('#pfMsg', root).textContent = t('av.bad');
     }
   };
-  $('#pfForm', root).onsubmit = (e) => {
+  /** @param {string} id */
+  const selectValue = (id) => must('#' + id, root, HTMLSelectElement).value;
+  must('#pfForm', root).onsubmit = (e) => {
     e.preventDefault();
-    const name = cleanName($('#pfName', root).value),
-      msg = $('#pfMsg', root);
+    const name = cleanName(must('#pfName', root, HTMLInputElement).value),
+      msg = must('#pfMsg', root);
     if (!name) {
       msg.textContent = t('err.noName');
       return;
@@ -444,29 +458,29 @@ export function renderProfile() {
       msg.textContent = t('err.taken2', { name });
       return;
     }
-    const avT = (root.querySelector('input[name="pfAv"]:checked') || {}).value || 'initial';
-    if (avT === 'photo' && !pendingPhoto && !(p.av && p.av.img)) {
+    const avT = checked('pfAv') || 'initial';
+    if (avT === 'photo' && !pendingPhoto && !p.av.img) {
       msg.textContent = t('av.need');
       return;
     }
     updateStudent(p.id, {
       name,
-      color: (root.querySelector('input[name="pfColor"]:checked') || {}).value || p.color,
+      color: checked('pfColor') || p.color,
       av: {
         t: avT,
-        k: $('#pfKana', root).value,
+        k: selectValue('pfKana'),
         img: avT === 'photo' ? pendingPhoto || p.av.img : '',
       },
-      age: $('#pfAge', root).value,
-      native: $('#pfNative', root).value,
-      jlevel: $('#pfJl', root).value,
-      rate: +$('#pfRate', root).value === 0.75 ? 0.75 : 1,
+      age: selectValue('pfAge'),
+      native: selectValue('pfNative'),
+      jlevel: selectValue('pfJl'),
+      rate: Number(selectValue('pfRate')) === 0.75 ? 0.75 : 1,
       goal: {
-        pace: +$('#pfPace', root).value,
-        min: +$('#pfMin', root).value,
-        reason: $('#pfReason', root).value,
+        pace: Number(selectValue('pfPace')),
+        min: Number(selectValue('pfMin')),
+        reason: selectValue('pfReason'),
       },
-      lang: $('#pfLang', root).value,
+      lang: selectValue('pfLang'),
     });
     pendingPhoto = null;
     setLang(p.lang);
@@ -489,12 +503,12 @@ export function renderProfile() {
       startDrill(wk);
       showTab('drill');
     };
-  $('#pExport', root).onclick = exportStudent;
-  $('#pSwitch', root).onclick = () => {
+  must('#pExport', root).onclick = exportStudent;
+  must('#pSwitch', root).onclick = () => {
     pfDelArmed = false;
     switchStudent();
   };
-  $('#pDelete', root).onclick = () => {
+  must('#pDelete', root).onclick = () => {
     if (!pfDelArmed) {
       pfDelArmed = true;
       renderProfile();

@@ -1,22 +1,38 @@
 import { reduceAnim } from '../core/motion.js';
 import { closeSheet } from './sheet-state.js';
+import { $, closest } from '../util.js';
 
 /* swipe a sheet down to close it, like iOS: it follows the finger, the backdrop fades, and it either goes or springs back */
 (function () {
   const root = document.getElementById('sheetRoot');
   if (!root) return;
+  /**
+   * @typedef {object} Swipe
+   * @property {HTMLElement} s the sheet
+   * @property {number} y0 where the finger went down (moved once the swipe starts)
+   * @property {number} x0
+   * @property {boolean} grab the finger is on the grab handle
+   * @property {boolean} on the touch has become a swipe
+   * @property {number} dy distance dragged down
+   * @property {number} ly previous finger position, for the speed
+   * @property {number} lt previous touch time
+   * @property {number} v smoothed speed in px/ms
+   */
+  /** @type {Swipe | null} */
   let d = null;
-  const sheetEl = () => root.querySelector('.sheet'),
-    scrimEl = () => root.querySelector('.scrim');
+  const sheetEl = () => $('.sheet', root),
+    scrimEl = () => $('.scrim', root);
+  /** @param {EventTarget | null} target @param {HTMLElement} sheet */
+  const inside = (target, sheet) => target instanceof Node && sheet.contains(target);
   root.addEventListener(
     'touchstart',
     (e) => {
       const s = sheetEl();
-      if (!s || !e.touches || e.touches.length !== 1 || !s.contains(e.target)) {
+      if (!s || !e.touches || e.touches.length !== 1 || !inside(e.target, s)) {
         d = null;
         return;
       }
-      if (e.target.closest && e.target.closest('input,select,textarea')) {
+      if (closest(e, 'input,select,textarea')) {
         d = null;
         return;
       }
@@ -25,7 +41,7 @@ import { closeSheet } from './sheet-state.js';
         s,
         y0: tc.clientY,
         x0: tc.clientX,
-        grab: !!(e.target.closest && e.target.closest('.grab')),
+        grab: !!closest(e, '.grab'),
         on: false,
         dy: 0,
         ly: tc.clientY,
@@ -47,8 +63,8 @@ import { closeSheet } from './sheet-state.js';
         if (
           s &&
           e.cancelable &&
-          !(e.target.closest && e.target.closest('input,select,textarea')) &&
-          (!s.contains(e.target) || s.scrollHeight <= s.clientHeight + 1)
+          !closest(e, 'input,select,textarea') &&
+          (!inside(e.target, s) || s.scrollHeight <= s.clientHeight + 1)
         )
           e.preventDefault();
         return;
@@ -97,6 +113,7 @@ import { closeSheet } from './sheet-state.js';
     },
     { passive: false },
   );
+  /** @param {boolean} cancel */
   const finish = (cancel) => {
     const x = d;
     d = null;

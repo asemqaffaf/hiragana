@@ -2,8 +2,16 @@ import { ui } from '../core/ui-state.js';
 import { DROWS, ROWS, YROWS } from '../data/letters.js';
 import { kb } from '../ui/letter-button.js';
 import { t } from '../i18n/core.js';
-import { $, $$ } from '../util.js';
+import { $$, must } from '../util.js';
 
+/** @type {readonly [import('../../types/app').ChartView, import('../../types/app').TextKey][]} */
+const VIEWS = [
+  ['basic', 'chart.basic'],
+  ['dak', 'chart.dak'],
+  ['yoon', 'chart.yoon'],
+];
+
+/** @param {string | null} k */
 function cell(k) {
   if (!k) return '<div class="blank"></div>';
   return kb(k, ' cell', true);
@@ -14,12 +22,7 @@ export function renderChart() {
     '<div class="seg" role="group" aria-label="' +
     t('chart.which') +
     '">' +
-    [
-      ['basic', 'chart.basic'],
-      ['dak', 'chart.dak'],
-      ['yoon', 'chart.yoon'],
-    ]
-      .map(
+    VIEWS.map(
         ([id, l]) =>
           '<button data-view="' +
           id +
@@ -47,12 +50,13 @@ export function renderChart() {
   }
   if (ui.chartView === 'dak') h += '<p class="note">' + t('chart.dakNote') + '</p>';
   if (ui.chartView === 'yoon') h += '<p class="note">' + t('chart.yoonNote') + '</p>';
-  const root = $('#tab-chart');
+  const root = must('#tab-chart');
   root.innerHTML = h;
   $$('[data-view]', root).forEach(
     (b) =>
       (b.onclick = () => {
-        ui.chartView = b.dataset.view;
+        const view = VIEWS.find(([id]) => id === b.dataset.view);
+        if (view) ui.chartView = view[0];
         renderChart();
       }),
   );

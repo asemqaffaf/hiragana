@@ -3,18 +3,21 @@ import { goalOf } from '../core/plan.js';
 import { cleanTheme, me } from '../core/store.js';
 import { readDeviceTheme, writeDeviceTheme } from '../core/storage.js';
 import { t } from '../i18n/core.js';
-import { $ } from '../util.js';
+import { must } from '../util.js';
 
 let themeReady = false;
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let themeTimer;
 export const deviceTheme = () => cleanTheme(readDeviceTheme());
 /* apply a theme to the page and remember it for this device (used before anyone signs in) */
-export function applyTheme(th, remember) {
-  th = cleanTheme(th);
+/** @param {unknown} theme @param {boolean} [remember] */
+export function applyTheme(theme, remember) {
+  const th = cleanTheme(theme);
   const r = document.documentElement;
   if (themeReady && !reduceAnim()) {
     r.classList.add('themeanim');
-    clearTimeout(applyTheme.t);
-    applyTheme.t = setTimeout(() => r.classList.remove('themeanim'), 500);
+    clearTimeout(themeTimer);
+    themeTimer = setTimeout(() => r.classList.remove('themeanim'), 500);
   }
   themeReady = true;
   if (th.mode === 'system') r.removeAttribute('data-theme');
@@ -29,13 +32,11 @@ export function applyTheme(th, remember) {
   const m = document.querySelector('meta[name="theme-color"]');
   if (m) m.setAttribute('content', getComputedStyle(document.body).backgroundColor);
 }
-if (window.matchMedia) {
-  try {
-    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () =>
-      applyTheme(deviceTheme()),
-    );
-  } catch (e) {}
-}
+try {
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () =>
+    applyTheme(deviceTheme()),
+  );
+} catch (e) {}
 
 export function applyStudent() {
   const student = me();
@@ -43,5 +44,5 @@ export function applyStudent() {
   const goal = goalOf(student);
   document.body.classList.toggle('kid', student.age === 'child');
   applyTheme(student.theme, true);
-  $('#appSub').textContent = t('app.subP', { days: goal.pace, min: goal.min });
+  must('#appSub').textContent = t('app.subP', { days: goal.pace, min: goal.min });
 }

@@ -11,9 +11,10 @@ import { groupOf } from '../data/writing.js';
 import { t } from '../i18n/core.js';
 import { explain } from '../i18n/helpers.js';
 import { strokeSVG } from '../strokes/draw.js';
-import { $, SPEAK_SVG } from '../util.js';
+import { SPEAK_SVG, must } from '../util.js';
 
 /* ---------- guided daily lesson ---------- */
+/** Opens the screen for a lesson step. @param {import('../../types/app').LessonStepId} id */
 export function runStep(id) {
   const focus = focusKana(curDay()),
     x = lesson();
@@ -42,7 +43,10 @@ export function runStep(id) {
     startDrill(pool);
   }
 }
+/** @type {ReturnType<typeof setTimeout> | undefined} */
 let meetAudioTimer;
+/** The letter shown by the last render, to flip the card only when it changes. @type {number | undefined} */
+let lastMeetIndex;
 export function enterMeet() {
   clearTimeout(meetAudioTimer);
   const list = focusKana(curDay());
@@ -57,6 +61,7 @@ export function enterMeet() {
   }, 300);
 }
 
+/** @param {number} offset */
 function moveMeet(offset) {
   ui.meetI += offset;
   enterMeet();
@@ -98,22 +103,22 @@ export function renderMeet() {
     '</button><button class="btn primary" id="meetNext">' +
     (last ? t('meet.finish') : t('meet.next')) +
     '</button></div>';
-  const root = $('#tab-meet');
+  const root = must('#tab-meet');
   root.innerHTML = '<h2>' + t('tab.meet') + '</h2>' + h;
-  if (renderMeet.last !== undefined && renderMeet.last !== ui.meetI && ui.currentTab === 'meet')
-    replay($('.meetcard', root), 'flip');
-  renderMeet.last = ui.meetI;
+  if (lastMeetIndex !== undefined && lastMeetIndex !== ui.meetI && ui.currentTab === 'meet')
+    replay(must('.meetcard', root), 'flip');
+  lastMeetIndex = ui.meetI;
   if (k.length === 1) {
     const svg = strokeSVG(k, { guide: true });
     if (svg) {
-      $('#meetSq', root).appendChild(svg);
+      must('#meetSq', root).appendChild(svg);
       setTimeout(() => svg.play(), 200);
     }
   }
-  $('#meetHear', root).onclick = () => speakFull(k);
+  must('#meetHear', root).onclick = () => speakFull(k);
   bindSay(root);
-  $('#meetPrev', root).onclick = () => moveMeet(-1);
-  $('#meetNext', root).onclick = () => {
+  must('#meetPrev', root).onclick = () => moveMeet(-1);
+  must('#meetNext', root).onclick = () => {
     if (last) showTab('plan');
     else {
       moveMeet(1);

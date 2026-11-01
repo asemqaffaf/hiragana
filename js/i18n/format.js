@@ -1,8 +1,11 @@
 /* keep Latin text (romaji, formulas) the right way round inside Arabic sentences */
+/** @param {string} s */
 export const iso = (s) => '⁦' + s + '⁩';
 const PR_AR = new Intl.PluralRules('ar'),
   PR_EN = new Intl.PluralRules('en');
+/** @typedef {'stroke' | 'phrase' | 'word' | 'time' | 'day' | 'question' | 'char' | 'write'} ArabicNoun */
 /* Arabic counted nouns: one / two / few (3-10) / many (11-99) / other */
+/** @type {Record<ArabicNoun, Partial<Record<Intl.LDMLPluralRule, string>> & {other: string}>} */
 const AR_N = {
   stroke: { one: 'خط واحد', two: 'خطّان', few: '{n} خطوط', many: '{n} خطّاً', other: '{n} خط' },
   phrase: {
@@ -37,11 +40,14 @@ const AR_N = {
     other: '{n} كتابة',
   },
 };
+/** @param {number} n @param {ArabicNoun} noun */
 export const arN = (n, noun) => {
   const f = AR_N[noun],
     c = PR_AR.select(n);
-  return (f[c] || f.other).replace('{n}', n);
+  return (f[c] || f.other).replace('{n}', String(n));
 };
+/** @param {number} n @param {string} one @param {string} [many] */
 export const enN = (n, one, many) =>
   n + ' ' + (PR_EN.select(n) === 'one' ? one : many || one + 's');
+/** Wraps Japanese text in the kana style. @param {string} s */
 export const K = (s) => '<span class="kana">' + s + '</span>';

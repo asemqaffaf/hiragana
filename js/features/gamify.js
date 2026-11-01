@@ -3,11 +3,14 @@ import { level, todayText } from '../core/stats.js';
 import { me, state } from '../core/store.js';
 import { awardBadges, recordStudyTime } from '../core/progress.js';
 import { ui } from '../core/ui-state.js';
-import { A46, DAK25, ROWS, YOON33 } from '../data/letters.js';
+import { A46, DAK25, ROWS, YOON33, kanaOf } from '../data/letters.js';
 import { t } from '../i18n/core.js';
-import { $, addDays } from '../util.js';
+import { $, addDays, valuesOf } from '../util.js';
 
+/** @type {readonly import('../../types/app').TextKey[]} */
+const LEVEL_KEYS = ['lvl.1', 'lvl.2', 'lvl.3', 'lvl.4', 'lvl.5', 'lvl.6', 'lvl.7', 'lvl.8', 'lvl.9', 'lvl.10'];
 const LEVEL_KANJI = ['芽', '葉', '苗', '若', '木', '林', '森', '山', '頂', '師'];
+/** @type {import('../../types/app').Badge[]} */
 export const BADGES = [
   { id: 'first', k: '初', ok: (c) => c.ans >= 1 },
   { id: 'hear', k: '聴', ok: (c) => c.heard >= 50 },
@@ -24,13 +27,15 @@ export const BADGES = [
   { id: 'yoon', k: '拗', ok: (c) => c.sYoon >= 33 },
   { id: 'plan', k: '終', ok: (c) => c.planDone },
 ];
+/** @param {import('../../types/app').Progress['act']} act */
 function longestStreak(act) {
   const ds = Object.keys(act)
-    .filter((d) => act[d] > 0)
+    .filter((d) => (act[d] ?? 0) > 0)
     .sort();
   let best = 0,
-    run = 0,
-    prev = null;
+    run = 0;
+  /** @type {string | null} */
+  let prev = null;
   ds.forEach((d) => {
     run = prev && addDays(prev, 1) === d ? run + 1 : 1;
     best = Math.max(best, run);
@@ -38,20 +43,22 @@ function longestStreak(act) {
   });
   return best;
 }
+/** @returns {import('../../types/app').ProgressContext} */
 export function progressCtx() {
+  /** @param {string[]} list */
   const solid = (list) => list.filter((k) => level(k) === 'solid').length;
   let ans = 0,
     clean = 0,
     writes = 0,
     heard = 0;
-  Object.values(state.stats).forEach((s) => {
+  valuesOf(state.stats).forEach((s) => {
     ans += s.c + s.w;
   });
-  Object.values(state.ws).forEach((w) => {
+  valuesOf(state.ws).forEach((w) => {
     writes += w.n;
     clean += w.p;
   });
-  Object.values(state.heard || {}).forEach((n) => {
+  valuesOf(state.heard).forEach((n) => {
     heard += n;
   });
   const cl = state.cl || {},
@@ -63,7 +70,7 @@ export function progressCtx() {
     heard,
     nCl: Object.keys(cl).length,
     clA46: A46.filter((k) => cl[k]).length,
-    rowDone: ROWS.some((r) => r.kana.filter(Boolean).every((k) => cl[k])),
+    rowDone: ROWS.some((r) => kanaOf(r).every((k) => cl[k])),
     longest: longestStreak(state.act),
     r90: (state.rounds || []).some((r) => r.n >= 10 && r.p >= 90),
     r100: (state.rounds || []).some((r) => r.n >= 10 && r.p >= 100),
@@ -73,9 +80,10 @@ export function progressCtx() {
     planDone: Array.from({ length: L }, (_, i) => i + 1).every((d) => state.done[d]),
   };
 }
+/** @param {import('../../types/app').ProgressContext} c */
 export function xpOf(c) {
   let correct = 0;
-  Object.values(state.stats).forEach((s) => {
+  valuesOf(state.stats).forEach((s) => {
     correct += s.c;
   });
   const good = (state.rounds || []).filter((r) => r.n >= 10 && r.p >= 90).length;
@@ -88,12 +96,15 @@ export function xpOf(c) {
     good * 15
   );
 }
+/** @param {number} xp */
 export function levelOf(xp) {
   let n = 1;
   while (n < 10 && xp >= 25 * n * (n + 1)) n++;
   return { n, from: 25 * (n - 1) * n, to: n < 10 ? 25 * n * (n + 1) : null };
 }
-export const levelName = (n) => LEVEL_KANJI[n - 1] + ' ' + t('lvl.' + n);
+/** @param {number} n a level, 1 to 10 */
+export const levelName = (n) => LEVEL_KANJI[n - 1] + ' ' + t(LEVEL_KEYS[n - 1]);
+/** Awards badges that were earned and announces them. @param {boolean} silent */
 export function checkBadges(silent) {
   if (!me()) return;
   const c = progressCtx();
@@ -102,7 +113,7 @@ export function checkBadges(silent) {
   awardBadges(fresh.map((b) => b.id));
   if (!silent) {
     fresh.forEach((b, i) =>
-      setTimeout(() => toast(b.k, t('toast.badge', { name: t('b.' + b.id) })), i * 1800),
+      setTimeout(() => toast(b.k, t('toast.badge', { name: t(`b.${b.id}`) })), i * 1800),
     );
     if (ui.lastLevel && lv > ui.lastLevel)
       setTimeout(
@@ -112,7 +123,9 @@ export function checkBadges(silent) {
   }
   ui.lastLevel = lv;
 }
-let toastT = null;
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let toastT;
+/** @param {string} mark @param {string} text */
 function toast(mark, text) {
   let el = $('#toast');
   if (!el) {
@@ -123,7 +136,7 @@ function toast(mark, text) {
     document.body.appendChild(el);
   }
   el.innerHTML = '<span class="tk">' + mark + '</span><span></span>';
-  el.lastChild.textContent = text;
+  if (el.lastChild) el.lastChild.textContent = text;
   el.className = 'show';
   clearTimeout(toastT);
   toastT = setTimeout(() => {

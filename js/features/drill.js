@@ -17,18 +17,27 @@ import {
   R,
   ROWS,
   YOON33,
+  kanaOf,
   rom,
 } from '../data/letters.js';
 import { recordLessonQuiz } from '../core/lesson.js';
 import { kb } from '../ui/letter-button.js';
 import { K, t } from '../i18n/core.js';
 import { explain } from '../i18n/helpers.js';
-import { $, $$, MARK_SVG, SPEAK_SVG, reduceMotion, shuffle } from '../util.js';
+import { $, $$, MARK_SVG, SPEAK_SVG, must, reduceMotion, shuffle } from '../util.js';
 
+/** @type {readonly import('../../types/app').DrillMode[]} */
+const DRILL_MODES = ['read', 'choose', 'listen'];
+/** @type {readonly (number | 'all')[]} */
+const DRILL_LENGTHS = [10, 20, 40, 'all'];
+
+/** The letter whose romaji was typed, if any. @param {string} v @returns {string | null} */
 const romToKana = (v) => {
   const n = norm(v);
-  return n ? ALL.find((x) => R[x].includes(n)) : null;
+  return (n && ALL.find((x) => R[x].includes(n))) || null;
 };
+/** A set of letters to drill: a named preset, or one row. @typedef {{id: string, lk?: import('../../types/app').TextKey, k?: string, get: () => string[]}} Preset */
+/** @type {Preset[]} */
 const PRESETS = [
   { id: 'today', lk: 'pre.today', get: todayPool },
   { id: 'sofar', lk: 'pre.sofar', get: soFarPool },
@@ -39,13 +48,17 @@ const PRESETS = [
   { id: 'yoon', lk: 'pre.yoon', get: () => YOON33 },
   { id: 'all', lk: 'pre.all', get: () => ALL },
 ];
+/** @type {Preset[]} */
 const ROWPRESETS = [...ROWS, ...DROWS].map((r) => ({
   id: 'row-' + r.id,
-  k: r.kana[0],
-  get: () => r.kana.filter(Boolean),
+  k: kanaOf(r)[0],
+  get: () => kanaOf(r),
 }));
-const presetLabel = (p) => (p.lk ? t(p.lk) : t('pre.row', { k: K(p.k) }));
+/** @param {Preset} p */
+const presetLabel = (p) => (p.lk ? t(p.lk) : t('pre.row', { k: K(p.k ?? '') }));
+/** The letters selected for a new round, in chart order. */
 function drillPool() {
+  /** @type {string[]} */
   let out = [];
   [...PRESETS, ...ROWPRESETS].forEach((p) => {
     if (ui.drillSel.has(p.id)) out = out.concat(p.get());
@@ -54,9 +67,11 @@ function drillPool() {
   if (ui.drillMode !== 'read') out = out.filter((k) => !NOSOUNDQ.includes(k));
   return out;
 }
+/** Draws `n` letters without repeats, favouring the ones that need practice. @param {string[]} pool @param {number} n */
 function wsample(pool, n) {
-  const arr = pool.slice(),
-    out = [];
+  const arr = pool.slice();
+  /** @type {string[]} */
+  const out = [];
   while (out.length < n && arr.length) {
     const tot = arr.reduce((a, k) => a + weight(k), 0);
     let r = Math.random() * tot,
@@ -69,7 +84,9 @@ function wsample(pool, n) {
   }
   return out;
 }
+/** @param {string[]} pool @param {number} n @returns {import('../../types/app').DrillQuestion[]} */
 function buildSeq(pool, n) {
+  /** @type {string[]} */
   let seq;
   if (n <= pool.length) seq = wsample(pool, n);
   else {
@@ -83,11 +100,12 @@ function buildSeq(pool, n) {
   return seq.map((k) => ({ k, retry: false }));
 }
 export function renderDrill() {
-  const root = $('#tab-drill');
+  const root = must('#tab-drill');
   if (!ui.session) return renderSetup(root);
-  if (ui.session.done) return renderResults(root);
-  renderQuestion(root);
+  if (ui.session.done) return renderResults(root, ui.session);
+  renderQuestion(root, ui.session);
 }
+/** @param {HTMLElement} root */
 function renderSetup(root) {
   const pool = drillPool();
   const n = ui.drillLen === 'all' ? pool.length : ui.drillLen;
@@ -124,7 +142,7 @@ function renderSetup(root) {
     ).join('') +
     '</div></details>';
   h += '<h3>' + t('drill.how') + '</h3><div class="modes">';
-  h += ['read', 'choose', 'listen']
+  h += DRILL_MODES
     .map(
       (id) =>
         '<button class="mode" data-mode="' +
@@ -132,9 +150,9 @@ function renderSetup(root) {
         '" aria-pressed="' +
         (ui.drillMode === id) +
         '"><b>' +
-        t('mode.' + id) +
+        t(`mode.${id}`) +
         '</b><span>' +
-        t('mode.' + id + 'D') +
+        t(`mode.${id}D`) +
         '</span></button>',
     )
     .join('');
@@ -144,7 +162,7 @@ function renderSetup(root) {
     '</h3><div class="seg" role="group" aria-label="' +
     t('drill.questions') +
     '">' +
-    [10, 20, 40, 'all']
+    DRILL_LENGTHS
       .map(
         (x) =>
           '<button data-len="' +
@@ -169,6 +187,7 @@ function renderSetup(root) {
     (b) =>
       (b.onclick = () => {
         const id = b.dataset.sel;
+        if (!id) return;
         if (ui.drillSel.has(id)) ui.drillSel.delete(id);
         else ui.drillSel.add(id);
         renderSetup(root);
@@ -177,19 +196,21 @@ function renderSetup(root) {
   $$('[data-mode]', root).forEach(
     (b) =>
       (b.onclick = () => {
-        ui.drillMode = b.dataset.mode;
+        const mode = DRILL_MODES.find((m) => m === b.dataset.mode);
+        if (mode) ui.drillMode = mode;
         renderSetup(root);
       }),
   );
   $$('[data-len]', root).forEach(
     (b) =>
       (b.onclick = () => {
-        ui.drillLen = b.dataset.len === 'all' ? 'all' : +b.dataset.len;
+        ui.drillLen = b.dataset.len === 'all' ? 'all' : Number(b.dataset.len);
         renderSetup(root);
       }),
   );
-  $('#startDrill', root).onclick = () => startDrill(pool);
+  must('#startDrill', root).onclick = () => startDrill(pool);
 }
+/** Starts a round over some letters. @param {string[]} pool */
 export function startDrill(pool) {
   if (!pool.length) return;
   const n = ui.drillLen === 'all' ? pool.length : ui.drillLen;
@@ -212,8 +233,8 @@ function presentQuestion() {
   const session = ui.session;
   if (session && !session.done && session.mode === 'listen') speak(session.seq[session.i].k);
 }
-function qTop() {
-  const s = ui.session;
+/** The progress bar above a question. @param {import('../../types/app').DrillSession} s */
+function qTop(s) {
   const answered = s.results.length,
     total = s.seq.filter((x) => !x.retry).length;
   const lbl =
@@ -228,9 +249,9 @@ function qTop() {
     '</span></div>'
   );
 }
-function renderQuestion(root) {
-  const s = ui.session,
-    item = s.seq[s.i],
+/** @param {HTMLElement} root @param {import('../../types/app').DrillSession} s */
+function renderQuestion(root, s) {
+  const item = s.seq[s.i],
     k = item.k;
   s.locked = false;
   if (s.mode === 'read') {
@@ -248,13 +269,13 @@ function renderQuestion(root) {
         t('q.check') +
         '</button></div></div><div id="qfb"></div>';
       s.built = true;
-      const inp = $('#qin', root);
+      const inp = must('#qin', root, HTMLInputElement);
       const autoCheck = () => {
         if (s.locked || !ui.session || ui.session !== s) return;
-        if (isRight(s.seq[s.i].k, inp.value)) answer(true, inp.value);
+        if (isRight(s.seq[s.i].k, inp.value)) answer(s, true, inp.value);
       };
       inp.addEventListener('input', (e) => {
-        if (e.isComposing) return;
+        if (e instanceof InputEvent && e.isComposing) return;
         autoCheck();
       });
       inp.addEventListener('compositionend', autoCheck);
@@ -266,43 +287,43 @@ function renderQuestion(root) {
           if (nb) nb.click();
           return;
         }
-        if (inp.value.trim()) answer(isRight(s.seq[s.i].k, inp.value), inp.value);
+        if (inp.value.trim()) answer(s, isRight(s.seq[s.i].k, inp.value), inp.value);
       });
-      $('#qCheck', root).onclick = () => {
+      must('#qCheck', root).onclick = () => {
         if (s.locked) return;
         const v = inp.value;
         if (!v.trim()) {
           inp.focus();
           return;
         }
-        answer(isRight(s.seq[s.i].k, v), v);
+        answer(s, isRight(s.seq[s.i].k, v), v);
       };
-      $('#qGive', root).onclick = () => {
-        if (!s.locked) answer(false, '');
+      must('#qGive', root).onclick = () => {
+        if (!s.locked) answer(s, false, '');
       };
     }
-    $('#qtopWrap', root).innerHTML = qTop();
-    $('#qEnd', root).onclick = endSession;
-    const qsq = $('#qsq', root);
+    must('#qtopWrap', root).innerHTML = qTop(s);
+    must('#qEnd', root).onclick = endSession;
+    const qsq = must('#qsq', root);
     const isTwo = k.length === 2;
-    $('#qk', root).textContent = k;
-    replay($('#qk', root), 'flip');
+    must('#qk', root).textContent = k;
+    replay(must('#qk', root), 'flip');
     qsq.classList.toggle('yo', isTwo);
-    $('.mark', qsq).setAttribute('class', 'mark');
-    $('#qflash', root).textContent = '';
-    $('#qfb', root).innerHTML = '';
-    const inp = $('#qin', root);
+    must('.mark', qsq, SVGElement).setAttribute('class', 'mark');
+    must('#qflash', root).textContent = '';
+    must('#qfb', root).innerHTML = '';
+    const inp = must('#qin', root, HTMLInputElement);
     inp.value = '';
     inp.disabled = false;
-    $('#qCheck', root).disabled = false;
-    $('#qGive', root).disabled = false;
+    must('#qCheck', root, HTMLButtonElement).disabled = false;
+    must('#qGive', root, HTMLButtonElement).disabled = false;
     if (document.activeElement !== inp && !matchMedia('(pointer: coarse)').matches) inp.focus();
     s.t0 = performance.now();
     return;
   }
   s.built = false;
   const choices = shuffle([k, ...distractors(k, 3, s.pool)]);
-  let h = qTop();
+  let h = qTop(s);
   if (s.mode === 'choose') h += '<div class="prompt">' + rom(k) + '</div>';
   else
     h +=
@@ -327,35 +348,43 @@ function renderQuestion(root) {
       .join('') +
     '</div><div id="qfb"></div>';
   root.innerHTML = h;
-  $('#qEnd', root).onclick = endSession;
+  must('#qEnd', root).onclick = endSession;
   $$('[data-pick]', root).forEach(
     (b) =>
       (b.onclick = () => {
-        if (!s.locked) answer(b.dataset.pick === k, b.dataset.pick, b);
+        if (!s.locked && b.dataset.pick) answer(s, b.dataset.pick === k, b.dataset.pick, b);
       }),
   );
-  if (s.mode === 'listen') $('#qPlay', root).onclick = () => speak(k);
+  if (s.mode === 'listen') must('#qPlay', root).onclick = () => speak(k);
   s.t0 = performance.now();
 }
+/** Lowercase letters only: what a typed romaji answer is compared on. @param {string} [v] */
 function norm(v) {
   return (v || '')
     .normalize('NFKC')
     .toLowerCase()
     .replace(/[^a-z]/g, '');
 }
+/** @param {string} s */
 const toHira = (s) =>
-  s.replace(/[\u30a1-\u30f6]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+  s.replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+/** Other letters that are read the same, accepted when typed as kana. @type {Record<string, string[]>} */
 const KANA_ALT = { を: ['お'], ぢ: ['じ'], づ: ['ず'] };
+/** Whether a typed answer (romaji or kana) is right for a letter. @param {string} k @param {string} v */
 function isRight(k, v) {
   const n = norm(v);
   if (n && R[k].includes(n)) return true;
   const h = toHira((v || '').normalize('NFKC').replace(/\s/g, ''));
   return h === k || (KANA_ALT[k] || []).includes(h);
 }
+/** Wrong choices for a multiple-choice question: look-alikes first, then letters from the same group. @param {string} k @param {number} n @param {string[]} pool */
 function distractors(k, n, pool) {
+  /** @type {string[]} */
   const out = [];
+  /** @param {string} x */
   const bad = (x) =>
     !x || x === k || out.includes(x) || NOSOUNDQ.includes(x) || !R[x] || R[x][0] === R[k][0];
+  /** @param {string} x */
   const push = (x) => {
     if (!bad(x)) out.push(x);
   };
@@ -371,11 +400,17 @@ function distractors(k, n, pool) {
   });
   return out.slice(0, n);
 }
-function answer(ok, given, btn) {
-  const s = ui.session,
-    item = s.seq[s.i],
+/**
+ * Records an answer and shows the feedback.
+ * @param {import('../../types/app').DrillSession} s
+ * @param {boolean} ok
+ * @param {string} given what was typed or picked
+ * @param {HTMLElement} [btn] the picked choice, in the multiple-choice modes
+ */
+function answer(s, ok, given, btn) {
+  const item = s.seq[s.i],
     k = item.k,
-    root = $('#tab-drill');
+    root = must('#tab-drill');
   s.locked = true;
   const ms = performance.now() - s.t0;
   recordAnswer(k, ok, ms, s.mode === 'read' ? romToKana(given) : given);
@@ -386,29 +421,29 @@ function answer(ok, given, btn) {
     if (!ahead) s.seq.splice(Math.min(s.i + 3, s.seq.length), 0, { k, retry: true });
   }
   if (s.mode === 'read') {
-    const mark = $('#qsq .mark', root);
+    const mark = must('#qsq .mark', root, SVGElement);
     mark.setAttribute('class', 'mark ' + (ok ? 'ok' : 'no'));
     if (ok) {
-      $('#qflash', root).textContent = rom(k);
+      must('#qflash', root).textContent = rom(k);
       setTimeout(nextQ, reduceMotion ? 450 : 700);
       return;
     }
-    $('#qin', root).disabled = true;
-    $('#qCheck', root).disabled = true;
-    $('#qGive', root).disabled = true;
-  } else {
-    const correctBtn = $('[data-pick="' + k + '"]', root);
+    must('#qin', root, HTMLInputElement).disabled = true;
+    must('#qCheck', root, HTMLButtonElement).disabled = true;
+    must('#qGive', root, HTMLButtonElement).disabled = true;
+  } else if (btn) {
+    const correctBtn = must('[data-pick="' + k + '"]', root);
     if (ok) {
-      $('.mark', btn).setAttribute('class', 'mark ok');
+      must('.mark', btn, SVGElement).setAttribute('class', 'mark ok');
       if (s.mode === 'choose') speak(k);
       setTimeout(nextQ, reduceMotion ? 450 : 750);
       return;
     }
-    $('.mark', btn).setAttribute('class', 'mark no');
-    $('.mark', correctBtn).setAttribute('class', 'mark ok');
+    must('.mark', btn, SVGElement).setAttribute('class', 'mark no');
+    must('.mark', correctBtn, SVGElement).setAttribute('class', 'mark ok');
     speak(k);
   }
-  const fb = $('#qfb', root);
+  const fb = must('#qfb', root);
   fb.innerHTML =
     '<div class="fb" role="status"><div class="ans">' +
     t('q.is', { k, r: rom(k) }) +
@@ -418,15 +453,15 @@ function answer(ok, given, btn) {
     t('next') +
     '</button></div>';
   if (s.mode === 'read' && (given || '').trim())
-    $('#fbGiven', fb).textContent = t('q.typed', { v: given.trim() });
+    must('#fbGiven', fb).textContent = t('q.typed', { v: given.trim() });
   else if (s.mode !== 'read' && given)
-    $('#fbGiven', fb).textContent = t('q.picked', { k: given, r: rom(given) });
-  $('#qNext', fb).onclick = () => {
+    must('#fbGiven', fb).textContent = t('q.picked', { k: given, r: rom(given) });
+  must('#qNext', fb).onclick = () => {
     nextQ();
     const inp = $('#qin');
     if (inp) inp.focus();
   };
-  const nb = $('#qNext', fb);
+  const nb = must('#qNext', fb);
   nb.focus({ preventScroll: true });
   nb.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
 }
@@ -462,9 +497,26 @@ function finishSession() {
   if (ui.lessonQuiz) recordLessonQuiz(percent);
 }
 
-function renderResults(root) {
-  const s = ui.session,
-    r = s.results;
+/** Begins a round over the letters of the last one that were missed, or over the same letters again. @param {import('../../types/app').DrillSession} s @param {string[]} pool */
+function startMissRound(s, pool) {
+  ui.session = {
+    pool,
+    src: 'miss',
+    mode: s.mode,
+    seq: buildSeq(pool, Math.max(pool.length * 3, 6)),
+    i: 0,
+    results: [],
+    misses: [],
+    built: false,
+    locked: false,
+    t0: 0,
+  };
+  presentQuestion();
+}
+
+/** @param {HTMLElement} root @param {import('../../types/app').DrillSession} s */
+function renderResults(root, s) {
+  const r = s.results;
   const right = r.filter((x) => x.ok).length,
     pct = r.length ? Math.round((right / r.length) * 100) : 0;
   const okTimes = r.filter((x) => x.ok).map((x) => x.ms);
@@ -511,46 +563,17 @@ function renderResults(root) {
       '</button></div>';
   root.innerHTML = h;
   const miss = $('#rMiss', root);
-  if (miss)
-    miss.onclick = () => {
-      const pool = s.misses.slice();
-      ui.session = {
-        pool,
-        src: 'miss',
-        mode: s.mode,
-        seq: buildSeq(pool, Math.max(pool.length * 3, 6)),
-        i: 0,
-        results: [],
-        misses: [],
-        built: false,
-        locked: false,
-        t0: 0,
-      };
-      presentQuestion();
-    };
-  $('#rAgain', root).onclick = () => {
+  if (miss) miss.onclick = () => startMissRound(s, s.misses.slice());
+  must('#rAgain', root).onclick = () => {
     if (s.src === 'miss') {
-      const pool = s.pool.slice();
-      ui.session = {
-        pool,
-        src: 'miss',
-        mode: s.mode,
-        seq: buildSeq(pool, Math.max(pool.length * 3, 6)),
-        i: 0,
-        results: [],
-        misses: [],
-        built: false,
-        locked: false,
-        t0: 0,
-      };
-      presentQuestion();
+      startMissRound(s, s.pool.slice());
       return;
     }
     const pool = drillPool();
     ui.session = null;
     startDrill(pool.length ? pool : s.pool);
   };
-  $('#rSetup', root).onclick = () => {
+  must('#rSetup', root).onclick = () => {
     ui.session = null;
     ui.lessonQuiz = false;
     renderDrill();
@@ -562,7 +585,7 @@ function renderResults(root) {
       ui.session = null;
       showTab('plan');
     };
-  const rd = $('#rDone', root);
+  const rd = $('#rDone', root, HTMLButtonElement);
   if (rd)
     rd.onclick = () => {
       setDayComplete(day, true);

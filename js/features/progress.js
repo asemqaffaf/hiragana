@@ -5,28 +5,31 @@ import { A46, ALL, DAK25, YOON33, rom } from '../data/letters.js';
 import { isComplete } from '../core/progress.js';
 import { t } from '../i18n/core.js';
 import { fmt } from '../i18n/helpers.js';
-import { $, addDays, esc, todayISO } from '../util.js';
+import { addDays, esc, must, todayISO, valuesOf } from '../util.js';
 
 /* ---------- progress and roadmap ---------- */
 export function renderProgress() {
   const p = me();
   if (!p) return;
+  /** @type {Record<import('../../types/app').LetterLevel, number>} */
   const lv = { solid: 0, learning: 0, new: 0 };
   ALL.forEach((k) => lv[level(k)]++);
   let ans = 0,
     right = 0,
     wp = 0;
-  Object.values(state.stats).forEach((s) => {
+  valuesOf(state.stats).forEach((s) => {
     ans += s.c + s.w;
     right += s.c;
   });
-  Object.values(state.ws).forEach((w) => {
+  valuesOf(state.ws).forEach((w) => {
     wp += w.p;
   });
   const days = Object.keys(state.act).length,
     streak = streakOf(state.act),
     today = dayNumber();
+  /** @param {string[]} list */
   const solidIn = (list) => list.filter((k) => level(k) === 'solid').length;
+  /** @param {string[]} list */
   const seenIn = (list) => list.filter((k) => level(k) !== 'new').length;
   let h =
     '<h2>' +
@@ -49,7 +52,9 @@ export function renderProgress() {
     tiles.map((x) => '<div><b>' + x[0] + '</b><span>' + x[1] + '</span></div>').join('') +
     '</div>';
   /* roadmap */
-  const ms = [
+  /** Milestones measured in letters carry their own count; the others count plan days done. */
+  /** @type {{k: 'm1' | 'm2' | 'm3' | 'm4' | 'm5' | 'm6', b: number[], v?: number, m?: number, sub?: import('../../types/app').TextKey}[]} */
+  const milestones = [
     { k: 'm1', b: [1, 2, 3, 4, 5], v: seenIn(A46), m: 46, sub: 'rm.m1d' },
     { k: 'm2', b: [6, 7], v: solidIn(A46), m: 46, sub: 'rm.solidD' },
     { k: 'm3', b: [8], v: solidIn(DAK25), m: 25, sub: 'rm.solidD' },
@@ -57,14 +62,12 @@ export function renderProgress() {
     { k: 'm5', b: [10, 11, 12] },
     { k: 'm6', b: [13, 14] },
   ];
-  ms.forEach((x) => {
+  const ms = milestones.map((x) => {
     const pd = planDaysFor(x.b);
-    x.d = pd.length > 1 ? pd[0] + '-' + pd[pd.length - 1] : String(pd[0]);
-    if (x.v === undefined) {
-      x.v = pd.filter((dn) => state.done[dn]).length;
-      x.m = pd.length;
-      x.sub = 'rm.daysDone';
-    }
+    const d = pd.length > 1 ? pd[0] + '-' + pd[pd.length - 1] : String(pd[0]);
+    if (x.v !== undefined && x.m !== undefined && x.sub)
+      return { k: x.k, d, v: x.v, m: x.m, sub: x.sub };
+    return { k: x.k, d, v: pd.filter((dn) => state.done[dn]).length, m: pd.length, sub: /** @type {import('../../types/app').TextKey} */ ('rm.daysDone') };
   });
   let cur = ms.findIndex((x) => x.v < x.m);
   h +=
@@ -85,7 +88,7 @@ export function renderProgress() {
         : '') +
       '</span><div class="rbody">' +
       '<div class="rhead"><b>' +
-      t('rm.' + x.k) +
+      t(`rm.${x.k}`) +
       '</b><span class="small muted">' +
       t(x.d.includes('-') ? 'rm.days' : 'rm.day', { d: x.d }) +
       '</span></div>' +
@@ -117,30 +120,30 @@ export function renderProgress() {
   if (rs !== 'all')
     h +=
       '<li class="later"><span class="node" aria-hidden="true"></span><div class="rbody"><div class="rhead"><b>' +
-      t(rs === 'jlpt' ? 'rm.n5' : 'rm.goal.' + rs) +
+      t(rs === 'jlpt' ? 'rm.n5' : `rm.goal.${rs}`) +
       '</b><span class="small muted">' +
-      t('goal.reason.' + rs) +
+      t(`goal.reason.${rs}`) +
       '</span></div><p class="small muted">' +
-      t(rs === 'jlpt' ? 'rm.n5D' : 'rm.goalD.' + rs) +
+      t(rs === 'jlpt' ? 'rm.n5D' : `rm.goalD.${rs}`) +
       '</p></div></li>';
   h += '</ol>';
   /* every character, by mastery */
   h += '<h3>' + t('pg.map') + '</h3><p class="small muted">' + t('pg.mapIntro') + '</p>';
   h +=
     '<div class="legend">' +
-    ['solid', 'learning', 'new']
-      .map((l) => '<span><i class="lv-' + l + '"></i>' + t('lv.' + l) + ' (' + lv[l] + ')</span>')
+    /** @type {import('../../types/app').LetterLevel[]} */ (['solid', 'learning', 'new'])
+      .map((l) => '<span><i class="lv-' + l + '"></i>' + t(`lv.${l}`) + ' (' + lv[l] + ')</span>')
       .join('') +
     '<span><i class="lv-cl"></i>' +
     t('cl.done') +
     ' (' +
     nCl +
     ')</span></div>';
-  [
+  /** @type {[string, string[]][]} */ ([
     [t('chart.basic'), A46],
     [t('chart.dak'), DAK25],
     [t('chart.yoon'), YOON33],
-  ].forEach(([title, list]) => {
+  ]).forEach(([title, list]) => {
     h +=
       '<p class="small mapt">' +
       title +
@@ -160,7 +163,7 @@ export function renderProgress() {
             ' ' +
             rom(k) +
             ': ' +
-            t('lv.' + level(k)) +
+            t(`lv.${level(k)}`) +
             '">' +
             k +
             '</button>',
@@ -169,13 +172,15 @@ export function renderProgress() {
       '</div>';
   });
   /* last 28 days */
-  const start = addDays(todayISO(), -27),
-    cells = [];
+  const start = addDays(todayISO(), -27);
+  /** @type {{d: string, n: number}[]} */
+  const cells = [];
   for (let i = 0; i < 28; i++) {
     const d = addDays(start, i),
       n = state.act[d] || 0;
     cells.push({ d, n });
   }
+  /** @param {number} n */
   const lvl = (n) => (n === 0 ? 0 : n < 10 ? 1 : n < 30 ? 2 : n < 60 ? 3 : 4);
   h +=
     '<h3>' +
@@ -231,5 +236,5 @@ export function renderProgress() {
       '</div>';
     h += '<p class="small muted">' + t('pg.roundsNote') + '</p>';
   }
-  $('#tab-progress').innerHTML = h;
+  must('#tab-progress').innerHTML = h;
 }

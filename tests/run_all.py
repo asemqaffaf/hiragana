@@ -23,6 +23,15 @@ SUITES = (
 )
 
 
+def check_types():
+    """Type-check the app (JSDoc + tsc --noEmit); TypeScript is a development dependency only."""
+    tsc = ROOT / 'node_modules' / 'typescript' / 'bin' / 'tsc'
+    if not tsc.exists():
+        sys.exit('TypeScript is not installed. Run: npm install')
+    subprocess.run(['node', str(tsc), '-p', 'jsconfig.json'], check=True)
+    print('PASS types: tsc --strict reported no errors', flush=True)
+
+
 def report_errors(value, path='report'):
     errors = []
     if isinstance(value, dict):
@@ -75,6 +84,7 @@ def main():
         parser.error('Unknown suites or invalid job count: ' + ', '.join(sorted(unknown)))
     os.chdir(ROOT)
     check_architecture()
+    check_types()
     subprocess.run(['node', '--test', 'tests/core.test.mjs', 'tests/i18n.test.mjs'], check=True)
     subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', 'tests', '-p', '*_test.py'], check=True)
     subprocess.run(['node', 'scripts/check-locales.mjs'], check=True)

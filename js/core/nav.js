@@ -4,11 +4,12 @@ import { enterPage } from './pages.js';
 import { moveThumb } from '../ui/thumb.js';
 import { t } from '../i18n/core.js';
 import { closeSheet } from '../ui/sheet-state.js';
-import { $, $$ } from '../util.js';
+import { $, $$, must } from '../util.js';
 
 /* ---------- tabs and back navigation ---------- */
 /* Each tab change is a browser history entry (#plan, #write ...), so the phone's back gesture moves between
    pages. An open card (sheet) is its own entry, so back closes the card first. */
+/** @type {readonly import('../../types/app').TabName[]} */
 export const TABS = [
   'plan',
   'meet',
@@ -21,6 +22,7 @@ export const TABS = [
   'phrases',
   'profile',
 ];
+/** @type {Record<import('../../types/app').TabName, import('../../types/app').NavGroup>} */
 const GROUP = {
   plan: 'home',
   meet: 'home',
@@ -33,23 +35,28 @@ const GROUP = {
   progress: 'progress',
   profile: 'profile',
 };
+/** Pages shown as a segmented control under the top bar. @type {Record<'practice', readonly import('../../types/app').TabName[]>} */
 const SUBTABS = { practice: ['drill', 'write', 'read', 'phrases'] };
-let lastSub = { practice: 'drill' };
+/** The page each group opens when its tab is tapped. @type {Record<'practice', import('../../types/app').TabName>} */
+const lastSub = { practice: 'drill' };
+/** @param {unknown} name @returns {name is import('../../types/app').TabName} */
+export const isTab = (name) => typeof name === 'string' && TABS.some((tab) => tab === name);
+/** @param {import('../../types/app').TabName} name */
 function renderSubnav(name) {
   const el = $('#subnav'),
-    g = GROUP[name],
-    subs = SUBTABS[g];
+    g = GROUP[name];
   if (!el) return;
-  if (!subs || document.body.classList.contains('signed-out')) {
+  if (g !== 'practice' || document.body.classList.contains('signed-out')) {
     el.hidden = true;
     el.innerHTML = '';
     return;
   }
+  const subs = SUBTABS[g];
   lastSub[g] = name;
   el.hidden = false;
   el.innerHTML =
     '<div class="seg" role="tablist" aria-label="' +
-    t('nav.' + g) +
+    t(`nav.${g}`) +
     '">' +
     subs
       .map(
@@ -61,7 +68,7 @@ function renderSubnav(name) {
           '" aria-pressed="' +
           (s === name) +
           '">' +
-          t('tab.' + s) +
+          t(`tab.${s}`) +
           '</button>',
       )
       .join('') +
@@ -70,12 +77,14 @@ function renderSubnav(name) {
   $$('[data-sub]', el).forEach(
     (b) =>
       (b.onclick = () => {
-        if (b.dataset.sub !== ui.currentTab)
-          showTab(b.dataset.sub, { root: ui.rootView, letter: carryLetter(b.dataset.sub) });
+        const sub = b.dataset.sub;
+        if (isTab(sub) && sub !== ui.currentTab)
+          showTab(sub, { root: ui.rootView, letter: carryLetter(sub) });
       }),
   );
 }
 /* The letter that Words and Phrases follow: from Write it is the letter being written, and between Words and Phrases it stays while the page is filtered */
+/** @param {import('../../types/app').TabName} to */
 function carryLetter(to) {
   if (to !== 'phrases' && to !== 'read') return undefined;
   if (ui.currentTab === 'write') return ui.writeK || undefined;
@@ -83,14 +92,18 @@ function carryLetter(to) {
   if (ui.currentTab === 'phrases') return ui.phFilter || undefined;
   return undefined;
 }
+/** @param {{tab: import('../../types/app').TabName, sheet?: boolean}} st @param {boolean} [replace] */
 function setHist(st, replace) {
   try {
     history[replace ? 'replaceState' : 'pushState'](st, '', '#' + st.tab);
   } catch (e) {}
 }
-export function showTab(name, opts) {
-  opts = opts || {};
-  if (!TABS.includes(name)) name = 'plan';
+/**
+ * @param {string} requested a tab name; anything unknown opens Today
+ * @param {import('../../types/app').ShowTabOptions} [opts]
+ */
+export function showTab(requested, opts = {}) {
+  const name = isTab(requested) ? requested : 'plan';
   if (opts.initial) {
     ui.navStack = [];
     setHist({ tab: name }, true);
@@ -137,16 +150,16 @@ export function renderBack() {
   if (!bar) return;
   /* always there, except on Today (the home page) and the login screen */
   bar.hidden = ui.currentTab === 'plan' || document.body.classList.contains('signed-out');
-  const page = t('tab.' + (prev && prev !== ui.currentTab ? prev : 'plan')),
-    lab = $('#backLabel');
+  const page = t(`tab.${prev && prev !== ui.currentTab ? prev : 'plan'}`),
+    lab = must('#backLabel');
   /* the capsule shows where Back goes; the full sentence is its accessible name */
-  $('#backBtn').setAttribute('aria-label', t('backTo', { page }));
+  must('#backBtn').setAttribute('aria-label', t('backTo', { page }));
   if (lab.textContent !== page) {
     lab.textContent = page;
     if (!bar.hidden) replay(lab, 'swap');
   }
 }
-$('#backBtn').addEventListener('click', () => {
+must('#backBtn').addEventListener('click', () => {
   if (ui.navStack.length) history.back();
   else showTab('plan');
 });
@@ -154,14 +167,14 @@ window.addEventListener('popstate', (e) => {
   if (document.body.classList.contains('signed-out')) return;
   if (ui.sheetPushed) {
     ui.sheetPushed = false;
-    if ($('#sheetRoot').innerHTML) {
+    if (must('#sheetRoot').innerHTML) {
       closeSheet('pop');
       return;
     }
   }
   const st = e.state || {},
     h = location.hash.slice(1);
-  const tab = TABS.includes(st.tab) ? st.tab : TABS.includes(h) ? h : 'plan';
+  const tab = isTab(st.tab) ? st.tab : isTab(h) ? h : 'plan';
   if (tab === ui.currentTab) return;
   if (ui.navStack[ui.navStack.length - 1] === tab) ui.navStack.pop();
   else ui.navStack.push(ui.currentTab);
@@ -176,6 +189,7 @@ export function markSheetOpen() {
 /* A tap on the tab bar answers at once (the highlight glides straight to it). The page behind it is drawn on the next
    frame, and when several taps come quickly only the last one is drawn, so the bar never waits for pages nobody looks at. */
 let tabTap = 0;
+/** @param {string} group */
 const markTabs = (group) => {
   $$('nav.tabs button').forEach((x) =>
     x.setAttribute('aria-selected', x.dataset.nav === group ? 'true' : 'false'),
@@ -184,15 +198,15 @@ const markTabs = (group) => {
 };
 $$('nav.tabs button').forEach((b) =>
   b.addEventListener('click', () => {
-    const g = b.dataset.nav,
+    const g = b.dataset.nav ?? '',
       target =
-        g === 'home'
-          ? 'plan'
-          : g === 'letters'
-            ? 'chart'
-            : g === 'progress'
-              ? 'progress'
-              : lastSub[g],
+        g === 'letters'
+          ? 'chart'
+          : g === 'progress'
+            ? 'progress'
+            : g === 'practice'
+              ? lastSub.practice
+              : 'plan',
       id = ++tabTap;
     if (target === ui.currentTab) {
       markTabs(GROUP[ui.currentTab]);

@@ -2,6 +2,7 @@ import { t } from '../i18n/core.js';
 import { meanOf } from '../i18n/helpers.js';
 import { SPEAK_SVG } from '../util.js';
 
+/** @param {readonly string[]} w @param {string} [cls] @param {string} [meaning] */
 export function wordCard(w, cls, meaning = meanOf(w)) {
   return (
     '<div class="word' +

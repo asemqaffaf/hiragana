@@ -12,9 +12,10 @@ import { wordCard } from '../ui/word-card.js';
 import { dailyCard } from '../ui/daily-card.js';
 import { t } from '../i18n/core.js';
 import { meanOf, phraseTitle } from '../i18n/helpers.js';
-import { $ } from '../util.js';
+import { $, closest, must } from '../util.js';
 
 /* ---------- daily words and phrases ---------- */
+/** @param {string} k */
 function hearDaily(k) {
   speak(k + '|dw');
   if (ui.currentTab === 'daily') recordLessonWord(k);
@@ -35,25 +36,25 @@ export function renderDaily() {
     '<div class="btnrow meetnav actionbar"><button class="btn primary" id="dDone">' +
     t('daily.done') +
     '</button></div>';
-  const root = $('#tab-daily');
+  const root = must('#tab-daily');
   root.innerHTML = h;
   root.onclick = (e) => {
-    const card = e.target.closest('.dcard'),
-      b = e.target.closest('[data-dw]') || (card && $('[data-dw]', card));
+    const card = closest(e, '.dcard'),
+      b = closest(e, '[data-dw]') || (card && $('[data-dw]', card));
     if (b) {
       flash(card);
-      hearDaily(b.dataset.dw);
-      b.closest('.dcard').classList.add('heard');
+      hearDaily(b.dataset.dw || '');
+      closest(e, '.dcard')?.classList.add('heard');
       const y = lesson(),
         n = list.filter((w) => y.d.includes(w[0])).length;
-      $('#dHeard', root).textContent = t('daily.heard', { n, m: list.length });
-      $('.rbar i', root).style.width = Math.round((n / list.length) * 100) + '%';
+      must('#dHeard', root).textContent = t('daily.heard', { n, m: list.length });
+      must('.rbar i', root).style.width = Math.round((n / list.length) * 100) + '%';
     }
   };
   list.forEach((w, i) => {
     if (x.d.includes(w[0])) root.querySelectorAll('.dcard')[i].classList.add('heard');
   });
-  $('#dDone', root).onclick = () => {
+  must('#dDone', root).onclick = () => {
     completeLessonWords();
     showTab('plan');
   };
@@ -67,10 +68,13 @@ export function renderPhrases() {
       (x) => x.items.length,
     );
     const nHit = hits.reduce((s, x) => s + x.items.length, 0);
-    const seen = new Set(),
-      pool = [];
+    /** @type {Set<string>} */
+    const seen = new Set();
+    /** @type {import('../../types/app').Word[]} */
+    const pool = [];
     if (!nHit) {
       /* no phrase uses it yet: fall back to the words that do */
+      /** @param {string} kana @param {string} ro @param {string} mean */
       const add = (kana, ro, mean) => {
         if (kana.includes(k) && !seen.has(kana)) {
           seen.add(kana);
@@ -131,7 +135,7 @@ export function renderPhrases() {
         t(scoped ? 'ph.goalBar' : 'ph.goalBarAll', {
           n: mine.length,
           m: PHRASES.length,
-          goal: t('goal.reason.' + reason),
+          goal: t(`goal.reason.${reason}`),
         }) +
         '</span><button class="btn' +
         (scoped ? '' : ' primary') +
@@ -152,7 +156,7 @@ export function renderPhrases() {
         '</div>';
     });
   }
-  const root = $('#tab-phrases');
+  const root = must('#tab-phrases');
   root.innerHTML = h;
   const all = $('#phAll', root);
   if (all)
@@ -179,11 +183,11 @@ export function renderPhrases() {
       replay($('.phfilter', root), 'swap');
     };
   root.onclick = (e) => {
-    const c = e.target.closest('[data-word]'),
-      sb = e.target.closest('[data-say]') || (c && $('[data-say]', c));
+    const c = closest(e, '[data-word]'),
+      sb = closest(e, '[data-say]') || (c && $('[data-say]', c));
     if (sb) {
       e.stopPropagation();
-      speak(sb.dataset.say);
+      speak(sb.dataset.say || '');
       flash(c || sb.closest('.word'));
     }
   };

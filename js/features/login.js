@@ -1,4 +1,4 @@
-import { TABS, showTab } from '../core/nav.js';
+import { showTab } from '../core/nav.js';
 import { goalOf } from '../core/plan.js';
 import { renderAll } from '../core/render-all.js';
 import {
@@ -33,9 +33,10 @@ import { avatar, cleanName, nameTaken, swatches } from '../ui/student.js';
 import { LANG, t } from '../i18n/core.js';
 import { fmt } from '../i18n/helpers.js';
 import { closeSheet } from '../ui/sheet-state.js';
-import { $, $$, esc, isoToUTC, todayISO } from '../util.js';
+import { $, $$, esc, isObject, isoToUTC, must, todayISO } from '../util.js';
 
 /* ---------- students: passwordless login and profile ---------- */
+/** @returns {string} */
 function newId() {
   try {
     if (window.crypto && crypto.randomUUID)
@@ -43,12 +44,25 @@ function newId() {
   } catch (e) {}
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 }
+/** @param {import('../../types/app').Progress} s */
 function planDay(s) {
   return Math.floor((isoToUTC(todayISO()) - isoToUTC(s.start)) / 86400000) + 1;
 }
+/**
+ * Checks that a parsed file is a student export from this app.
+ * @param {unknown} d
+ * @returns {{student: import('../../types/app').RawStudent, progress: unknown} | null}
+ */
+function readExport(d) {
+  if (!isObject(d) || d.app !== 'hiragana14' || !d.progress) return null;
+  const student = d.student;
+  if (!isObject(student) || typeof student.name !== 'string') return null;
+  return { student: { ...student, id: '', name: student.name }, progress: d.progress };
+}
+/** One line about a student's place in the plan. @param {import('../../types/app').Progress} s @param {import('../../types/app').Student} sp */
 function summaryOf(s, sp) {
   const n = planDay(s),
-    solid = ALL.filter((k) => ((s.stats[k] || {}).b || 0) >= 4).length;
+    solid = ALL.filter((k) => (s.stats[k]?.b ?? 0) >= 4).length;
   return t('summary', {
     day:
       n < 1
@@ -59,6 +73,7 @@ function summaryOf(s, sp) {
     s: solid,
   });
 }
+/** The student picker and new-student form. */
 export function showLogin() {
   closeSheet('silent');
   ui.navStack = [];
@@ -70,10 +85,10 @@ export function showLogin() {
   $$('.tab').forEach((s) => {
     s.hidden = true;
   });
-  const who = $('#whoBtn');
+  const who = must('#whoBtn');
   who.hidden = true;
   who.innerHTML = '';
-  const root = $('#login');
+  const root = must('#login');
   root.hidden = false;
   const list = students.list.slice().sort((x, y) => (y.last || 0) - (x.last || 0));
   let h = langSeg(LANG, 'langseg');
@@ -144,24 +159,32 @@ export function showLogin() {
         showLogin();
       }),
   );
-  $$('[data-login]', root).forEach((b) => (b.onclick = () => login(b.dataset.login)));
-  $('#newStudent', root).onsubmit = (e) => {
+  $$('[data-login]', root).forEach(
+    (b) =>
+      (b.onclick = () => {
+        if (b.dataset.login) login(b.dataset.login);
+      }),
+  );
+  const nameInput = must('#nsName', root, HTMLInputElement);
+  const levelSelect = must('#nsJl', root, HTMLSelectElement);
+  const paceSelect = must('#nsPace', root, HTMLSelectElement);
+  must('#newStudent', root).onsubmit = (e) => {
     e.preventDefault();
-    const name = cleanName($('#nsName', root).value),
-      msg = $('#nsMsg', root);
-    const color = (root.querySelector('input[name="nsColor"]:checked') || {}).value || COLORS[0];
-    const start = $('#nsStart', root).value;
+    const name = cleanName(nameInput.value),
+      msg = must('#nsMsg', root);
+    const color = $('input[name="nsColor"]:checked', root, HTMLInputElement)?.value || COLORS[0];
+    const start = must('#nsStart', root, HTMLInputElement).value;
     if (!name) {
       msg.textContent = t('err.noName');
-      $('#nsName', root).focus();
+      nameInput.focus();
       return;
     }
     if (nameTaken(name)) {
       msg.textContent = t('err.taken', { name });
-      $('#nsName', root).focus();
+      nameInput.focus();
       return;
     }
-    const age = $('#nsAge', root).value;
+    const age = must('#nsAge', root, HTMLSelectElement).value;
     const p = {
       id: newId(),
       name,
@@ -170,13 +193,13 @@ export function showLogin() {
       last: Date.now(),
       lang: LANG,
       age,
-      jlevel: $('#nsJl', root).value,
+      jlevel: levelSelect.value,
       native: LANG,
       rate: age === 'child' ? 0.75 : 1,
       goal: {
-        pace: +$('#nsPace', root).value,
-        min: +$('#nsMin', root).value,
-        reason: $('#nsReason', root).value,
+        pace: Number(paceSelect.value),
+        min: Number(must('#nsMin', root, HTMLSelectElement).value),
+        reason: must('#nsReason', root, HTMLSelectElement).value,
       },
       av: { t: 'initial', k: 'あ', img: '' },
       theme: deviceTheme(),
@@ -184,24 +207,18 @@ export function showLogin() {
     addStudent(p, { start: ISO.test(start) ? start : todayISO() });
     enterApp();
   };
-  $('#nsJl', root).onchange = (e) => {
-    if (e.target.value === 'all') $('#nsPace', root).value = '7';
+  levelSelect.onchange = () => {
+    if (levelSelect.value === 'all') paceSelect.value = '7';
   };
-  $('#importBtn', root).onclick = () => $('#importFile', root).click();
-  $('#importFile', root).onchange = async (e) => {
-    const f = e.target.files && e.target.files[0];
+  const importFile = must('#importFile', root, HTMLInputElement);
+  must('#importBtn', root).onclick = () => importFile.click();
+  importFile.onchange = async () => {
+    const f = importFile.files && importFile.files[0];
     if (!f) return;
     try {
       if (f.size > 2e6) throw new Error('too big');
-      const d = JSON.parse(await f.text());
-      if (
-        !d ||
-        d.app !== 'hiragana14' ||
-        !d.student ||
-        typeof d.student.name !== 'string' ||
-        !d.progress
-      )
-        throw new Error('not ours');
+      const d = readExport(JSON.parse(await f.text()));
+      if (!d) throw new Error('not ours');
       const base = cleanName(d.student.name) || 'Student';
       let name = base,
         i = 2;
@@ -216,9 +233,10 @@ export function showLogin() {
       showLogin();
     }
   };
-  const first = $('[data-login]', root) || $('#nsName', root);
+  const first = $('[data-login]', root) || nameInput;
   if (first && !matchMedia('(pointer: coarse)').matches) first.focus();
 }
+/** @param {string} id */
 export function login(id) {
   const p = selectStudent(id);
   if (!p) return showLogin();
@@ -226,7 +244,7 @@ export function login(id) {
 }
 export function renderWho() {
   const p = me(),
-    b = $('#whoBtn');
+    b = must('#whoBtn');
   if (!p) {
     b.hidden = true;
     return;
@@ -236,9 +254,11 @@ export function renderWho() {
   b.hidden = false;
 }
 function enterApp() {
-  setLang(me().lang || deviceLang());
+  const student = me();
+  if (!student) return showLogin();
+  setLang(student.lang || deviceLang());
   document.body.classList.remove('signed-out');
-  const root = $('#login');
+  const root = must('#login');
   root.hidden = true;
   root.innerHTML = '';
   ui.session = null;
@@ -249,7 +269,7 @@ function enterApp() {
   ui.chartView = 'basic';
   renderWho();
   applyStudent();
-  const kid = (me() || {}).age === 'child';
+  const kid = student.age === 'child';
   ui.drillLen = kid ? 10 : goalOf().min === 10 ? 10 : 20;
   ui.showRo = kid;
   ui.lastLevel = 0;
@@ -257,8 +277,7 @@ function enterApp() {
   checkBadges(true);
   ui.currentTab = 'plan';
   renderAll();
-  const h = location.hash.slice(1);
-  showTab(TABS.includes(h) ? h : 'plan', { initial: true });
+  showTab(location.hash.slice(1), { initial: true });
 }
 export function switchStudent() {
   clearCurrentStudent();

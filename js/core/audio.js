@@ -7,10 +7,14 @@ import { K, t } from '../i18n/core.js';
 import { exampleMeaning, meanOf } from '../i18n/helpers.js';
 import { $, $$, SPEAK_SVG } from '../util.js';
 
-export let actx = null,
-  htmlAudio = null,
-  htmlOK = true,
-  waSrc = null;
+/** @type {AudioContext | null} */
+export let actx = null;
+/** @type {HTMLAudioElement | null} */
+export let htmlAudio = null;
+export let htmlOK = true;
+/** @type {AudioBufferSourceNode | null} */
+let waSrc = null;
+/** @type {Map<string, AudioBuffer>} */
 const bufCache = new Map();
 /* ---- audio ----
    iPhone rules this is built around:
@@ -47,6 +51,7 @@ function onAudioError() {
   if (key && ++htmlFails >= 4) htmlOK = false;
   if (key) playWA(key);
 }
+/** @type {string | null} */
 let lastKey = null;
 function unlockHtml() {
   if (htmlUnlocked) return;
@@ -73,6 +78,7 @@ function unlockAudio() {
   unlockHtml();
   if (actx && actx.state !== 'running') actx.resume().catch(() => {});
 }
+/** @returns {AudioContext | null} */
 function ensureCtx() {
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!actx && AC) {
@@ -85,8 +91,11 @@ function ensureCtx() {
   return actx;
 }
 /* keep each clip's bytes in memory once fetched: replays then start at once and never wait on the network */
-const blobCache = new Map(),
-  blobPending = new Set();
+/** @type {Map<string, string>} */
+const blobCache = new Map();
+/** @type {Set<string>} */
+const blobPending = new Set();
+/** @param {string} key */
 export function cacheClip(key) {
   if (
     !AUD[key] ||
@@ -99,7 +108,7 @@ export function cacheClip(key) {
     return;
   blobPending.add(key);
   fetch(clipUrl(key))
-    .then((r) => (r.ok ? r.blob() : Promise.reject()))
+    .then((r) => (r.ok ? r.blob() : Promise.reject(new Error('Clip not found'))))
     .then((b) => {
       if (b.size > 1000) blobCache.set(key, URL.createObjectURL(b));
     })
@@ -112,20 +121,27 @@ document.addEventListener('keydown', unlockAudio, true);
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && actx && actx.state !== 'running') actx.resume().catch(() => {});
 });
+/** @param {string} key */
 const clipUrl = (key) => 'audio/' + AUD[key];
+/* the callback form of decodeAudioData is the one older Safari versions support */
+/** @param {AudioContext} ctx @param {ArrayBuffer} data @returns {Promise<AudioBuffer>} */
+const decode = (ctx, data) =>
+  new Promise((resolve, reject) => ctx.decodeAudioData(data, resolve, reject));
+/** @param {string} key */
 async function playWA(key) {
-  if (!ensureCtx()) return;
+  const ctx = ensureCtx();
+  if (!ctx) return;
   const tok = playTok;
   try {
-    if (actx.state !== 'running') {
+    if (ctx.state !== 'running') {
       try {
-        await actx.resume();
+        await ctx.resume();
       } catch (e) {}
     }
     let buf = bufCache.get(key);
     if (!buf) {
       const ab = await (await fetch(clipUrl(key))).arrayBuffer();
-      buf = await new Promise((res, rej) => actx.decodeAudioData(ab, res, rej));
+      buf = await decode(ctx, ab);
       bufCache.set(key, buf);
     }
     if (tok !== playTok) return; /* a newer clip was asked for while this one loaded */
@@ -134,13 +150,14 @@ async function playWA(key) {
         waSrc.stop();
       } catch (e) {}
     }
-    const src = actx.createBufferSource();
+    const src = ctx.createBufferSource();
     src.buffer = buf;
-    src.connect(actx.destination);
+    src.connect(ctx.destination);
     src.start();
     waSrc = src;
   } catch (e) {}
 }
+/** @param {string} key */
 function playClip(key) {
   const tok = ++playTok;
   lastKey = key;
@@ -182,6 +199,7 @@ function playClip(key) {
   }
   playWA(key);
 }
+/** @param {string} text */
 function deviceSpeak(text) {
   if (!('speechSynthesis' in window)) return false;
   try {
@@ -195,9 +213,11 @@ function deviceSpeak(text) {
     return false;
   }
 }
+/** @param {string} t */
 export const hasClip = (t) => !!AUD[t];
-const audioRate = () => (me() && me().rate === 0.75 ? 0.75 : 1);
+const audioRate = () => (me()?.rate === 0.75 ? 0.75 : 1);
 /* Hear buttons: the letter twice, then an example word */
+/** @param {string} k */
 export function speakFull(k) {
   if (AUD[k + '|ex']) {
     recordHeard(k);
@@ -206,6 +226,7 @@ export function speakFull(k) {
   }
   return speak(k);
 }
+/** @param {string} k */
 export function exampleHtml(k) {
   const e = EXAMPLES[k];
   if (!e) return '';
@@ -221,6 +242,7 @@ export function exampleHtml(k) {
     '</p>'
   );
 }
+/** @param {string} k */
 export function moreExHtml(k) {
   const L = EXTRA[k];
   if (!L || !L.length) return '';
@@ -248,23 +270,28 @@ export function moreExHtml(k) {
   );
 }
 /* a quick highlight on whatever box was tapped, so the tap feels answered */
+/** @type {WeakMap<Element, number>} */
+const flashTimers = new WeakMap();
+/** @param {Element | null} el */
 export function flash(el) {
   if (!el) return;
   el.classList.add('playing');
-  clearTimeout(el._pt);
-  el._pt = setTimeout(() => el.classList.remove('playing'), 700);
+  clearTimeout(flashTimers.get(el));
+  flashTimers.set(el, setTimeout(() => el.classList.remove('playing'), 700));
 }
+/** @param {ParentNode} root */
 export function bindSay(root) {
   $$('.morex .mx', root).forEach((r) => {
     const b = $('[data-say]', r);
     if (!b) return;
     r.onclick = (e) => {
       e.stopPropagation();
-      speak(b.dataset.say);
+      speak(b.dataset.say || '');
       flash(r);
     };
   });
 }
+/** @param {string} text */
 export function speak(text) {
   recordHeard(text);
   if (AUD[text]) {

@@ -3,6 +3,7 @@ import { isComplete } from '../core/progress.js';
 import { rom } from '../data/letters.js';
 import { t } from '../i18n/core.js';
 
+/** A letter as a tappable square. @param {string} k @param {string} [cls] @param {boolean} [bar] show the mastery bar */
 export function kb(k, cls, bar) {
   return (
     '<button class="kb' +

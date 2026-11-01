@@ -1,3 +1,4 @@
+/** @type {import('../../types/app').KanaRow[]} */
 export const ROWS = [
   {id:'a', kana:['あ','い','う','え','お']},
   {id:'k', kana:['か','き','く','け','こ']},
@@ -11,6 +12,7 @@ export const ROWS = [
   {id:'w', kana:['わ',null,null,null,'を']},
   {id:'nn', kana:['ん',null,null,null,null]}
 ];
+/** @type {import('../../types/app').VoicedRow[]} */
 export const DROWS = [
   {id:'g', base:'k', kana:['が','ぎ','ぐ','げ','ご']},
   {id:'z', base:'s', kana:['ざ','じ','ず','ぜ','ぞ']},
@@ -18,9 +20,12 @@ export const DROWS = [
   {id:'b', base:'h', kana:['ば','び','ぶ','べ','ぼ']},
   {id:'p', base:'h', kana:['ぱ','ぴ','ぷ','ぺ','ぽ']}
 ];
+/** @type {string[]} */
 export const YBASE = ['き','し','ち','に','ひ','み','り','ぎ','じ','び','ぴ'];
 const SMALL = ['ゃ','ゅ','ょ'];
+/** @type {import('../../types/app').YoonRow[]} */
 export const YROWS = YBASE.map(b => ({id:'y-'+b, base:b, kana:SMALL.map(s => b+s)}));
+/** @type {Record<string, string>} */
 const RTXT = {
   'あ':'a','い':'i','う':'u','え':'e','お':'o',
   'か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko',
@@ -38,8 +43,10 @@ const RTXT = {
   'ば':'ba','び':'bi','ぶ':'bu','べ':'be','ぼ':'bo',
   'ぱ':'pa','ぴ':'pi','ぷ':'pu','ぺ':'pe','ぽ':'po'
 };
+/** Accepted romaji spellings per kana; the first one is shown. @type {Record<string, string[]>} */
 export const R = {};
 for (const k in RTXT) R[k] = RTXT[k].split('|');
+/** @type {Record<string, string[][]>} */
 const YSPECIAL = {
   'し':[['sha','sya'],['shu','syu'],['sho','syo']],
   'ち':[['cha','tya','cya'],['chu','tyu','cyu'],['cho','tyo','cyo']],
@@ -55,12 +62,23 @@ R['ゃ'] = ['ya'];
  R['ゅ'] = ['yu'];
  R['ょ'] = ['yo'];
  R['っ'] = ['(pause)'];
+/** @type {Record<string, string>} */
 const DISP = {'を':'(w)o'};
+/** The romaji shown for a kana. @param {string} k */
 export const rom = k => DISP[k] || R[k][0];
-export const A46 = ROWS.flatMap(r => r.kana).filter(Boolean);
+/** @param {string | null} k @returns {k is string} */
+const isKana = k => k !== null;
+/** The letters that exist in a row (the や and わ rows have gaps). @param {{kana: (string | null)[]}} row @returns {string[]} */
+export const kanaOf = row => row.kana.filter(isKana);
+/** @type {string[]} */
+export const A46 = ROWS.flatMap(kanaOf);
+/** @type {string[]} */
 export const DAK25 = DROWS.flatMap(r => r.kana);
+/** @type {string[]} */
 export const YOON33 = YROWS.flatMap(r => r.kana);
+/** @type {string[]} */
 export const ALL = [...A46, ...DAK25, ...YOON33];
+/** @type {Record<string, string>} */
 const HOOK = {
   'あ':"A cross, then one big loop: a lowercase \"a\" is hiding inside. Ah!",
   'い':"Two eels standing side by side: \"ee\". The left one is taller and hooks at the bottom.",
@@ -109,6 +127,7 @@ const HOOK = {
   'を':"Only used as the object particle, and read \"o\" like お. Someone tripping forward: \"whoa\".",
   'ん':"A cursive lowercase n. The only basic hiragana with no vowel sound."
 };
+/** @type {Record<string, string[]>} */
 export const LOOK = {
   'あ':['お'],'お':['あ'],'め':['ぬ'],'ぬ':['め'],'ね':['れ','わ'],'れ':['ね','わ'],'わ':['ね','れ'],
   'る':['ろ'],'ろ':['る'],'さ':['ち','き'],'ち':['さ'],'き':['さ'],'い':['り','こ'],'り':['い'],
@@ -118,6 +137,7 @@ export const LOOK = {
 };
 export const LOOKSET = A46.filter(k => LOOK[k]);
 export const NOSOUNDQ = ['を','ぢ','づ'];
+/** @type {Record<string, string>} */
 const DRULE = {
   g:"The two small dashes (dakuten) make k voiced: k becomes g.",
   z:"The dakuten makes s voiced: s becomes z.",
@@ -125,24 +145,34 @@ const DRULE = {
   b:"The dakuten makes h voiced: h becomes b.",
   p:"The small circle (handakuten) turns h into p. It is the only row that takes ゜."
 };
+/** @type {Record<string, string>} */
 const DNOTE = {
   'じ':"Read \"ji\", not \"zi\".",
   'ぢ':"Sounds exactly like じ (ji). Rare: you will meet it in a few words such as はなぢ (nosebleed).",
   'づ':"Sounds exactly like ず (zu). Rare: for example つづく (to continue)."
 };
+/**
+ * The plain-row letter a voiced letter is built from.
+ * @param {string} k
+ * @returns {{row: import('../../types/app').VoicedRow, base: string} | null}
+ */
 export function baseOf(k) {
   for (const r of DROWS) {
     const i = r.kana.indexOf(k);
-    if (i >= 0) return {row:r, base:ROWS.find(x => x.id === r.base).kana[i]};
+    const base = i >= 0 ? ROWS.find(x => x.id === r.base)?.kana[i] : null;
+    if (base) return {row:r, base};
   }
   return null;
 }
+/** The full-size letter that a small ゃ ゅ ょ is the small version of. @type {Record<string, string>} */
+export const FULL_SIZE = {'ゃ':'や','ゅ':'ゆ','ょ':'よ'};
+/** @param {string} k */
 export function explainEn(k) {
   if (HOOK[k]) return HOOK[k];
   const d = baseOf(k);
   if (d) return d.base + " (" + rom(d.base) + ") + " + (d.row.id === 'p' ? "゜" : "゛") + " = " + k + " (" + rom(k) + "). " + DRULE[d.row.id] + (DNOTE[k] ? " " + DNOTE[k] : "");
   if (k.length === 2) {
-    const b = k[0], s = k[1], big = {'ゃ':'や','ゅ':'ゆ','ょ':'よ'}[s];
+    const b = k[0], s = k[1], big = FULL_SIZE[s];
     return b + " (" + rom(b) + ") + small " + s + " = " + k + " (" + rom(k) + "), said as one beat. Written full size, " + b + big + " would be two beats: " + rom(b) + "-" + rom(big) + ".";
   }
   return "";

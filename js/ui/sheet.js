@@ -4,17 +4,18 @@ import { markSheetOpen, showTab } from '../core/nav.js';
 import { st } from '../core/stats.js';
 import { state } from '../core/store.js';
 import { ui } from '../core/ui-state.js';
-import { LOOK, rom } from '../data/letters.js';
+import { FULL_SIZE, LOOK, rom } from '../data/letters.js';
 import { groupOf } from '../data/writing.js';
 import { closeSheet } from './sheet-state.js';
 import { t } from '../i18n/core.js';
 import { explain } from '../i18n/helpers.js';
 import { strokeCount } from '../strokes/check.js';
 import { strokeSVG } from '../strokes/draw.js';
-import { $, $$, SPEAK_SVG } from '../util.js';
+import { $, $$, SPEAK_SVG, closest, must } from '../util.js';
 
+/** The card for a letter: stroke order, hook, example words and buttons. @param {string} k */
 function openSheet(k) {
-  const replacing = !!$('#sheetRoot').innerHTML;
+  const replacing = !!must('#sheetRoot').innerHTML;
   closeSheet('replace');
   if (!replacing) ui.lastFocus = document.activeElement;
   const parts = k.length === 2 ? [k[0], k[1]] : [k];
@@ -24,10 +25,7 @@ function openSheet(k) {
       ? t('card.drilled', { n: s.c + s.w, c: s.c, avg: s.t ? (s.t / 1000).toFixed(1) : '' })
       : t('card.notDrilled');
   const looks = LOOK[k] || [];
-  const sc = parts
-    .map(strokeCount)
-    .filter(Boolean)
-    .reduce((a, b) => a + b, 0);
+  const sc = parts.reduce((sum, part) => sum + (strokeCount(part) ?? 0), 0);
   const combo = parts.length > 1;
   let h =
     '<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="' +
@@ -73,7 +71,7 @@ function openSheet(k) {
           rom(parts[0]) +
           ')</button>',
         s: parts[1],
-        big: { ゃ: 'や', ゅ: 'ゆ', ょ: 'よ' }[parts[1]],
+        big: FULL_SIZE[parts[1]],
       }) +
       '</p>';
   const wr = (state.ws || {})[k];
@@ -97,21 +95,18 @@ function openSheet(k) {
     t('close') +
     '</button></div>';
   h += '</div></div>';
-  const root = $('#sheetRoot');
+  const root = must('#sheetRoot');
   root.classList.toggle('swap', replacing);
   root.innerHTML = h;
   bindSay(root);
-  let svg = null;
-  if (!combo) {
-    svg = strokeSVG(k, { guide: true });
-    if (svg) $('[data-slot="0"]', root).appendChild(svg);
-  }
+  const svg = combo ? null : strokeSVG(k, { guide: true });
+  if (svg) must('[data-slot="0"]', root).appendChild(svg);
   const pl = $('#shPlay', root);
   if (pl && svg) pl.onclick = () => svg.play();
-  $('#shSay', root).onclick = () => {
-    if (!speakFull(k)) $('#shSay', root).textContent = t('noSpeech');
+  must('#shSay', root).onclick = () => {
+    if (!speakFull(k)) must('#shSay', root).textContent = t('noSpeech');
   };
-  $('#shWrite', root).onclick = () => {
+  must('#shWrite', root).onclick = () => {
     ui.writeK = parts[0];
     ui.writeGroup = groupOf(ui.writeK);
     const had = closeSheet('nav');
@@ -119,13 +114,13 @@ function openSheet(k) {
   };
   $$('[data-close]', root).forEach((b) => (b.onclick = () => closeSheet()));
   markSheetOpen();
-  (pl || $('#shSay', root)).focus({ preventScroll: true });
+  (pl || must('#shSay', root, HTMLElement)).focus({ preventScroll: true });
   if (svg) setTimeout(() => svg.play(), 250);
 }
 document.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-open]');
-  if (t) {
+  const opener = closest(e, '[data-open]');
+  if (opener?.dataset.open) {
     e.preventDefault();
-    openSheet(t.dataset.open);
+    openSheet(opener.dataset.open);
   }
 });

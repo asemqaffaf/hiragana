@@ -31,19 +31,20 @@ def add_language(root, code, label, direction='ltr', date_locale=None):
     quote = lambda value: json.dumps(value, ensure_ascii=False)
     source = f'''// Translate incrementally. Missing strings and learning content use English.
 // See docs/languages.md and run: node scripts/check-locales.mjs {code}
-export default {{
+// The type comments let `npm run typecheck` reject misspelled string keys and wrong content shapes.
+export default /** @satisfies {{import('../../types/app').LocaleDefinition}} */ ({{
   id: {quote(code)},
   label: {quote(label.strip())},
   direction: {quote(direction)},
   dateLocale: {quote(date_locale or code)},
-  strings: {{
+  strings: /** @satisfies {{import('../../types/app').PartialStrings}} */ ({{
     // 'login.create': 'Your translation',
-  }},
+  }}),
   content: {{
     // meanings: {{'ねこ': 'Your translation'}},
     // hooks: {{'あ': 'Your memory hook'}},
   }},
-}};
+}});
 '''
     target.write_text(source)
     manifest.write_text(text)

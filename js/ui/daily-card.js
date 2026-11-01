@@ -2,6 +2,7 @@ import { t } from '../i18n/core.js';
 import { dailySentenceMeaning, meanOf } from '../i18n/helpers.js';
 import { SPEAK_SVG } from '../util.js';
 
+/** @param {import('../../types/app').DailyWord} w */
 export function dailyCard(w) {
   return (
     '<div class="dcard"><div class="dhead"><span class="kana dk" dir="ltr">' +

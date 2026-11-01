@@ -22,8 +22,9 @@ import { renderRead } from './features/read.js';
 import { renderWrite } from './features/write.js';
 import { STR } from './i18n/core.js';
 import { judgeStroke, parsePath, strokeTemplates } from './strokes/check.js';
+import { must } from './util.js';
 
-document.getElementById('whoBtn').addEventListener('click', () => {
+must('#whoBtn').addEventListener('click', () => {
   if (ui.currentTab !== 'profile') showTab('profile');
 });
 function boot() {
@@ -33,7 +34,7 @@ function boot() {
     daily: { render: renderDaily },
     progress: { render: renderProgress },
     chart: { render: renderChart },
-    drill: { render: renderDrill, shouldRender: () => !ui.session || ui.session.done },
+    drill: { render: renderDrill, shouldRender: () => !ui.session || !!ui.session.done },
     write: { render: renderWrite },
     read: { enter: recordLessonReading, render: renderRead },
     phrases: { render: renderPhrases },
@@ -49,11 +50,11 @@ boot();
 if (/[#&]test\b/.test(location.hash))
   window.__hira = {
     STR,
-    wordsFor: (k) => {
+    wordsFor: (/** @type {string} */ k) => {
       ui.rdFilter = ui.rdLetter = k;
       showTab('read', { letter: k });
     },
-    phrasesFor: (k) => {
+    phrasesFor: (/** @type {string} */ k) => {
       ui.phFilter = ui.phLetter = k;
       showTab('phrases', { letter: k });
     },

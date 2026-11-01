@@ -3,8 +3,15 @@ import {$, $$} from '../util.js';
 
 /* The moving highlight behind the selected tab (tab bar) or segment (segmented control), as in iOS 26: one shape that glides, with a spring,
    from the old position to the new one. The control's own selected style is dropped while the thumb is there (.has-thumb). */
+/** @type {Map<string, {x: number, w: number}>} */
 const last = new Map();
+/** @param {HTMLElement} th @param {{x: number, w: number}} p */
 const place = (th, p) => { th.style.width = p.w + 'px'; th.style.transform = 'translateX(' + p.x + 'px)'; };
+/**
+ * @param {HTMLElement | null} c the tab bar or segmented control
+ * @param {string} key which control, so each remembers its own last position
+ * @param {boolean} [instant]
+ */
 export function moveThumb(c, key, instant) {
   if (!c) return;
   let th = $(':scope > .thumb', c);

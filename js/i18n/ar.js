@@ -4,9 +4,7 @@ import { EXAMPLES } from '../data/content.js';
 import { DAILY_ALL, EXTRA, PHRASES } from '../data/daily.js';
 import { K, arN, iso } from './format.js';
 
-const strings = {};
-
-Object.assign(strings, {
+const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   'doc.title': 'الهيراغانا في 14 يوماً',
   'app.sub': 'اقرأ الهيراغانا كلها في 14 يوماً، 30 دقيقة كل يوم',
   'nav.label': 'الأقسام',
@@ -282,8 +280,7 @@ Object.assign(strings, {
   'p.daysV': (v) => arN(v.d, 'day') + '. السلسلة الحالية: ' + arN(v.s, 'day') + '.',
   'p.created': 'تاريخ إنشاء الملف',
   'p.langNote': 'لكل طالب لغته الخاصة. المفتاح في الشاشة الأولى يحدد لغة الطلاب الجدد.',
-});
-Object.assign(strings, {
+
   'tab.progress': 'التقدّم',
   'plan.seeProgress': 'التقدّم وخريطة الطريق',
   'pg.intro': 'تقدّم {name} على هذا الجهاز، والطريق من هنا إلى JLPT N5.',
@@ -331,8 +328,7 @@ Object.assign(strings, {
   'pg.roundTip': (v) => v.date + ': ' + arN(v.n, 'question') + '، ' + v.p + '% صحيحة',
   'pg.roundsNote':
     'كل عمود جولة واحدة، والأقدم في البداية: ارتفاعه نسبة الإجابات الصحيحة من المحاولة الأولى. الخط عند 90%.',
-});
-Object.assign(strings, {
+
   'cl.btn': 'سجّل {k} كمكتمل',
   'cl.done': 'مكتمل',
   'cl.undo': 'تراجع',
@@ -343,8 +339,7 @@ Object.assign(strings, {
   'cl.listen': 'أنجزت 3 كتابات نظيفة. اضغط «استمع» مرة واحدة لتفعيل الإكمال.',
   'cl.saved': 'اكتمل الحرف {k}. أحسنت.',
   'pg.completed': 'الأحرف المكتملة',
-});
-Object.assign(strings, {
+
   'app.subP': (v) =>
     'اقرأ الهيراغانا كلها في ' + arN(v.days, 'day') + '، ' + arMin(v.min) + ' كل يوم',
   'rm.daysDone': 'أيام الخطة المسجّلة كمُنجزة',
@@ -482,8 +477,7 @@ Object.assign(strings, {
   'rm.goal.fun': 'القراءة للمتعة',
   'rm.goalD.fun':
     'الكاتاكانا، ثم الكانجي الشائعة لتقرأ اللافتات والمانغا والألعاب. ليست في هذا الموقع بعد.',
-});
-Object.assign(strings, {
+
   'nav.home': 'اليوم',
   'nav.letters': 'الأحرف',
   'nav.practice': 'تمرين',
@@ -510,8 +504,7 @@ Object.assign(strings, {
   'plan.letters': 'أحرف اليوم',
   'plan.tasksT': 'خطة اليوم بالتفصيل',
   'plan.settingsT': 'إعدادات الخطة والمساعدة',
-});
-Object.assign(strings, {
+
   'tab.daily': 'كلمات اليوم',
   'tab.phrases': 'عبارات',
   'step.words': 'تعلّم كلمات اليوم',
@@ -541,8 +534,7 @@ Object.assign(strings, {
   'rd.showingAll': 'كل الكلمات',
   'rd.only': 'كلمات فيها {k} فقط',
   'rd.words': 'كلمات',
-});
-Object.assign(strings, {
+
   'pf.look': 'المظهر',
   'th.mode': 'فاتح أم داكن',
   'th.bg': 'لون الخلفية',
@@ -558,11 +550,10 @@ Object.assign(strings, {
   'th.white': 'سادة',
   'th.note':
     'تُطبَّق التغييرات فوراً وتُحفظ لهذا الطالب. خيار «مثل الجهاز» يتبع إعداد هاتفك أو حاسوبك: داكن ليلاً إن كان مضبوطاً هكذا.',
+  'duration.minutes': (values) => arMin(Number(values.n)),
 });
 
-Object.assign(strings, { 'duration.minutes': (values) => arMin(values.n) });
-
-export default {
+export default /** @satisfies {import('../../types/app').LocaleDefinition} */ ({
   id: 'ar',
   label: 'العربية',
   direction: 'rtl',
@@ -589,4 +580,4 @@ export default {
     ),
     phraseTitles: Object.fromEntries(PHRASES.map((group) => [group.id, group.ar])),
   },
-};
+});

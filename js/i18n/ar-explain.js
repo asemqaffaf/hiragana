@@ -1,7 +1,8 @@
-import { baseOf, rom } from '../data/letters.js';
+import { FULL_SIZE, baseOf, rom } from '../data/letters.js';
 import { DNOTE_AR, DRULE_AR, HOOK_AR } from './ar-content.js';
 import { iso } from './format.js';
 
+/** @param {string} k */
 export function explainArabic(k) {
   if (HOOK_AR[k]) return HOOK_AR[k];
   const d = baseOf(k);
@@ -26,7 +27,7 @@ export function explainArabic(k) {
   if (k.length === 2) {
     const b = k[0],
       s = k[1],
-      big = { ゃ: 'や', ゅ: 'ゆ', ょ: 'よ' }[s];
+      big = FULL_SIZE[s];
     return (
       iso(b + ' (' + rom(b) + ') + ' + s + ' = ' + k + ' (' + rom(k) + ')') +
       '، تُنطق نبضة واحدة لأن ' +

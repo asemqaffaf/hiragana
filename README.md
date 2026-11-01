@@ -56,6 +56,8 @@ Live: https://asemqaffaf.github.io/hiragana/
 
 ```
 index.html            page shell: loads css/*.css (the load order is the cascade order), then js/main.js
+jsconfig.json         type-checking settings (strict); package.json only lists the dev-time TypeScript dependency
+types/                shared domain types (progress, students, locales, drill and write state ...), development only
 css/                  one file per area (base, components, plan, drill, write, motion, touch-targets ...);
                       ios.css is loaded last and holds the iOS 26 look: filled-tint buttons, glass bars, spring motion,
                       the glass Back capsule and the push / pop page slide
@@ -98,6 +100,7 @@ tests/                dependency checks, Node core tests, Python script tests an
 
 Conventions:
 
+- The code is type-checked, not compiled. Types are JSDoc comments plus the declarations in `types/`; `tsc --noEmit` checks them under `strict` and nothing is built, so GitHub Pages still serves the source as written. Saved and imported data enters as `unknown` and is validated in `core/store.js` before it becomes a `Progress` or `Student`; interface text is addressed by `StringKey`, so `t('plan.dayOff')` fails the check; `$` and `must` in `util.js` return `HTMLElement` and take a class (`HTMLInputElement`, `SVGElement`) to check anything more specific.
 - Shared view state lives in `ui` (`core/ui-state.js`). Screens read progress from `core/store.js` and change it through `core/progress.js` or `core/lesson.js`; student changes use store operations. Only the store persists state. The v1 storage keys and export format remain compatible with existing students.
 - `core/` and shared `ui/` modules do not import feature screens. Navigation and bulk rendering use the registry wired in `main.js`. Screen entry actions record visits; rendering does not award progress or save rounds. The dependency check rejects circular imports.
 - Storage never calculates achievements or schedules notifications. The entry point subscribes the achievement feature to progress changes; badge writes do not recursively notify the subscriber.
@@ -118,13 +121,15 @@ Adding `#test` to the URL exposes `window.__hira` for the tests.
 Development checks use Node.js 22+ and Python with Playwright. Neither is needed to serve the app on GitHub Pages.
 
 ```sh
+npm install                     # TypeScript only, for the type check
+npm run typecheck
 python3 -m venv .venv
 .venv/bin/pip install -r tests/requirements.txt
 .venv/bin/python -m playwright install chromium
 PYTHON=.venv/bin/python tests/run_all.sh --jobs 3
 ```
 
-The runner serves the repo on port 8767 (`PORT=...` to change), checks module dependencies, runs core and script tests, audits locales, and runs every browser suite. It returns a failure status for failed scripts, timeouts or reported browser errors, and saves full per-suite logs in the system temporary directory (`HIRA_TEST_OUTPUT=...` to choose a directory).
+The runner serves the repo on port 8767 (`PORT=...` to change), checks module dependencies and types, runs core and script tests, audits locales, and runs every browser suite. It returns a failure status for failed scripts, timeouts or reported browser errors, and saves full per-suite logs in the system temporary directory (`HIRA_TEST_OUTPUT=...` to choose a directory).
 
 Run a subset or just the core checks:
 

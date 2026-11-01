@@ -3,12 +3,19 @@ import { PL, PLEN, curDay, dayNumber, focusKana } from './plan.js';
 import { state, updateProgress } from './store.js';
 import { todayISO } from '../util.js';
 
+/** @type {readonly import('../../types/app').LessonStepId[]} */
+export const LESSON_STEP_IDS = ['meet', 'write', 'words', 'read', 'quiz'];
+/** @param {unknown} id @returns {id is import('../../types/app').LessonStepId} */
+export const isLessonStep = (id) => LESSON_STEP_IDS.some((step) => step === id);
+
 export const lessonOn = () => dayNumber() >= 1 && dayNumber() <= PLEN();
 
+/** The saved progress for a day's lesson, with defaults. @param {number} [day] @returns {import('../../types/app').LessonProgress} */
 export function lesson(day = curDay()) {
   return { m: [], w: [], q: -1, r: false, d: [], dd: false, ...state.les[day] };
 }
 
+/** The letters written in a lesson: only days with up to ten single letters. @param {number} [day] @returns {string[]} */
 export function writeList(day = curDay()) {
   const focus = focusKana(day);
   return focus.length && focus.length <= 10 && focus.every((kana) => kana.length === 1)
@@ -16,11 +23,13 @@ export function writeList(day = curDay()) {
     : [];
 }
 
+/** @param {number} [day] @returns {import('../../types/app').LessonStep[]} */
 export function lessonSteps(day = curDay()) {
   const focus = focusKana(day),
     progress = lesson(day),
-    writes = writeList(day),
-    steps = [];
+    writes = writeList(day);
+  /** @type {Omit<import('../../types/app').LessonStep, 'done'>[]} */
+  const steps = [];
   if (focus.length)
     steps.push({
       id: 'meet',
@@ -46,6 +55,7 @@ export function lessonSteps(day = curDay()) {
   return steps.map((step) => ({ ...step, done: step.n >= step.m }));
 }
 
+/** @param {(lesson: import('../../types/app').LessonProgress) => void} change */
 function updateLesson(change) {
   if (!lessonOn()) return;
   const day = curDay();
@@ -59,6 +69,7 @@ function updateLesson(change) {
   });
 }
 
+/** @param {string} kana */
 export function markLetterMet(kana) {
   if (!focusKana(curDay()).includes(kana) || lesson().m.includes(kana)) return;
   updateLesson((progress) => {
@@ -66,6 +77,7 @@ export function markLetterMet(kana) {
   });
 }
 
+/** @param {string} kana */
 export function recordLessonWrite(kana) {
   if (!writeList().includes(kana) || lesson().w.includes(kana)) return;
   updateLesson((progress) => {
@@ -73,6 +85,7 @@ export function recordLessonWrite(kana) {
   });
 }
 
+/** @param {string} kana the word, as written in the daily list */
 export function recordLessonWord(kana) {
   if (!dailyFor(curDay()).some((word) => word[0] === kana) || lesson().d.includes(kana)) return;
   updateLesson((progress) => {
@@ -94,6 +107,7 @@ export function recordLessonReading() {
     });
 }
 
+/** @param {number} percent */
 export function recordLessonQuiz(percent) {
   updateLesson((progress) => {
     progress.q = Math.max(progress.q, percent);

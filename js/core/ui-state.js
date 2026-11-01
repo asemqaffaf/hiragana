@@ -1,5 +1,6 @@
 /* Shared view state: what is open, selected or in progress right now. Not saved anywhere.
    Modules read and write these as ui.name, so no module needs to own another module's variables. */
+/** @type {import('../../types/app').UiState} */
 export const ui = {
   lastLevel: 0,
   currentTab: 'plan',

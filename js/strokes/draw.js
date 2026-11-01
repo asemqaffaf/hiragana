@@ -2,19 +2,27 @@ import {KVG} from '../data/kvg.js';
 import {reduceMotion} from '../util.js';
 
 /* ---------- stroke order ---------- */
+/** @param {number} ms */
 const wait = ms => new Promise(r => setTimeout(r, ms));
 /* Animate one SVG path from its start to its end. msPerUnit scales duration with stroke length.
    Resolves false if cancelled (live() turned false), true when the stroke is fully drawn. */
+/**
+ * @param {SVGPathElement} p
+ * @param {number | null} msPerUnit
+ * @param {() => boolean} live
+ * @returns {Promise<boolean>}
+ */
 function drawPath(p, msPerUnit, live) {
   let L = 0;
   try { L = p.getTotalLength(); } catch (e) { L = 0; }
   if (!L) { p.style.visibility = 'visible'; return Promise.resolve(true); }
   const dur = Math.max(msPerUnit ? 420 : 320, L * (msPerUnit || 11));
   p.setAttribute('stroke-dasharray', L + ' ' + L);
-  p.setAttribute('stroke-dashoffset', L);
+  p.setAttribute('stroke-dashoffset', String(L));
   p.style.visibility = 'visible';
   return new Promise(resolve => {
     const t0 = performance.now();
+    /** @param {number} now */
     function step(now) {
       if (!live()) { resolve(false); return; }
       const t = Math.min(1, (now - t0) / dur), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -25,15 +33,21 @@ function drawPath(p, msPerUnit, live) {
     requestAnimationFrame(step);
   });
 }
-export function strokeSVG(k, opts) {
-  opts = opts || {};
+/**
+ * The stroke-order drawing of a letter, or null when there is no stroke data for it.
+ * @param {string} k
+ * @param {import('../../types/app').StrokeSvgOptions} [opts]
+ * @returns {import('../../types/app').StrokeSvg | null}
+ */
+export function strokeSVG(k, opts = {}) {
   const d = KVG[k];
   if (!d) return null;
   const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
+  const svg = /** @type {import('../../types/app').StrokeSvg} */ (document.createElementNS(ns, 'svg'));
   svg.setAttribute('viewBox', '0 0 109 109');
   svg.setAttribute('class', 'strokes' + (opts.guide === false ? ' no-guide' : '') + (opts.nums === false ? ' no-num' : ''));
   svg.setAttribute('aria-hidden', 'true');
+  /** @template {keyof SVGElementTagNameMap} T @param {T} tag @param {string} [cls] */
   const mk = (tag, cls) => { const e = document.createElementNS(ns, tag); if (cls) e.setAttribute('class', cls); return e; };
   const gd = mk('g', 'gd'), ik = mk('g', 'ik'), ht = mk('g', 'ht'), nm = mk('g', 'nm');
   d.p.forEach(p => {
@@ -44,12 +58,13 @@ export function strokeSVG(k, opts) {
   const dot = mk('circle'); dot.setAttribute('r', '3.4'); dot.style.visibility = 'hidden'; ht.appendChild(dot);
   d.n.forEach((xy, i) => {
     const t = mk('text');
-    t.setAttribute('x', xy[0]); t.setAttribute('y', xy[1]); t.textContent = i + 1; nm.appendChild(t);
+    t.setAttribute('x', String(xy[0])); t.setAttribute('y', String(xy[1])); t.textContent = String(i + 1); nm.appendChild(t);
   });
   svg.appendChild(gd); svg.appendChild(ik); svg.appendChild(ht); svg.appendChild(nm);
   if (opts.inkHidden) ik.style.visibility = 'hidden';
-  const inkPaths = () => Array.from(ik.children);
+  const inkPaths = () => /** @type {SVGPathElement[]} */ (Array.from(ik.children));
   const hintPaths = () => Array.from(ht.querySelectorAll('path'));
+  /** @param {SVGPathElement} p */
   const clearDash = p => { p.removeAttribute('stroke-dasharray'); p.removeAttribute('stroke-dashoffset'); p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; };
   function resetInk() { inkPaths().forEach(p => { clearDash(p); p.style.visibility = ''; }); }
   let token = 0, htok = 0;

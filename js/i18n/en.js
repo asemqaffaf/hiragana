@@ -2,9 +2,8 @@ import { K, enN } from './format.js';
 import { PLAN, REVIEW_EN } from '../data/content.js';
 import { explainEn } from '../data/letters.js';
 
-const strings = {};
-
-Object.assign(strings, {
+/** Every interface string. Its keys are the keys `t()` accepts. */
+const strings = /** @satisfies {Record<string, import('../../types/app').LocaleString>} */ ({
   'doc.title': 'Hiragana in 14 days',
   'app.sub': 'Read all hiragana in 14 days, 30 minutes a day',
   'nav.label': 'Sections',
@@ -260,8 +259,7 @@ Object.assign(strings, {
   'p.created': 'Profile created',
   'p.langNote':
     'Each student has their own language. The switch on the first screen sets it for new students.',
-});
-Object.assign(strings, {
+
   'tab.progress': 'Progress',
   'plan.seeProgress': 'Progress and roadmap',
   'pg.intro': '{name}’s progress on this device, and the road from here to JLPT N5.',
@@ -309,8 +307,7 @@ Object.assign(strings, {
   'pg.roundTip': (v) => v.date + ': ' + enN(v.n, 'question') + ', ' + v.p + '% right',
   'pg.roundsNote':
     'Each bar is one round, oldest on the left: its height is the share right on the first try. The line marks 90%.',
-});
-Object.assign(strings, {
+
   'cl.btn': 'Mark {k} complete',
   'cl.done': 'Completed',
   'cl.undo': 'Undo',
@@ -322,8 +319,7 @@ Object.assign(strings, {
   'cl.listen': '3 clean writes done. Tap Hear once to unlock Complete.',
   'cl.saved': '{k} is complete. Well done.',
   'pg.completed': (v) => (v.n === 1 ? 'letter completed' : 'letters completed'),
-});
-Object.assign(strings, {
+
   'app.subP': (v) => 'Read all hiragana in ' + v.days + ' days, ' + v.min + ' minutes a day',
   'rm.daysDone': 'Plan days marked done',
   'ex.label': 'Example:',
@@ -460,8 +456,7 @@ Object.assign(strings, {
   'rm.goal.fun': 'Read for fun',
   'rm.goalD.fun':
     'Katakana, then common kanji so you can read signs, manga and games. Not in this site yet.',
-});
-Object.assign(strings, {
+
   'nav.home': 'Today',
   'nav.letters': 'Letters',
   'nav.practice': 'Practice',
@@ -488,8 +483,7 @@ Object.assign(strings, {
   'plan.letters': 'Today’s letters',
   'plan.tasksT': 'Today’s plan in detail',
   'plan.settingsT': 'Plan settings and help',
-});
-Object.assign(strings, {
+
   'tab.daily': 'Today’s words',
   'tab.phrases': 'Phrases',
   'step.words': 'Learn today’s words',
@@ -519,8 +513,7 @@ Object.assign(strings, {
   'rd.showingAll': 'All words',
   'rd.only': 'Only words with {k}',
   'rd.words': 'Words',
-});
-Object.assign(strings, {
+
   'pf.look': 'Appearance',
   'th.mode': 'Light or dark',
   'th.bg': 'Background colour',
@@ -536,11 +529,10 @@ Object.assign(strings, {
   'th.white': 'Plain',
   'th.note':
     'Changes apply straight away and are saved for this student. “Same as device” follows your phone or computer: dark at night if that is how it is set.',
+  'duration.minutes': '{n} min',
 });
 
-Object.assign(strings, { 'duration.minutes': '{n} min' });
-
-export default {
+export default /** @satisfies {import('../../types/app').LocaleDefinition} */ ({
   id: 'en',
   label: 'English',
   direction: 'ltr',
@@ -548,4 +540,4 @@ export default {
   listSeparator: ', ',
   strings,
   content: { plan: PLAN, review: REVIEW_EN, explain: explainEn },
-};
+});

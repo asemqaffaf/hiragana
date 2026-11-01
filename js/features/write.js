@@ -17,9 +17,10 @@ import { recordLessonWrite, writeList } from '../core/lesson.js';
 import { t } from '../i18n/core.js';
 import { judgeStroke, strokeCount, strokeMessage, strokeTemplates } from '../strokes/check.js';
 import { strokeSVG } from '../strokes/draw.js';
-import { $, $$, MARK_SVG, SPEAK_SVG } from '../util.js';
+import { $, $$, MARK_SVG, SPEAK_SVG, must } from '../util.js';
 
 /* ---------- write ---------- */
+/** The completed tag, or what is still needed to complete the letter. @param {string} k */
 function completeHtml(k) {
   if (isComplete(k))
     return (
@@ -59,14 +60,17 @@ function refreshComplete() {
     btn.textContent = t('cl.btn', { k });
   }
 }
+/** @param {string} k */
 function markStrip(k) {
   const b = $('.strip [data-wk="' + k + '"]');
   if (b) b.classList.toggle('cl', isComplete(k));
 }
 const wsOf = writingStats;
+/** @param {string} k */
 function cleanText(k) {
   return t('clean', { p: wsOf(k).p });
 }
+/** The letter after the current one, moving on to the next group at the end. */
 function nextWrite() {
   const g = WGROUPS.find((x) => x.id === ui.writeGroup) || WGROUPS[0],
     i = g.kana.indexOf(ui.writeK);
@@ -74,6 +78,7 @@ function nextWrite() {
   const ng = WGROUPS[(WGROUPS.indexOf(g) + 1) % WGROUPS.length];
   return { k: ng.kana[0], g: ng.id };
 }
+/** @returns {import('../../types/app').WriteAttempt} */
 function newAttempt() {
   return {
     k: ui.writeK,
@@ -85,27 +90,31 @@ function newAttempt() {
     recorded: false,
   };
 }
+/** Shows a message under the writing area. @param {string} text @param {'good' | 'bad'} [cls] */
 function wSay(text, cls) {
   const el = $('#wStat');
   if (!el) return;
   el.textContent = text;
   el.className = 'wstat' + (cls ? ' ' + cls : '');
 }
-function startText() {
-  return t('w.start', { n: ui.wq.tpl.pts.length, nums: ui.writeNums });
+/** @param {import('../../types/app').WriteAttempt} wq */
+function startText(wq) {
+  return t('w.start', { n: wq.tpl ? wq.tpl.pts.length : 0, nums: ui.writeNums });
 }
+/** @param {boolean} on */
 function setMark(on) {
   const m = $('#wsq .mark');
   if (m) m.setAttribute('class', 'mark' + (on ? ' ok' : ''));
 }
 /* The bar under the writing area. Writing a lesson's letters: it is always there, Next waits (dimmed) until the letter is written.
    Free writing: it appears once the letter is written. */
+/** @param {boolean} on */
 function showDone(on) {
   const dn = $('#wDone');
   if (!dn) return;
   dn.hidden = !on && !ui.lessonWrite;
   dn.classList.toggle('waiting', !on);
-  const nx = $('#wNext', dn),
+  const nx = $('#wNext', dn, HTMLButtonElement),
     again = $('#wAgain', dn);
   if (nx) {
     nx.disabled = !on;
@@ -116,8 +125,10 @@ function showDone(on) {
   if (on && !reduceAnim()) dn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   else if (on) dn.scrollIntoView({ block: 'nearest' });
 }
+/** The number of strokes in the letter being written. @param {import('../../types/app').WriteAttempt} wq */
+const strokeTotal = (wq) => (wq.tpl ? wq.tpl.pts.length : 0);
 function restartAttempt() {
-  ui.wq = newAttempt();
+  const wq = (ui.wq = newAttempt());
   ui.demoShown = false;
   if (ui.writeSvg) {
     ui.writeSvg.clearHint();
@@ -126,30 +137,33 @@ function restartAttempt() {
   if (ui.pad) ui.pad.clear();
   setMark(false);
   showDone(false);
-  wSay(startText());
+  wSay(startText(wq));
 }
 function finishWrite() {
-  const n = ui.wq.tpl.pts.length;
-  ui.wq.done = true;
-  if (!ui.wq.recorded) {
-    ui.wq.recorded = true;
-    recordWrite(ui.wq.k, !ui.wq.miss);
+  const wq = ui.wq;
+  if (!wq) return;
+  const n = strokeTotal(wq);
+  wq.done = true;
+  if (!wq.recorded) {
+    wq.recorded = true;
+    recordWrite(wq.k, !wq.miss);
   }
-  if (ui.lessonWrite) recordLessonWrite(ui.wq.k);
-  if (!ui.wq.miss) {
+  if (ui.lessonWrite) recordLessonWrite(wq.k);
+  if (!wq.miss) {
     setMark(true);
-    wSay(t('w.allRight', { n, clean: cleanText(ui.wq.k) }), 'good');
-  } else wSay(t('w.finished', { m: ui.wq.miss }), 'bad');
+    wSay(t('w.allRight', { n, clean: cleanText(wq.k) }), 'good');
+  } else wSay(t('w.finished', { m: wq.miss }), 'bad');
   const c = $('#wCount');
-  if (c) c.textContent = cleanText(ui.wq.k);
-  const bar = $('.strip [data-wk="' + ui.wq.k + '"] .wm');
-  if (bar) bar.style.setProperty('--m', Math.min(wsOf(ui.wq.k).p, CLEAN_GOAL) / CLEAN_GOAL);
+  if (c) c.textContent = cleanText(wq.k);
+  const bar = $('.strip [data-wk="' + wq.k + '"] .wm');
+  if (bar) bar.style.setProperty('--m', String(Math.min(wsOf(wq.k).p, CLEAN_GOAL) / CLEAN_GOAL));
   showDone(true);
   refreshComplete();
-  if (canComplete(ui.wq.k)) wSay(t('cl.ready', { k: ui.wq.k }), 'good');
-  else if (!isComplete(ui.wq.k) && !(state.heard[ui.wq.k] > 0) && wsOf(ui.wq.k).p >= CLEAN_GOAL)
+  if (canComplete(wq.k)) wSay(t('cl.ready', { k: wq.k }), 'good');
+  else if (!isComplete(wq.k) && !((state.heard[wq.k] ?? 0) > 0) && wsOf(wq.k).p >= CLEAN_GOAL)
     wSay(t('cl.listen'), 'good');
 }
+/** @type {import('../../types/app').PadHandler} */
 const writeHandler = {
   begin() {
     if (!ui.wq || !ui.writeSvg) return;
@@ -158,34 +172,35 @@ const writeHandler = {
       ui.demoShown = false;
       ui.writeSvg.showUpTo(ui.wq.i);
     }
-    ui.writeSvg.clearHint();
+    ui.writeSvg?.clearHint();
   },
   end(pts) {
-    if (!ui.wq || !ui.wq.tpl) return 'ignore';
-    const n = ui.wq.tpl.pts.length,
-      i = ui.wq.i;
+    const wq = ui.wq;
+    if (!wq || !wq.tpl) return 'ignore';
+    const n = wq.tpl.pts.length,
+      i = wq.i;
     const v = judgeStroke(
       pts,
-      ui.wq.tpl,
+      wq.tpl,
       i,
-      (ui.writeGuide ? 1 : 1.35) * ((me() || {}).age === 'child' ? 1.2 : 1),
+      (ui.writeGuide ? 1 : 1.35) * (me()?.age === 'child' ? 1.2 : 1),
     );
     if (v.kind === 'tiny') {
       wSay(strokeMessage(v, i, ui.writeNums), 'bad');
       return 'ignore';
     }
     if (v.kind === 'ok') {
-      ui.wq.i++;
-      ui.wq.sm = 0;
-      ui.writeSvg.showUpTo(ui.wq.i);
-      if (ui.wq.i >= n) finishWrite();
+      wq.i++;
+      wq.sm = 0;
+      ui.writeSvg?.showUpTo(wq.i);
+      if (wq.i >= n) finishWrite();
       else wSay(t('w.right', { i: i + 1, j: i + 2, n }), 'good');
       return 'ok';
     }
-    ui.wq.miss++;
-    ui.wq.sm++;
+    wq.miss++;
+    wq.sm++;
     wSay(strokeMessage(v, i, ui.writeNums), 'bad');
-    if (v.kind === 'shape' || ui.wq.sm >= 2) ui.writeSvg.hint(i);
+    if (v.kind === 'shape' || wq.sm >= 2) ui.writeSvg?.hint(i);
     return 'bad';
   },
 };
@@ -198,6 +213,7 @@ const ICON = {
   clear:
     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
 };
+/** A button in the row of tools. @param {string} id @param {string} icon @param {string} label @param {string} [cls] */
 const tool = (id, icon, label, cls) =>
   '<button class="tool' +
   (cls ? ' ' + cls : '') +
@@ -208,6 +224,7 @@ const tool = (id, icon, label, cls) =>
   '<span>' +
   label +
   '</span></button>';
+/** @param {boolean} [play] start the stroke-order demo straight away */
 export function renderWrite(play) {
   const g = WGROUPS.find((x) => x.id === ui.writeGroup) || WGROUPS[0];
   if (!g.kana.includes(ui.writeK)) ui.writeK = g.kana[0];
@@ -267,7 +284,7 @@ export function renderWrite(play) {
     '<p class="wmeta"><b>' +
     rom(ui.writeK) +
     '</b><span class="muted small">' +
-    t('strokes', { n }) +
+    t('strokes', { n: n ?? 0 }) +
     '</span>' +
     (ui.writeCheck
       ? '<span class="muted small" id="wCount">' + cleanText(ui.writeK) + '</span>'
@@ -324,28 +341,33 @@ export function renderWrite(play) {
     (ui.writeCheck ? t('write.howCheck') : t('write.howFree')) +
     '</p></details>';
   h += '</div></div>';
-  const root = $('#tab-write');
+  const root = must('#tab-write');
   root.innerHTML = h;
   showDone(false);
   const rp = $('.rowpick', root),
     rc = rp && $('[aria-pressed="true"]', rp);
-  if (rc)
+  if (rp && rc)
     rp.scrollLeft +=
       rc.getBoundingClientRect().left +
       rc.offsetWidth / 2 -
       (rp.getBoundingClientRect().left + rp.clientWidth / 2);
-  const wsq = $('#wsq', root);
+  const wsq = must('#wsq', root);
   ui.writeSvg = strokeSVG(ui.writeK, { guide: ui.writeGuide, nums: ui.writeNums, inkHidden: true });
   if (ui.writeSvg) wsq.insertBefore(ui.writeSvg, wsq.firstChild);
-  ui.wq = ui.writeCheck ? newAttempt() : null;
+  const wq = (ui.wq = ui.writeCheck ? newAttempt() : null);
   ui.demoShown = false;
-  ui.pad = makePad($('#wpad', root), ui.writeCheck && ui.wq && ui.wq.tpl ? writeHandler : null);
-  if (ui.writeCheck && ui.wq) wSay(startText());
+  ui.pad = makePad(
+    must('#wpad', root, HTMLCanvasElement),
+    ui.writeCheck && wq && wq.tpl ? writeHandler : null,
+  );
+  if (ui.writeCheck && wq) wSay(startText(wq));
   $$('[data-wg]', root).forEach(
     (b) =>
       (b.onclick = () => {
-        ui.writeGroup = b.dataset.wg;
-        ui.writeK = WGROUPS.find((x) => x.id === ui.writeGroup).kana[0];
+        const group = WGROUPS.find((x) => x.id === b.dataset.wg);
+        if (!group) return;
+        ui.writeGroup = group.id;
+        ui.writeK = group.kana[0];
         renderWrite();
       }),
   );
@@ -353,32 +375,35 @@ export function renderWrite(play) {
     (b) =>
       (b.onclick = () => {
         ui.lessonWrite = false;
-        ui.writeK = b.dataset.wk;
+        ui.writeK = b.dataset.wk || ui.writeK;
         renderWrite(true);
       }),
   );
-  $('#wGuide', root).onchange = (e) => {
-    ui.writeGuide = e.target.checked;
+  const guide = must('#wGuide', root, HTMLInputElement);
+  guide.onchange = () => {
+    ui.writeGuide = guide.checked;
     if (ui.writeSvg) ui.writeSvg.classList.toggle('no-guide', !ui.writeGuide);
   };
-  $('#wNums', root).onchange = (e) => {
-    ui.writeNums = e.target.checked;
+  const nums = must('#wNums', root, HTMLInputElement);
+  nums.onchange = () => {
+    ui.writeNums = nums.checked;
     if (ui.writeSvg) ui.writeSvg.classList.toggle('no-num', !ui.writeNums);
   };
-  $('#wCheck', root).onchange = (e) => {
-    ui.writeCheck = e.target.checked;
+  const check = must('#wCheck', root, HTMLInputElement);
+  check.onchange = () => {
+    ui.writeCheck = check.checked;
     renderWrite();
   };
-  $('#wPlay', root).onclick = () => {
+  must('#wPlay', root).onclick = () => {
     if (ui.pad) ui.pad.clear();
     if (ui.writeCheck && ui.wq) {
       restartAttempt();
       ui.demoShown = true;
-      wSay(t('w.watch', { n: ui.wq.tpl.pts.length }));
+      wSay(t('w.watch', { n: ui.wq ? strokeTotal(ui.wq) : 0 }));
     }
     if (ui.writeSvg) ui.writeSvg.play();
   };
-  const ws = $('#wSay', root);
+  const ws = must('#wSay', root, HTMLButtonElement);
   if (!hasClip(ui.writeK)) {
     ws.disabled = true;
     ws.title = t('write.silent');
@@ -400,25 +425,26 @@ export function renderWrite(play) {
         ui.writeSvg.hint(ui.wq.i);
       }
     };
-  $('#wUndo', root).onclick = () => {
-    if (!ui.writeCheck || !ui.wq) {
+  must('#wUndo', root).onclick = () => {
+    const attempt = ui.wq;
+    if (!ui.writeCheck || !attempt) {
       if (ui.pad) ui.pad.undo();
       return;
     }
-    if (ui.wq.done) {
-      ui.wq.done = false;
-      ui.wq.i = ui.wq.tpl.pts.length - 1;
+    if (attempt.done) {
+      attempt.done = false;
+      attempt.i = strokeTotal(attempt) - 1;
       setMark(false);
       showDone(false);
-    } else if (ui.wq.i > 0) ui.wq.i--;
-    ui.wq.sm = 0;
+    } else if (attempt.i > 0) attempt.i--;
+    attempt.sm = 0;
     ui.demoShown = false;
     if (ui.pad) ui.pad.clear();
-    ui.writeSvg.clearHint();
-    ui.writeSvg.showUpTo(ui.wq.i);
-    wSay(t('w.draw', { i: ui.wq.i + 1, n: ui.wq.tpl.pts.length }));
+    ui.writeSvg?.clearHint();
+    ui.writeSvg?.showUpTo(attempt.i);
+    wSay(t('w.draw', { i: attempt.i + 1, n: strokeTotal(attempt) }));
   };
-  $('#wClear', root).onclick = () => {
+  must('#wClear', root).onclick = () => {
     if (!ui.writeCheck || !ui.wq) {
       if (ui.pad) ui.pad.clear();
       if (ui.writeSvg) ui.writeSvg.showInk(false);
@@ -426,7 +452,7 @@ export function renderWrite(play) {
     }
     restartAttempt();
   };
-  $('#wAgain', root).onclick = () => restartAttempt();
+  must('#wAgain', root).onclick = () => restartAttempt();
   const cb = $('#wCompleteBtn', root);
   if (cb)
     cb.onclick = () => {
@@ -437,7 +463,7 @@ export function renderWrite(play) {
       wSay(t('cl.saved', { k: ui.writeK }), 'good');
     };
   if (ui.writeCheck) refreshComplete();
-  $('#wNext', root).onclick = () => {
+  must('#wNext', root).onclick = () => {
     if (!nx.k) {
       ui.lessonWrite = false;
       showTab('plan');
@@ -449,20 +475,44 @@ export function renderWrite(play) {
   };
   if (play && ui.writeSvg) {
     ui.demoShown = !!ui.wq;
-    if (ui.wq) wSay(t('w.watch', { n: ui.wq.tpl.pts.length }));
+    if (ui.wq) wSay(t('w.watch', { n: strokeTotal(ui.wq) }));
     ui.writeSvg.play();
   }
 }
-function makePad(canvas, handler) {
+/** @param {HTMLCanvasElement} canvas @returns {CanvasRenderingContext2D} */
+function context2d(canvas) {
   const ctx = canvas.getContext('2d');
-  let strokes = [],
-    cur = null,
-    active = null,
-    w = 0,
-    h = 0,
-    fadeT = null;
+  if (!ctx) throw new Error('This browser cannot draw on a canvas');
+  return ctx;
+}
+/**
+ * @typedef {object} PadStroke
+ * @property {import('../../types/app').StrokePath} pts
+ * @property {string} c the CSS variable holding its colour
+ * @property {boolean} [bad] drawn wrongly, so it fades out
+ */
+/**
+ * The drawing surface: ink follows the pointer, and each finished stroke goes to the handler to be judged.
+ * @param {HTMLCanvasElement} canvas
+ * @param {import('../../types/app').PadHandler | null} handler
+ * @returns {import('../../types/app').WritePad}
+ */
+function makePad(canvas, handler) {
+  const ctx = context2d(canvas);
+  /** @type {PadStroke[]} */
+  let strokes = [];
+  /** @type {PadStroke | null} */
+  let cur = null;
+  /** The pointer that is drawing, if any. @type {number | null} */
+  let active = null;
+  let w = 0,
+    h = 0;
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let fadeT = null;
+  /** @param {string} v */
   const color = (v) =>
     getComputedStyle(document.documentElement).getPropertyValue(v).trim() || '#262422';
+  /** @param {string} c */
   function setStyle(c) {
     ctx.lineWidth = Math.max(4, w * 0.034);
     ctx.lineCap = 'round';
@@ -479,12 +529,14 @@ function makePad(canvas, handler) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     redraw();
   }
+  /** @param {import('../../types/app').Point} a @param {import('../../types/app').Point} b */
   function seg(a, b) {
     ctx.beginPath();
     ctx.moveTo(a[0] * w, a[1] * h);
     ctx.lineTo(b[0] * w + (a === b ? 0.1 : 0), b[1] * h);
     ctx.stroke();
   }
+  /** @param {PadStroke} s */
   function drawStroke(s) {
     setStyle(s.c);
     seg(s.pts[0], s.pts[0]);
@@ -494,6 +546,7 @@ function makePad(canvas, handler) {
     ctx.clearRect(0, 0, w, h);
     strokes.forEach(drawStroke);
   }
+  /** @param {PointerEvent} e @returns {import('../../types/app').Point} */
   function pt(e) {
     const r = canvas.getBoundingClientRect();
     return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
@@ -516,25 +569,27 @@ function makePad(canvas, handler) {
       canvas.setPointerCapture(e.pointerId);
     } catch (x) {}
     if (handler) handler.begin();
-    cur = { pts: [pt(e)], c: '--ink' };
-    strokes.push(cur);
-    setStyle(cur.c);
-    seg(cur.pts[0], cur.pts[0]);
+    const stroke = (cur = { pts: [pt(e)], c: '--ink' });
+    strokes.push(stroke);
+    setStyle(stroke.c);
+    seg(stroke.pts[0], stroke.pts[0]);
   });
   canvas.addEventListener('pointermove', (e) => {
     if (e.pointerId !== active || !cur) return;
     e.preventDefault();
+    const stroke = cur;
     const evs =
       e.getCoalescedEvents && e.getCoalescedEvents().length ? e.getCoalescedEvents() : [e];
-    setStyle(cur.c);
+    setStyle(stroke.c);
     evs.forEach((ev) => {
       const p = pt(ev),
-        last = cur.pts[cur.pts.length - 1];
+        last = stroke.pts[stroke.pts.length - 1];
       if (Math.hypot(p[0] - last[0], p[1] - last[1]) < 0.002) return;
-      cur.pts.push(p);
+      stroke.pts.push(p);
       seg(last, p);
     });
   });
+  /** @param {PointerEvent} e */
   function end(e) {
     if (e.pointerId !== active) return;
     active = null;

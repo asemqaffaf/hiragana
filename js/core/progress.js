@@ -2,17 +2,22 @@ import { LETTERS, me, normalize, restoreProgress, state, updateProgress } from '
 import { todayISO } from '../util.js';
 
 // These operations own progress changes; screens only read state and invoke actions.
+/** @param {import('../../types/app').Progress} progress */
 function logActivity(progress) {
   const day = todayISO();
   progress.act[day] = (progress.act[day] || 0) + 1;
 }
 
 export const CLEAN_GOAL = 3;
+/** @param {string} kana */
 export const isComplete = (kana) => !!state.cl[kana];
+/** @param {string} kana @returns {import('../../types/app').WriteStats} */
 export const writingStats = (kana) => ({ n: 0, p: 0, ...state.ws[kana] });
+/** A letter can be completed once it was heard and written cleanly enough times. @param {string} kana */
 export const canComplete = (kana) =>
-  !isComplete(kana) && state.heard[kana] > 0 && writingStats(kana).p >= CLEAN_GOAL;
+  !isComplete(kana) && (state.heard[kana] ?? 0) > 0 && writingStats(kana).p >= CLEAN_GOAL;
 
+/** @param {string} kana @param {boolean} complete */
 export function completeLetter(kana, complete) {
   if (complete && !canComplete(kana)) return;
   updateProgress((progress) => {
@@ -21,6 +26,7 @@ export function completeLetter(kana, complete) {
   });
 }
 
+/** @param {string} kana @param {boolean} clean */
 export function recordWrite(kana, clean) {
   updateProgress((progress) => {
     const writes = writingStats(kana);
@@ -31,6 +37,7 @@ export function recordWrite(kana, clean) {
   });
 }
 
+/** @param {string} kana */
 export function recordHeard(kana) {
   if (!me() || !LETTERS().includes(kana)) return;
   updateProgress((progress) => {
@@ -38,6 +45,12 @@ export function recordHeard(kana) {
   });
 }
 
+/**
+ * @param {string} kana
+ * @param {boolean} correct
+ * @param {number} milliseconds
+ * @param {string | null} [confusedWith] the letter the answer was mistaken for
+ */
 export function recordAnswer(kana, correct, milliseconds, confusedWith) {
   updateProgress((progress) => {
     const stats = { b: 0, c: 0, w: 0, t: 0, ...progress.stats[kana] };
@@ -62,12 +75,14 @@ export function recordAnswer(kana, correct, milliseconds, confusedWith) {
   });
 }
 
+/** @param {number} count @param {number} percent */
 export function recordRound(count, percent) {
   updateProgress((progress) => {
     progress.rounds = [...progress.rounds, { d: todayISO(), n: count, p: percent }].slice(-50);
   });
 }
 
+/** @param {number} day @param {boolean} complete */
 export function setDayComplete(day, complete) {
   updateProgress((progress) => {
     if (complete) progress.done[day] = todayISO();
@@ -75,6 +90,7 @@ export function setDayComplete(day, complete) {
   });
 }
 
+/** @param {import('../../types/app').ISODate} date */
 export function setStartDate(date) {
   updateProgress((progress) => {
     progress.start = date;
@@ -86,6 +102,7 @@ export function resetProgress() {
   updateProgress(() => {});
 }
 
+/** @param {string[]} ids */
 export function awardBadges(ids) {
   if (!ids.length) return;
   // The app's subscriber calculates badges after an action. Do not notify it recursively.
@@ -99,6 +116,7 @@ export function awardBadges(ids) {
   );
 }
 
+/** @param {number} seconds */
 export function recordStudyTime(seconds) {
   updateProgress(
     (progress) => {

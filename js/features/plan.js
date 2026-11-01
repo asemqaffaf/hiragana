@@ -5,19 +5,21 @@ import { me, state } from '../core/store.js';
 import { resetProgress, setDayComplete, setStartDate } from '../core/progress.js';
 import { ui } from '../core/ui-state.js';
 
-import { lessonSteps } from '../core/lesson.js';
+import { isLessonStep, lessonSteps } from '../core/lesson.js';
 import { runStep } from './lesson.js';
 import { kb } from '../ui/letter-button.js';
 import { syncText } from '../ui/student.js';
 import { t } from '../i18n/core.js';
 import { fmt } from '../i18n/helpers.js';
-import { $, $$, addDays, esc, todayISO } from '../util.js';
+import { $, $$, addDays, esc, must, todayISO } from '../util.js';
 
+/** @param {string | undefined} done the date the day was completed, if it was */
 function circle(done) {
   return done
     ? '<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19" transform="rotate(-110 22 22)"/></svg>'
     : '';
 }
+/** @param {string[]} list @param {boolean} dense */
 function kanaSquares(list, dense) {
   return (
     '<div class="focus' +
@@ -55,7 +57,6 @@ export function renderPlan() {
       '</button></div>';
   else {
     const steps = lessonSteps(),
-      allDone = steps.every((x) => x.done),
       next = steps.find((x) => !x.done);
     h +=
       '<p class="eyebrowless date">' +
@@ -78,21 +79,21 @@ export function renderPlan() {
             '</span><button class="sbody" data-step="' +
             x.id +
             '"><b>' +
-            t('step.' + x.id) +
+            t(`step.${x.id}`) +
             '</b><span class="small muted">' +
             (x.id === 'quiz'
-              ? x.score >= 0
+              ? x.score !== undefined && x.score >= 0
                 ? t('step.quizScore', { p: x.score })
                 : t('step.quizD')
               : x.m > 1
                 ? t('rm.of', { v: x.n, m: x.m })
-                : t('step.' + x.id + 'D')) +
+                : t(`step.${x.id}D`)) +
             '</span></button></li>'
           );
         })
         .join('') +
       '</ol>';
-    h += allDone
+    h += !next
       ? '<p class="lessondone">' +
         t('lesson.done') +
         '</p><div class="btnrow"><button class="btn bigbtn" id="goMore">' +
@@ -101,7 +102,7 @@ export function renderPlan() {
       : '<div class="btnrow"><button class="btn primary bigbtn" id="goNext">' +
         (steps.indexOf(next) === 0 && next.n === 0
           ? t('lesson.start')
-          : t('lesson.continue', { step: t('step.' + next.id) })) +
+          : t('lesson.continue', { step: t(`step.${next.id}`) })) +
         '</button></div>';
     h += '</div>';
     if (focus.length)
@@ -175,18 +176,27 @@ export function renderPlan() {
     '</p><p>' +
     t('credits') +
     '</p></footer>';
-  const root = $('#tab-plan');
-  const wasOpen = $$('details', root).map((d) => d.open),
+  const root = must('#tab-plan');
+  const wasOpen = $$('details', root, HTMLDetailsElement).map((d) => d.open),
     sameDay = root.dataset.day === String(day);
   root.innerHTML = h;
   root.dataset.day = String(day);
   if (sameDay)
-    $$('details', root).forEach((d, i) => {
+    $$('details', root, HTMLDetailsElement).forEach((d, i) => {
       if (wasOpen[i]) d.open = true;
     });
   const gn = $('#goNext', root);
-  if (gn) gn.onclick = () => runStep(lessonSteps().find((x) => !x.done).id);
-  $$('[data-step]', root).forEach((b) => (b.onclick = () => runStep(b.dataset.step)));
+  if (gn)
+    gn.onclick = () => {
+      const step = lessonSteps().find((x) => !x.done);
+      if (step) runStep(step.id);
+    };
+  $$('[data-step]', root).forEach(
+    (b) =>
+      (b.onclick = () => {
+        if (isLessonStep(b.dataset.step)) runStep(b.dataset.step);
+      }),
+  );
   const gw = $('#goWeak', root);
   if (gw)
     gw.onclick = () => {
@@ -201,25 +211,26 @@ export function renderPlan() {
       ui.session = null;
       showTab('drill');
     };
-  $('#markDone', root).onclick = () => {
+  must('#markDone', root).onclick = () => {
     setDayComplete(day, !state.done[day]);
     renderPlan();
   };
   $$('[data-toggle-day]', root).forEach(
     (b) =>
       (b.onclick = () => {
-        const dn = +b.dataset.toggleDay;
+        const dn = Number(b.dataset.toggleDay);
         setDayComplete(dn, !state.done[dn]);
         renderPlan();
       }),
   );
-  $('#startDate', root).onchange = (e) => {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) {
-      setStartDate(e.target.value);
+  const startDate = must('#startDate', root, HTMLInputElement);
+  startDate.onchange = () => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(startDate.value)) {
+      setStartDate(startDate.value);
       renderPlan();
     }
   };
-  $('#resetBtn', root).onclick = () => {
+  must('#resetBtn', root).onclick = () => {
     if (!ui.resetArmed) {
       ui.resetArmed = true;
       renderPlan();

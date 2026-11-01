@@ -43,6 +43,8 @@ export default {
 
 Entries may be strings or functions receiving the interpolation values. Preserve arrays where the English entry is an array, such as `read.rules`. For languages with several plural forms, functions can use `Intl.PluralRules`. The English and Arabic modules contain examples. Language names and text direction come from locale metadata; there is no need to add `lang.fr` keys to every other language.
 
+Misspelled keys are also caught by the type checker (`npm run typecheck`): the generated module is annotated so only keys that exist in `js/i18n/en.js` are accepted.
+
 Check progress and placeholder mistakes with:
 
 ```sh
@@ -95,6 +97,7 @@ Specific dictionaries take precedence over general meanings. Missing entries fal
 ## Verification
 
 ```sh
+npm run typecheck
 node --test tests/i18n.test.mjs
 PYTHON=.venv/bin/python tests/run_all.sh localetest --jobs 1
 ```

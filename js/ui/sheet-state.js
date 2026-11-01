@@ -1,11 +1,12 @@
 import { reduceAnim } from '../core/motion.js';
 import { ui } from '../core/ui-state.js';
-import { $ } from '../util.js';
+import { $, must } from '../util.js';
 
 /* mode: 'replace' = another card is about to take its place; 'pop' = the back gesture already left the card's
    history entry; 'nav' = leaving for another page, which takes over the card's entry; 'silent' = no focus return */
+/** @param {import('../../types/app').SheetCloseMode} [mode] */
 export function closeSheet(mode) {
-  const root = $('#sheetRoot');
+  const root = must('#sheetRoot');
   if (!root.innerHTML) return false;
   const sh = $('.sheet', root);
   if (sh && sh.classList.contains('out')) return false; /* already sliding away */
@@ -36,7 +37,7 @@ export function closeSheet(mode) {
       } catch (e) {}
     }
   }
-  if (mode !== 'silent' && mode !== 'nav' && ui.lastFocus && ui.lastFocus.focus)
+  if (mode !== 'silent' && mode !== 'nav' && ui.lastFocus instanceof HTMLElement)
     ui.lastFocus.focus();
   return had;
 }
