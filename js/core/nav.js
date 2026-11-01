@@ -1,4 +1,4 @@
-import {enterAnim} from './motion.js';
+import {enterAnim, pageSnapshot, replay} from './motion.js';
 import {ui} from './ui-state.js';
 import {renderChart} from '../features/chart.js';
 import {renderDaily, renderPhrases} from '../features/daily.js';
@@ -47,6 +47,7 @@ export function showTab(name, opts) {
   else if (!opts.fromHistory && name !== ui.currentTab) { ui.navStack.push(ui.currentTab); setHist({tab: name}, !!opts.replace); }
   ui.rootView = opts.fromHistory ? (name === 'plan' || name === 'chart') : !!opts.root;
   const prevTab = ui.currentTab;
+  const snap = name !== prevTab ? pageSnapshot($('#tab-' + prevTab), opts) : null; /* the page being left, kept on screen while it slides away */
   if (name === 'phrases') { if (opts.letter !== undefined) ui.phFilter = ui.phLetter = opts.letter; else if (!opts.fromHistory) ui.phFilter = ui.phLetter = null; }
   if (name === 'read') { if (opts.letter !== undefined) ui.rdFilter = ui.rdLetter = opts.letter; else if (!opts.fromHistory) ui.rdFilter = ui.rdLetter = null; }
   ui.currentTab = name;
@@ -68,14 +69,17 @@ export function showTab(name, opts) {
   if (name === 'read' && lessonOn()) { const x = lesson(); if (!x.r) { x.r = true; saveLesson(x); } }
   renderBack();
   window.scrollTo(0, 0);
-  enterAnim(name, opts, prevTab);
+  enterAnim(name, opts, prevTab, snap);
 }
 export function renderBack() {
   const bar = $('#backBar'), prev = ui.navStack[ui.navStack.length - 1];
   if (!bar) return;
   /* always there, except on Today (the home page) and the login screen */
   bar.hidden = ui.currentTab === 'plan' || document.body.classList.contains('signed-out');
-  $('#backLabel').textContent = t('backTo', {page: t('tab.' + (prev && prev !== ui.currentTab ? prev : 'plan'))});
+  const page = t('tab.' + (prev && prev !== ui.currentTab ? prev : 'plan')), lab = $('#backLabel');
+  /* the capsule shows where Back goes; the full sentence is its accessible name */
+  $('#backBtn').setAttribute('aria-label', t('backTo', {page}));
+  if (lab.textContent !== page) { lab.textContent = page; if (!bar.hidden) replay(lab, 'swap'); }
 }
 $('#backBtn').addEventListener('click', () => { if (ui.navStack.length) history.back(); else showTab('plan'); });
 window.addEventListener('popstate', e => {

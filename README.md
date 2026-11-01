@@ -56,7 +56,8 @@ Live: https://asemqaffaf.github.io/hiragana/
 ```
 index.html            page shell: loads css/*.css (the load order is the cascade order), then js/main.js
 css/                  one file per area (base, components, plan, drill, write, motion, touch-targets ...);
-                      ios.css is loaded last and holds the iOS 26 look: filled-tint buttons, glass bars, spring motion
+                      ios.css is loaded last and holds the iOS 26 look: filled-tint buttons, glass bars, spring motion,
+                      the glass Back capsule and the push / pop page slide
 js/
   main.js             entry point: imports everything and starts the app
   util.js             DOM and date helpers, shared SVG snippets
@@ -67,7 +68,8 @@ js/
     audio.js          clip playback (the iOS rules are documented inline), device voice as fallback
     plan.js           the base plan reshaped for the student's pace and daily minutes
     nav.js            tabs, history entries, back navigation
-    motion.js         page and element animation helpers
+    motion.js         page and element animation helpers; pageSnapshot() keeps a copy of the page being left so
+                      the Back / push slide can show both pages at once (skipped on #test pages)
     render-all.js     re-render the visible pages
   features/           one file per page: plan, lesson, daily, drill, write, read, chart,
                       progress, profile, login, language, gamify (levels, badges, toasts)

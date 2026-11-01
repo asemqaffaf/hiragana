@@ -3,17 +3,33 @@ import {$, $$} from '../util.js';
 /* ---------- motion ---------- */
 export const reduceAnim = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
 let enterTimer = 0, firstTab = true;
-export function enterAnim(name, opts, prevTab) {
+/* A copy of the page that is being left, fixed where it was on screen. The new page slides over it (push) or
+   it slides away to reveal the new page (back), the way iOS navigation works. Plain DOM, no View Transitions,
+   so the page underneath is already updated when showTab returns. */
+export function pageSnapshot(el, opts) {
+  if (!el || el.hidden || reduceAnim() || opts.initial || opts.root) return null;
+  if (/test/.test(location.hash) && !window.__hiraSnap) return null; /* the test pages look for one copy of each element */
+  const r = el.getBoundingClientRect(); if (r.height < 40 || r.bottom < 0) return null;
+  const c = el.cloneNode(true);
+  c.removeAttribute('id'); $$('[id]', c).forEach(n => n.removeAttribute('id')); $$('[for]', c).forEach(n => n.removeAttribute('for'));
+  c.className = 'pagesnap' + (opts.fromHistory ? ' pop' : ' push'); c.hidden = false; c.inert = true; c.setAttribute('aria-hidden', 'true');
+  c.style.cssText = 'left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + Math.max(0, Math.min(r.height, innerHeight - r.top)) + 'px';
+  document.body.appendChild(c);
+  setTimeout(() => c.remove(), 700);
+  return c;
+}
+export function enterAnim(name, opts, prevTab, snap) {
   const el = $('#tab-' + name); if (!el) return;
   const first = firstTab; firstTab = false;
   if (reduceAnim() || (name === prevTab && !first && !opts.fromHistory)) return;
-  el.classList.remove('enter', 'rev', 'first'); void el.offsetWidth;
+  el.classList.remove('enter', 'rev', 'first', 'slide', 'push', 'pop'); void el.offsetWidth;
   /* give map and calendar cells their wave order */
   $$('.cmap, .cal', el).forEach(g => Array.from(g.children).forEach((c, i) => c.style.setProperty('--i', Math.min(i, 40))));
   el.classList.add('enter'); if (opts.fromHistory) el.classList.add('rev'); if (first || opts.initial) el.classList.add('first');
+  if (snap) el.classList.add('slide', opts.fromHistory ? 'pop' : 'push');
   if (name === 'progress') countUp(el);
   clearTimeout(enterTimer);
-  enterTimer = setTimeout(() => $$('.tab.enter').forEach(x => x.classList.remove('enter', 'rev', 'first')), 1900);
+  enterTimer = setTimeout(() => $$('.tab.enter').forEach(x => x.classList.remove('enter', 'rev', 'first', 'slide', 'push', 'pop')), 1900);
 }
 function countUp(root) {
   $$('.pstat b', root).forEach(b => {
