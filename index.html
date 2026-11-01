@@ -635,6 +635,11 @@ html.themeanim body,html.themeanim body *{transition:background-color .35s,color
 .mx:active,.word:active,.dcard:active{transform:scale(.985)}
 .mx.playing,.word.playing,.dcard.playing{background:var(--jade-soft);border-color:var(--jade)}
 @media (prefers-reduced-motion:reduce){.mx,.word,.dcard{transition:none}.mx:active,.word:active,.dcard:active{transform:none}}
+
+.phfilter{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0 4px;padding:12px 14px;border:1.5px solid var(--jade);border-radius:12px;background:var(--jade-soft)}
+.phfilter .kana{font-family:var(--kana);font-size:34px;line-height:1;color:var(--ink)}
+.phfilter .phft{flex:1 1 140px;font-weight:600}
+.phfilter .btn{min-height:40px;flex:0 0 auto}
 </style>
 </head>
 <body class="signed-out">
@@ -1496,7 +1501,11 @@ Object.assign(STR.en, {
   'daily.ex': 'Example', 'daily.done': 'Done: back to today', 'daily.heard': 'Heard {n} of {m}',
   'daily.title': 'Daily words', 'daily.today': 'Day {d} (today)', 'daily.sofar': 'Earlier days ({n} words)', 'daily.later': 'Coming later ({n} words)',
   'ph.intro': 'Short phrases you can use in Japan from day one. Tap Hear and repeat after the voice. Romaji and meaning are always shown.',
-  'ph.count': '{n} phrases'
+  'ph.count': v => v.n + (v.n === 1 ? ' phrase' : ' phrases'),
+  'ph.with': 'Phrases that use {k}',
+  'ph.noneFor': 'No phrase uses {k} yet. Words that do:',
+  'ph.nothing': 'Nothing uses {k} yet.',
+  'ph.all': 'Show all phrases'
 });
 Object.assign(STR.en, {
   'pf.look': 'Appearance', 'th.mode': 'Light or dark', 'th.bg': 'Background colour',
@@ -1511,7 +1520,11 @@ Object.assign(STR.ar, {
   'daily.ex': 'مثال', 'daily.done': 'تم: العودة إلى اليوم', 'daily.heard': 'استمعت إلى {n} من {m}',
   'daily.title': 'كلمات يومية', 'daily.today': 'اليوم {d} من الخطة', 'daily.sofar': v => 'الأيام السابقة (' + arN(v.n, 'word') + ')', 'daily.later': v => 'لاحقاً (' + arN(v.n, 'word') + ')',
   'ph.intro': 'عبارات قصيرة تستطيع استخدامها في اليابان من اليوم الأول. اضغط «استمع» وردّد بعد الصوت. النطق بالحروف اللاتينية والمعنى ظاهران دائماً.',
-  'ph.count': v => arN(v.n, 'phrase')
+  'ph.count': v => arN(v.n, 'phrase'),
+  'ph.with': 'عبارات فيها {k}',
+  'ph.noneFor': 'لا توجد عبارة فيها {k} بعد. كلمات فيها:',
+  'ph.nothing': 'لا شيء يستخدم {k} بعد.',
+  'ph.all': 'عرض كل العبارات'
 });
 Object.assign(STR.ar, {
   'pf.look': 'المظهر', 'th.mode': 'فاتح أم داكن', 'th.bg': 'لون الخلفية',
@@ -2301,9 +2314,10 @@ function renderSubnav(name) {
   lastSub[g] = name;
   el.hidden = false;
   el.innerHTML = '<div class="seg" role="tablist" aria-label="' + t('nav.' + g) + '">' + subs.map(s => '<button role="tab" data-sub="' + s + '" aria-selected="' + (s === name) + '" aria-pressed="' + (s === name) + '">' + t('tab.' + s) + '</button>').join('') + '</div>';
-  $$('[data-sub]', el).forEach(b => b.onclick = () => { if (b.dataset.sub !== currentTab) showTab(b.dataset.sub, {root: rootView}); });
+  $$('[data-sub]', el).forEach(b => b.onclick = () => { if (b.dataset.sub !== currentTab) showTab(b.dataset.sub, {root: rootView, letter: b.dataset.sub === 'phrases' && currentTab === 'write' && writeK ? writeK : undefined}); });
 }
 let currentTab = 'plan', navStack = [], sheetPushed = false, rootView = true;
+let phFilter = null;   /* a letter: the Phrases page then shows only what uses that letter */
 function setHist(st, replace) { try { history[replace ? 'replaceState' : 'pushState'](st, '', '#' + st.tab); } catch (e) {} }
 
 /* ---------- motion ---------- */
@@ -2340,6 +2354,7 @@ function showTab(name, opts) {
   else if (!opts.fromHistory && name !== currentTab) { navStack.push(currentTab); setHist({tab: name}, !!opts.replace); }
   rootView = opts.fromHistory ? (name === 'plan' || name === 'chart') : !!opts.root;
   const prevTab = currentTab;
+  if (name === 'phrases') { if (opts.letter !== undefined) phFilter = opts.letter; else if (!opts.fromHistory) phFilter = null; }
   currentTab = name;
   $$('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.nav === GROUP[name] ? 'true' : 'false'));
   const wb = $('#whoBtn'); if (wb) { if (name === 'profile') wb.setAttribute('aria-current', 'page'); else wb.removeAttribute('aria-current'); }
@@ -2522,12 +2537,35 @@ function renderDaily() {
   $('#dDone', root).onclick = () => { if (lessonOn()) { const y = lesson(); y.dd = true; saveLesson(y); } showTab('plan'); };
 }
 function renderPhrases() {
-  let h = '<h2>' + t('tab.phrases') + '</h2><p class="muted">' + t('ph.intro') + '</p>';
-  PHRASES.forEach(g => {
-    h += '<h3>' + (isAr() ? g.ar : g.en) + ' <span class="muted small">' + t('ph.count', {n: g.items.length}) + '</span></h3><div class="sentences phr">' + g.items.map(p => wordCard([p[0], p[1], isAr() ? p[3] : p[2]], ' open')).join('') + '</div>';
-  });
+  const k = phFilter;
+  let h = '<h2>' + t('tab.phrases') + '</h2>';
+  if (k) {
+    /* opened from the Write page: only what uses this letter */
+    const hits = PHRASES.map(g => ({g, items: g.items.filter(p => p[0].includes(k))})).filter(x => x.items.length);
+    const nHit = hits.reduce((s, x) => s + x.items.length, 0);
+    const seen = new Set(), pool = [];
+    if (!nHit) {
+      /* no phrase uses it yet: fall back to the words that do */
+      const add = (kana, ro, mean) => { if (kana.includes(k) && !seen.has(kana)) { seen.add(kana); pool.push([kana, ro, mean]); } };
+      WORDS.forEach(g => g.items.forEach(w => add(w[0], w[1], meanOf(w))));
+      DAILY_ALL.forEach(w => add(w[0], w[1], isAr() ? w[3] : w[2]));
+      Object.keys(EXTRA).forEach(x => EXTRA[x].forEach(w => add(w[0], w[1], isAr() ? w[3] : w[2])));
+    }
+    h += '<div class="phfilter"><span class="kana" dir="ltr">' + k + '</span><span class="phft">' + t(nHit ? 'ph.with' : pool.length ? 'ph.noneFor' : 'ph.nothing', {k}) + '</span><button class="btn" id="phAll" type="button">' + t('ph.all') + '</button></div>';
+    if (nHit) {
+      hits.forEach(x => {
+        h += '<h3>' + (isAr() ? x.g.ar : x.g.en) + ' <span class="muted small">' + t('ph.count', {n: x.items.length}) + '</span></h3><div class="sentences phr">' + x.items.map(p => wordCard([p[0], p[1], isAr() ? p[3] : p[2]], ' open')).join('') + '</div>';
+      });
+    } else if (pool.length) h += '<div class="sentences phr">' + pool.map(w => wordCard(w, ' open')).join('') + '</div>';
+  } else {
+    h += '<p class="muted">' + t('ph.intro') + '</p>';
+    PHRASES.forEach(g => {
+      h += '<h3>' + (isAr() ? g.ar : g.en) + ' <span class="muted small">' + t('ph.count', {n: g.items.length}) + '</span></h3><div class="sentences phr">' + g.items.map(p => wordCard([p[0], p[1], isAr() ? p[3] : p[2]], ' open')).join('') + '</div>';
+    });
+  }
   const root = $('#tab-phrases');
   root.innerHTML = h;
+  const all = $('#phAll', root); if (all) all.onclick = () => { phFilter = null; renderPhrases(); window.scrollTo(0, 0); };
   root.onclick = e => { const c = e.target.closest('[data-word]'), sb = e.target.closest('[data-say]') || (c && $('[data-say]', c)); if (sb) { e.stopPropagation(); speak(sb.dataset.say); flash(c || sb.closest('.word')); } };
 }
 
@@ -3457,7 +3495,7 @@ function renderAll() {
   if (currentTab === 'write') renderWrite();
 }
 boot();
-if (/[#&]test\b/.test(location.hash)) window.__hira = {audioEl: () => htmlAudio, audioState: () => ({htmlOK, htmlFails, playTok, waState: actx && actx.state}), judgeStroke, strokeTemplates, parsePath, KVG, getState: () => state, getStudents: () => students};
+if (/[#&]test\b/.test(location.hash)) window.__hira = {phrasesFor: k => { phFilter = k; showTab("phrases", {letter: k}); }, audioEl: () => htmlAudio, audioState: () => ({htmlOK, htmlFails, playTok, waState: actx && actx.state}), judgeStroke, strokeTemplates, parsePath, KVG, getState: () => state, getStudents: () => students};
 
 })();
 </script>
