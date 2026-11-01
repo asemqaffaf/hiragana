@@ -22,6 +22,7 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   lang: 'اللغة',
   'lang.choose': 'اختر لغتك',
   'lang.change': 'تغيير اللغة',
+  by: 'من إنشاء ' + iso('Asem Qaffaf'),
   strokes: (v) => arN(v.n, 'stroke'),
   'plan.starts': 'تبدأ في {date}',
   'plan.todayIs': 'اليوم هو {date}',

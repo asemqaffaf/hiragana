@@ -82,9 +82,13 @@ export function langStep(cur) {
           '</button>',
       )
       .join('') +
-    '</div></div>'
+    '</div>' +
+    byline() +
+    '</div>'
   );
 }
+/** The creator's credit line. */
+export const byline = () => '<p class="byline">' + esc(t('by')) + '</p>';
 /** A small button on the profile form that shows the chosen language and goes back to the first step. @param {string} cur */
 export function langChip(cur) {
   return (

@@ -18,7 +18,7 @@ import { reconcileLessonCompletion } from '../core/lesson.js';
 import { ui } from '../core/ui-state.js';
 import { ALL } from '../data/letters.js';
 import { checkBadges } from './gamify.js';
-import { deviceLang, langChip, langStep, setLang } from './language.js';
+import { byline, deviceLang, langChip, langStep, setLang } from './language.js';
 import {
   ageOpts,
   goalHint,
@@ -33,7 +33,6 @@ import { avatar, cleanName, nameTaken, swatches } from '../ui/student.js';
 import { LANG, t } from '../i18n/core.js';
 import { fmt } from '../i18n/helpers.js';
 import { closeSheet } from '../ui/sheet-state.js';
-import { reduceAnim } from '../core/motion.js';
 import { $, $$, esc, isObject, isoToUTC, must, todayISO } from '../util.js';
 
 /* ---------- students: passwordless login and profile ---------- */
@@ -99,16 +98,8 @@ export function showLogin() {
         (b.onclick = () => {
           setDeviceLanguage(b.dataset.lang);
           ui.langStep = false;
-          /* the step fades away, then the form rises in */
-          const step = $('.langstep', root);
-          const next = () => {
-            showLogin();
-            window.scrollTo(0, 0);
-          };
-          if (step && !reduceAnim()) {
-            step.classList.add('leaving');
-            setTimeout(next, 220);
-          } else next();
+          showLogin();
+          window.scrollTo(0, 0);
         }),
     );
     return;
@@ -172,7 +163,7 @@ export function showLogin() {
     '</button><span class="muted">' +
     t('login.importHint') +
     '</span></p><input type="file" id="importFile" accept="application/json,.json" hidden>';
-  h += '<footer class="credit"><p>' + t('credits') + '</p></footer>';
+  h += '<footer class="credit"><p>' + t('credits') + '</p>' + byline() + '</footer>';
   root.innerHTML = h;
   ui.loginMsg = '';
   must('[data-change-lang]', root).onclick = () => {

@@ -95,25 +95,23 @@ html.sheet-open body{overflow:hidden;overscroll-behavior:none}
 
 /* first step (choose a language) and the profile form that follows */
 @keyframes globePop{0%{opacity:0;transform:scale(.4) rotate(-28deg)}60%{opacity:1;transform:scale(1.1) rotate(5deg)}100%{opacity:1;transform:none}}
-@keyframes stepLeave{to{opacity:0;transform:translateY(-12px) scale(.98)}}
+@keyframes rowIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 .langglobe{animation:globePop .75s var(--spring-soft,cubic-bezier(.3,1.4,.5,1)) backwards,nowRing 2.4s ease-in-out .9s 2}
 .langstep h2{animation:rise .5s cubic-bezier(.2,.7,.2,1) .14s backwards}
-.langopt{animation:rise .5s cubic-bezier(.2,.7,.2,1) backwards;transition:background-color .2s,transform .35s var(--spring,ease)}
-.langopt:nth-child(1){animation-delay:.22s}.langopt:nth-child(2){animation-delay:.3s}.langopt:nth-child(3){animation-delay:.38s}
-.langopt:nth-child(4){animation-delay:.46s}.langopt:nth-child(n+5){animation-delay:.54s}
+.langopt{animation:rowIn .45s cubic-bezier(.2,.7,.2,1) backwards;transition:background-color .2s,transform .35s var(--spring,ease)}
+.langopt:nth-child(1){animation-delay:.2s}.langopt:nth-child(2){animation-delay:.26s}.langopt:nth-child(3){animation-delay:.32s}
+.langopt:nth-child(4){animation-delay:.38s}.langopt:nth-child(n+5){animation-delay:.44s}
 .langopt:active{transform:scale(.985)}
 .langopt .chev{transition:transform .35s var(--spring,ease)}
 .langopt:active .chev{transform:translateX(5px)}
 .langopt[dir="rtl"]:active .chev{transform:scaleX(-1) translateX(5px)}
 .langopt .tick path{stroke-dasharray:26;animation:tick .45s ease-out .6s backwards}
-.langstep.leaving{animation:stepLeave .24s ease-in forwards;pointer-events:none}
-#login > *:not(.langstep){animation:rise .5s cubic-bezier(.2,.7,.2,1) backwards}
-#login > *:nth-child(2){animation-delay:.05s}#login > *:nth-child(3){animation-delay:.1s}#login > *:nth-child(4){animation-delay:.15s}
-#login > *:nth-child(n+5){animation-delay:.2s}
+/* the form only fades in: nothing moves, so an early tap lands where the button is */
+#login > *:not(.langstep){animation:fadeIn .4s ease backwards}
 .langchip{transition:transform .35s var(--spring,ease),background-color .2s}
 .langchip:active{transform:scale(.94)}
 @media (prefers-reduced-motion:reduce){
-  .langglobe,.langstep h2,.langopt,.langopt .tick path,.langstep.leaving,#login > *{animation:none !important}
+  .langglobe,.langstep h2,.langopt,.langopt .tick path,#login > *{animation:none !important}
   .langopt,.langopt .chev,.langchip{transition:none}
   .langopt:active,.langchip:active,.langopt:active .chev{transform:none}
 }

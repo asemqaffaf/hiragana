@@ -2,6 +2,8 @@
 
 A study kit for all 104 hiragana, in English and Arabic: a 14-day plan, a chart with memory hooks and animated stroke order, drills (read, choose, listen), handwriting practice that checks every stroke, and JLPT N5-level reading practice with recorded audio.
 
+Created by Asem Qaffaf.
+
 Live: https://asemqaffaf.github.io/hiragana/
 
 ## How to use it

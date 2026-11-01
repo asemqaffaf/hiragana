@@ -9,6 +9,7 @@ import { isLessonStep, lessonSteps } from '../core/lesson.js';
 import { runStep } from './lesson.js';
 import { kb } from '../ui/letter-button.js';
 import { syncText } from '../ui/student.js';
+import { byline } from './language.js';
 import { t } from '../i18n/core.js';
 import { fmt } from '../i18n/helpers.js';
 import { $, $$, addDays, esc, must, todayISO } from '../util.js';
@@ -175,7 +176,9 @@ export function renderPlan() {
     syncText() +
     '</p><p>' +
     t('credits') +
-    '</p></footer>';
+    '</p>' +
+    byline() +
+    '</footer>';
   const root = must('#tab-plan');
   const wasOpen = $$('details', root, HTMLDetailsElement).map((d) => d.open),
     sameDay = root.dataset.day === String(day);

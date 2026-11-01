@@ -143,3 +143,5 @@ p{margin:0 0 10px}
 .langchipwrap{display:flex;justify-content:center;margin:4px 0 18px}
 .langchip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:0;border-radius:999px;background:var(--gray-fill,rgba(120,120,128,.16));color:var(--ink);font-size:15px;font-weight:600}
 .langchip svg{width:18px;height:18px;color:var(--jade)}
+.byline{margin:14px 0 0;text-align:center;color:var(--pencil);font-size:13px;font-weight:600;letter-spacing:.02em}
+.credit .byline{margin-top:10px}
