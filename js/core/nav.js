@@ -139,7 +139,7 @@ export function showTab(requested, opts = {}) {
   $$('.tab').forEach((s) => {
     s.hidden = s.id !== 'tab-' + name;
   });
-  enterPage(name);
+  enterPage(name, opts);
   renderBack();
   window.scrollTo(0, 0);
   enterAnim(name, opts, prevTab, snap);
@@ -250,6 +250,5 @@ $$('nav.tabs button').forEach((b) =>
   window.addEventListener('resize', () => {
     moveThumb($('nav.tabs .in'), 'tabs', true);
     moveThumb($('#subnav .seg'), 'subnav', true);
-    moveThumb($('#login .langseg:not(.many)'), 'lang', true);
   });
 })();

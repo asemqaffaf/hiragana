@@ -38,10 +38,12 @@ async def main():
         await page.route('**/js/i18n/locales.js', lambda route: route.fulfill(body=source, content_type='text/javascript'))
 
         await page.goto(BASE + '#test')
-        await page.locator('#nsName').wait_for()
-        assert await page.locator('#login h2').inner_text() == 'Créer un profil'
+        await page.locator('.langstep').wait_for()
         assert await page.locator('[data-lang]').count() == 4
         assert await page.locator('html').get_attribute('lang') == 'fr'
+        await page.click('[data-lang="fr"]')
+        await page.locator('#nsName').wait_for()
+        assert await page.locator('#login h2').inner_text() == 'Créer un profil'
         await page.fill('#nsName', 'Camille')
         await page.click('#newStudent button[type=submit]')
         assert await page.locator('#tab-plan .dtitle').inner_text() == 'Première leçon'

@@ -24,6 +24,8 @@ async def main():
         await pg.emulate_media(reduced_motion='reduce')
         R = {}
         await pg.goto(URL); await pg.wait_for_timeout(400)
+        R['0_language_step'] = [await pg.text_content('#login h2'), await pg.locator('[data-lang]').count()]
+        await pg.click('[data-lang="en"]')
         R['1_first_screen'] = await pg.text_content('#login h2')
         R['1_nav_visible'] = await pg.is_visible('nav.tabs'); R['1_chip_visible'] = await pg.is_visible('#whoBtn')
         await pg.screenshot(path='/tmp/hira-tests/login_empty.png')
@@ -103,6 +105,7 @@ async def main():
         pg2.on('pageerror', lambda e: e2.append(str(e)))
         await pg2.add_init_script("Object.defineProperty(window, 'localStorage', {get(){ throw new DOMException('blocked', 'SecurityError'); }});")
         await pg2.goto(URL); await pg2.wait_for_timeout(300)
+        await pg2.click('[data-lang="en"]')
         R['13_blocked_warning'] = await pg2.text_content('#login .note.warn')
         await pg2.fill('#nsName', 'Guest'); await pg2.click('#newStudent button[type=submit]'); await pg2.wait_for_timeout(200)
         R['13_blocked_can_study'] = await pg2.text_content('#tab-plan h2'); R['13_errors'] = e2

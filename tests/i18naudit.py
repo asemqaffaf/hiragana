@@ -17,7 +17,7 @@ async def main():
         browser = await playwright.chromium.launch()
         page = await browser.new_page()
         await page.goto(BASE + '#test')
-        await page.locator('#nsName').wait_for()
+        await page.locator('.langstep').wait_for()
         reports = await page.evaluate("""async () => {
           const {localeIds, STR} = await import('./js/i18n/core.js');
           const {auditLocale} = await import('./js/i18n/audit.js');

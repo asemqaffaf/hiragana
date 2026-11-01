@@ -34,5 +34,6 @@ export const ui = {
   demoShown: false,
   showRo: false,
   showMean: false,
+  langStep: false,
   loginMsg: '',
 };

@@ -28,6 +28,7 @@ async def main():
         await pg.add_init_script("window.__plays=[];const op=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){const el=this;const r=op.call(this);const i=window.__plays.push('pending')-1;r.then(()=>setTimeout(()=>window.__plays[i]=el.src.split('/').pop()+' rate='+el.playbackRate+' dur='+(el.duration||0).toFixed(2),400)).catch(e=>window.__plays[i]='err:'+e.name);return r;};")
         await pg.emulate_media(reduced_motion='reduce')
         await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+        await pg.click('[data-lang="en"]')
         await pg.fill('#nsName', 'Kid'); await pg.select_option('#nsAge', 'child'); await pg.select_option('#nsPace', '7'); await pg.select_option('#nsMin', '20'); await pg.select_option('#nsReason', 'travel')
         await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(250)
         R['kid'] = [await pg.evaluate("document.body.classList.contains('kid')"), await pg.text_content('#appSub'), await pg.text_content('#tab-plan h2'), await pg.text_content('#tab-plan .dtitle')]

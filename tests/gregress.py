@@ -19,6 +19,7 @@ async def main():
         pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.emulate_media(reduced_motion='reduce')
         await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+        await pg.click('[data-lang="en"]')
         await pg.fill('#nsName', 'Tester'); await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(200)
         R = {}
         await go(pg, "chart"); n = 0

@@ -35,7 +35,7 @@ export interface ShowTabOptions {
 
 export interface PageDefinition {
   render: () => void;
-  enter?: () => void;
+  enter?: (opts: ShowTabOptions) => void;
   shouldRender?: () => boolean;
 }
 export type PageRegistry = Record<TabName, PageDefinition>;
@@ -450,6 +450,8 @@ export interface UiState {
   demoShown: boolean;
   showRo: boolean;
   showMean: boolean;
+  /** The first-screen language step is showing (before a language was chosen, or after Change language). */
+  langStep: boolean;
   /** A string key explaining why the login screen is showing, or empty. */
   loginMsg: TextKey | '';
 }

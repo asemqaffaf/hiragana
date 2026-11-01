@@ -47,7 +47,8 @@ export function runStep(id) {
 let meetAudioTimer;
 /** The letter shown by the last render, to flip the card only when it changes. @type {number | undefined} */
 let lastMeetIndex;
-export function enterMeet() {
+/** @param {import('../../types/app').ShowTabOptions} [opts] `initial` is the first page of a visit: nothing may start playing by itself */
+export function enterMeet(opts = {}) {
   clearTimeout(meetAudioTimer);
   const list = focusKana(curDay());
   if (!list.length) return;
@@ -55,6 +56,7 @@ export function enterMeet() {
   markLetterMet(list[ui.meetI]);
   const kana = list[ui.meetI],
     student = me();
+  if (opts.initial) return;
   meetAudioTimer = setTimeout(() => {
     if (me() === student && ui.currentTab === 'meet' && focusKana(curDay())[ui.meetI] === kana)
       speakFull(kana);

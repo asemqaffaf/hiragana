@@ -17,6 +17,7 @@ async def main():
         page.on('pageerror', lambda error: errors.append(str(error)))
         await page.emulate_media(reduced_motion='reduce')
         await page.goto(BASE + '#test')
+        await page.click('[data-lang="en"]')
         await page.fill('#nsName', 'Learner')
         await page.click('#newStudent button[type=submit]')
         result = await page.evaluate('''async () => {

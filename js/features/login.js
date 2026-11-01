@@ -18,7 +18,7 @@ import { reconcileLessonCompletion } from '../core/lesson.js';
 import { ui } from '../core/ui-state.js';
 import { ALL } from '../data/letters.js';
 import { checkBadges } from './gamify.js';
-import { deviceLang, glideLangSeg, langSeg, setLang } from './language.js';
+import { deviceLang, langChip, langStep, setLang } from './language.js';
 import {
   ageOpts,
   goalHint,
@@ -90,8 +90,22 @@ export function showLogin() {
   who.innerHTML = '';
   const root = must('#login');
   root.hidden = false;
+  /* the first step: choose a language, before anything else is asked */
+  if (ui.langStep || (!students.lang && !students.list.length)) {
+    root.innerHTML = langStep(LANG);
+    $$('[data-lang]', root).forEach(
+      (b) =>
+        (b.onclick = () => {
+          setDeviceLanguage(b.dataset.lang);
+          ui.langStep = false;
+          showLogin();
+          window.scrollTo(0, 0);
+        }),
+    );
+    return;
+  }
   const list = students.list.slice().sort((x, y) => (y.last || 0) - (x.last || 0));
-  let h = langSeg(LANG, 'langseg');
+  let h = langChip(LANG);
   h += '<h2>' + t(list.length ? 'login.who' : 'login.create') + '</h2>';
   h += '<p class="muted">' + t(list.length ? 'login.tapName' : 'login.addName') + '</p>';
   if (!canStore) h += '<p class="note warn">' + t('login.blocked') + '</p>';
@@ -151,15 +165,11 @@ export function showLogin() {
     '</span></p><input type="file" id="importFile" accept="application/json,.json" hidden>';
   h += '<footer class="credit"><p>' + t('credits') + '</p></footer>';
   root.innerHTML = h;
-  glideLangSeg(root);
   ui.loginMsg = '';
-  $$('[data-lang]', root).forEach(
-    (b) =>
-      (b.onclick = () => {
-        setDeviceLanguage(b.dataset.lang);
-        showLogin();
-      }),
-  );
+  must('[data-change-lang]', root).onclick = () => {
+    ui.langStep = true;
+    showLogin();
+  };
   $$('[data-login]', root).forEach(
     (b) =>
       (b.onclick = () => {

@@ -14,10 +14,10 @@ export function renderPage(name) {
   page.render();
 }
 
-/** @param {import('../../types/app').TabName} name */
-export function enterPage(name) {
+/** @param {import('../../types/app').TabName} name @param {import('../../types/app').ShowTabOptions} [opts] */
+export function enterPage(name, opts = {}) {
   const page = pages[name];
   if (!page) throw new Error('Unregistered page: ' + name);
-  if (page.enter) page.enter();
+  if (page.enter) page.enter(opts);
   if (!page.shouldRender || page.shouldRender()) page.render();
 }

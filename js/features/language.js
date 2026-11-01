@@ -1,7 +1,6 @@
 import { isTab, renderBack } from '../core/nav.js';
 import { me, students } from '../core/store.js';
 import { applyStudent } from '../ui/appearance.js';
-import { moveThumb } from '../ui/thumb.js';
 import {
   LANG,
   detectLocale,
@@ -11,7 +10,7 @@ import {
   replaceLang,
   t,
 } from '../i18n/core.js';
-import { $, $$, esc, must } from '../util.js';
+import { $$, esc, must } from '../util.js';
 
 /* ---------- language ---------- */
 /** The language for people who have not signed in: the saved device choice, else the browser's. */
@@ -46,27 +45,29 @@ export function setLang(l) {
   });
   renderBack();
 }
-/** Up to this many languages fit in one pill. */
-const MAX_PILL = 3;
 const GLOBE_SVG =
-  '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 12h17M12 3c2.6 2.6 3.8 5.6 3.8 9S14.6 18.4 12 21c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
-/** The language buttons. @param {string} cur the selected language @param {string} [cls] */
-export function langSeg(cur, cls) {
-  const many = localeIds().length > MAX_PILL;
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 12h17M12 3c2.6 2.6 3.8 5.6 3.8 9S14.6 18.4 12 21c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+const CHEVRON_SVG =
+  '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const CHECK_SVG =
+  '<svg class="tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+/**
+ * The first step: a centred globe, a heading and one large row per language, each in its own script.
+ * @param {string} cur the language the page is showing now
+ */
+export function langStep(cur) {
   return (
-    '<div class="langpick"><span class="langcue" aria-hidden="true">' +
+    '<div class="langstep"><span class="langglobe">' +
     GLOBE_SVG +
-    esc(t('lang')) +
-    '</span><div class="seg language-options ' +
-    (cls || '') +
-    (many ? ' many' : '') +
-    '" role="group" aria-label="' +
+    '</span><h2>' +
+    esc(t('lang.choose')) +
+    '</h2><div class="langlist" role="group" aria-label="' +
     esc(t('lang')) +
     '">' +
     localeIds()
       .map(
         (l) =>
-          '<button type="button" data-lang="' +
+          '<button type="button" class="langopt" data-lang="' +
           l +
           '" lang="' +
           l +
@@ -74,16 +75,27 @@ export function langSeg(cur, cls) {
           localeFor(l).direction +
           '" aria-pressed="' +
           (cur === l) +
-          '">' +
+          '"><span>' +
           esc(localeLabel(l)) +
+          '</span>' +
+          (cur === l ? CHECK_SVG : CHEVRON_SVG) +
           '</button>',
       )
       .join('') +
     '</div></div>'
   );
 }
-/** Gives the language pill its gliding glass thumb; with many languages the buttons wrap and mark themselves. @param {ParentNode} root */
-export function glideLangSeg(root) {
-  const seg = $('.langseg', root);
-  if (seg && !seg.classList.contains('many')) moveThumb(seg, 'lang');
+/** A small button on the profile form that shows the chosen language and goes back to the first step. @param {string} cur */
+export function langChip(cur) {
+  return (
+    '<div class="langchipwrap"><button type="button" class="langchip" data-change-lang aria-label="' +
+    esc(t('lang.change')) +
+    '">' +
+    GLOBE_SVG +
+    '<span lang="' +
+    cur +
+    '">' +
+    esc(localeLabel(cur)) +
+    '</span></button></div>'
+  );
 }

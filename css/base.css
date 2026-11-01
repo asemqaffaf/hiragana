@@ -126,3 +126,20 @@ p{margin:0 0 10px}
 .small{font-size:14px}
 .tab[hidden]{display:none}
 
+/* first step: choose a language (centred, a grouped list as in iOS Settings) */
+.langstep{display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:clamp(12px,7vh,56px)}
+.langglobe{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:var(--gray-fill,rgba(120,120,128,.16));color:var(--jade);margin-bottom:18px}
+.langglobe svg{width:44px;height:44px}
+.langstep h2{margin:0}
+.langlist{width:100%;max-width:420px;margin-top:26px;display:grid;overflow:hidden;border-radius:22px;background:var(--surface);box-shadow:var(--shadow);text-align:start}
+.langopt{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:62px;padding:0 22px;border:0;background:none;color:var(--ink);font-size:20px;font-weight:600;text-align:start}
+.langopt + .langopt{border-top:.5px solid var(--grid)}
+.langopt:active{background:var(--gray-fill,rgba(120,120,128,.16))}
+.langopt svg{width:20px;height:20px;flex:0 0 auto}
+.langopt .chev{color:var(--pencil)}
+.langopt[dir="rtl"] .chev{transform:scaleX(-1)}
+.langopt .tick{color:var(--jade)}
+/* on the profile form: a small button that shows the language and goes back to that step */
+.langchipwrap{display:flex;justify-content:center;margin:4px 0 18px}
+.langchip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:0;border-radius:999px;background:var(--gray-fill,rgba(120,120,128,.16));color:var(--ink);font-size:15px;font-weight:600}
+.langchip svg{width:18px;height:18px;color:var(--jade)}

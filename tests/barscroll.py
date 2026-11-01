@@ -8,6 +8,7 @@ async def main():
         b = await p.chromium.launch()
         ctx = await b.new_context(**p.devices['iPhone 13']); pg = await ctx.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(BASE + '#test'); await pg.wait_for_timeout(400)
+        await pg.tap('[data-lang="en"]')
         await pg.fill('#nsName','A'); await pg.tap('#newStudent button[type=submit]'); await pg.wait_for_timeout(700)
         await pg.tap('nav [data-nav="progress"]'); await pg.wait_for_timeout(1200)
         cdp = await ctx.new_cdp_session(pg)

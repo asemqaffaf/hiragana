@@ -19,6 +19,8 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   all: 'All',
   none: 'None yet',
   lang: 'Language',
+  'lang.choose': 'Choose your language',
+  'lang.change': 'Change language',
   strokes: (v) => enN(v.n, 'stroke'),
   /* plan */
   'plan.starts': 'Starts {date}',
