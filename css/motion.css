@@ -1,0 +1,94 @@
+/* ---------- motion ---------- */
+#homeBtn{cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:6px;transition:transform .15s ease}
+#homeBtn:active{transform:scale(.94)}
+#homeBtn:focus-visible{outline:2px solid var(--jade);outline-offset:3px}
+body.signed-out #homeBtn{cursor:default;pointer-events:none}
+#homeBtn.bounce{animation:homeBounce .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes homeBounce{0%{transform:scale(1)}35%{transform:scale(1.12) rotate(-2deg)}100%{transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes slideIn{from{opacity:0;transform:translateX(var(--sx,22px))}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+@keyframes popIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes navPop{0%{transform:none}40%{transform:scale(1.28) translateY(-3px)}100%{transform:none}}
+@keyframes growX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes drawC{from{stroke-dashoffset:110}to{stroke-dashoffset:0}}
+@keyframes tick{from{stroke-dashoffset:26}to{stroke-dashoffset:0}}
+@keyframes nowRing{0%,100%{box-shadow:0 0 0 4px var(--jade-soft)}50%{box-shadow:0 0 0 9px transparent}}
+@keyframes cardIn{from{opacity:0;transform:translateX(var(--sx,22px)) scale(.98)}to{opacity:1;transform:none}}
+html{--sx:22px}
+html[dir="rtl"]{--sx:-22px}
+/* page change: the page's blocks slide in one after another; going back slides from the other side */
+.tab.enter{overflow-x:hidden}
+@supports (overflow:clip){.tab.enter{overflow-x:clip}}
+.tab.enter > *{animation:slideIn .38s cubic-bezier(.2,.7,.2,1) backwards}
+.tab.enter.rev > *{--sx:-22px}
+[dir="rtl"] .tab.enter.rev > *{--sx:22px}
+.tab.enter.first > *{animation-name:rise}
+.tab.enter > *:nth-child(2){animation-delay:.04s}.tab.enter > *:nth-child(3){animation-delay:.08s}
+.tab.enter > *:nth-child(4){animation-delay:.12s}.tab.enter > *:nth-child(5){animation-delay:.16s}
+.tab.enter > *:nth-child(6){animation-delay:.2s}.tab.enter > *:nth-child(7){animation-delay:.24s}
+.tab.enter > *:nth-child(n+8){animation-delay:.28s}
+/* progress: bars fill, numbers pop, roadmap draws in */
+.tab.enter .rbar i{transform-origin:0 50%;animation:growX .9s cubic-bezier(.2,.8,.2,1) .25s backwards}
+[dir="rtl"] .tab.enter .rbar i{transform-origin:100% 50%}
+.tab.enter .pstat div{animation:rise .5s cubic-bezier(.2,.7,.2,1) backwards}
+.tab.enter .pstat div:nth-child(2){animation-delay:.06s}.tab.enter .pstat div:nth-child(3){animation-delay:.12s}
+.tab.enter .pstat div:nth-child(4){animation-delay:.18s}.tab.enter .pstat div:nth-child(5){animation-delay:.24s}
+.tab.enter .pstat div:nth-child(6){animation-delay:.3s}
+.tab.enter .road li{animation:rise .5s cubic-bezier(.2,.7,.2,1) backwards}
+.tab.enter .road li:nth-child(1){animation-delay:.2s}.tab.enter .road li:nth-child(2){animation-delay:.3s}
+.tab.enter .road li:nth-child(3){animation-delay:.4s}.tab.enter .road li:nth-child(4){animation-delay:.5s}
+.tab.enter .road li:nth-child(n+5){animation-delay:.6s}
+.tab.enter .road .node circle{stroke-dasharray:110;animation:drawC .7s ease-out .5s backwards}
+.tab.enter .cmap button,.tab.enter .cal i{animation:popIn .35s cubic-bezier(.3,1.4,.5,1) backwards;animation-delay:calc(var(--i,0) * 14ms + 350ms)}
+/* today's lesson: ticks draw, the current step breathes */
+.tab.enter .steps li.done .snum path{stroke-dasharray:26;animation:tick .45s ease-out .35s backwards}
+.steps li.now .snum{animation:nowRing 2.4s ease-in-out infinite}
+.lessondone{animation:popIn .5s cubic-bezier(.3,1.4,.5,1) .4s backwards}
+/* sheets */
+.scrim{animation:fadeIn .2s ease-out}
+.sheet{animation:sheetUp .3s cubic-bezier(.2,.8,.2,1)}
+#sheetRoot.swap .scrim,#sheetRoot.swap .sheet{animation:none}
+@keyframes sheetDown{from{transform:none}to{transform:translateY(100%)}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+.sheet.out{animation:sheetDown .22s cubic-bezier(.4,0,1,1) forwards !important;pointer-events:none}
+.scrim.out{animation:fadeOut .22s ease-in forwards !important;pointer-events:none}
+/* feedback and meeting cards */
+.fb{animation:rise .3s ease-out}
+.qsq .k.flip,.meetcard.flip{animation:cardIn .3s cubic-bezier(.2,.7,.2,1)}
+.mark.no{animation:shake .4s}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+/* taps */
+.btn,nav.tabs button,.cmap button,.cell,.tool,.say,.sbody{transition:transform .12s ease,background-color .2s,border-color .2s,color .2s}
+.btn:active,nav.tabs button:active,.cmap button:active,.cell:active,.tool:active,.say:active,.sbody:active{transform:scale(.96)}
+nav.tabs button[aria-selected="true"] .g{display:inline-block;animation:navPop .42s cubic-bezier(.3,1.5,.5,1)}
+html.themeanim body,html.themeanim body *{transition:background-color .35s,color .35s,border-color .35s,fill .35s,stroke .35s !important}
+@media (prefers-reduced-motion:reduce){
+  .tab.enter > *,.tab.enter .rbar i,.tab.enter .pstat div,.tab.enter .road li,.tab.enter .road .node circle,.tab.enter .cmap button,.tab.enter .cal i,
+  .tab.enter .steps li.done .snum path,.steps li.now .snum,.lessondone,.scrim,.sheet,.fb,.qsq .k.flip,.meetcard.flip,.mark.no,
+  nav.tabs button[aria-selected="true"] .g,#homeBtn.bounce{animation:none !important}
+  .btn,nav.tabs button,.cmap button,.cell,.tool,.say,.sbody,#homeBtn{transition:none}
+  .btn:active,nav.tabs button:active,.cmap button:active,.cell:active,.tool:active,.say:active,.sbody:active,#homeBtn:active{transform:none}
+  html.themeanim body,html.themeanim body *{transition:none !important}
+}
+
+/* whole boxes play when tapped */
+.mx,.word,.dcard{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,background-color .25s,border-color .25s}
+.mx:active,.word:active,.dcard:active{transform:scale(.985)}
+.mx.playing,.word.playing,.dcard.playing{background:var(--jade-soft);border-color:var(--jade)}
+@media (prefers-reduced-motion:reduce){.mx,.word,.dcard{transition:none}.mx:active,.word:active,.dcard:active{transform:none}}
+
+.phfilter{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0 4px;padding:12px 14px;border:1.5px solid var(--jade);border-radius:12px;background:var(--jade-soft)}
+.phfilter .kana{font-family:var(--kana);font-size:34px;line-height:1;color:var(--ink)}
+.phfilter .phft{flex:1 1 140px;font-weight:600}
+.phfilter .btn{min-height:40px;flex:0 0 auto}
+
+/* the page behind an open sheet stays put */
+html.sheet-open{overflow:hidden;scrollbar-gutter:stable;overscroll-behavior:none}
+html.sheet-open body{overflow:hidden;overscroll-behavior:none}
+
+.phfilter.all{border-color:var(--grid);background:var(--surface)}
+.phfilter.swap{animation:cardIn .3s cubic-bezier(.2,.7,.2,1)}
+@media (prefers-reduced-motion:reduce){.phfilter.swap{animation:none}}
+

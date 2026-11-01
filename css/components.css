@@ -1,0 +1,34 @@
+/* practice square: the paper cell with a dashed cross guide */
+.sq{position:relative;aspect-ratio:1/1;background:var(--surface);border:1.5px solid var(--grid);border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}
+.sq::before,.sq::after{content:"";position:absolute;pointer-events:none}
+.sq::before{left:50%;top:4px;bottom:4px;border-left:1px dashed var(--guide)}
+.sq::after{top:50%;left:4px;right:4px;border-top:1px dashed var(--guide)}
+.sq .k{font-family:var(--kana);line-height:1;position:relative;z-index:1}
+button.sq{box-shadow:var(--shadow)}
+button.sq:active{transform:translateY(1px)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border-radius:8px;border:1.5px solid var(--grid);background:var(--surface);font-weight:500}
+.btn.primary{background:var(--jade);border-color:var(--jade);color:var(--jade-ink);font-weight:700}
+.btn.red{border-color:var(--red);color:var(--red)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.btnrow .btn{flex:1 1 140px}
+.link{background:none;border:0;padding:6px 2px;color:var(--jade);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:40px;padding:0 14px;border-radius:999px;border:1.5px solid var(--grid);background:var(--surface);font-size:15px}
+.chip[aria-pressed="true"]{background:var(--jade);border-color:var(--jade);color:var(--jade-ink);font-weight:700}
+.chip .kana{font-family:var(--kana);font-size:17px}
+.seg{display:flex;border:1.5px solid var(--grid);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{flex:1;min-height:44px;border:0;background:none;border-inline-end:1.5px solid var(--grid);font-weight:500}
+.seg button:last-child{border-inline-end:0}
+.seg button[aria-pressed="true"]{background:var(--jade);color:var(--jade-ink);font-weight:700}
+
+/* bottom tab bar */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1.5px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+nav.tabs button{min-height:58px;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font-size:13px;color:var(--pencil)}
+nav.tabs button .g{font-family:var(--kana);font-size:21px;line-height:1.1;color:var(--pencil)}
+nav.tabs button[aria-selected="true"]{color:var(--ink);font-weight:700}
+nav.tabs button[aria-selected="true"] .g{color:var(--red)}
+

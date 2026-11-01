@@ -1,0 +1,14 @@
+/* Arabic: right-to-left text, Arabic typeface; the writing and drawing surfaces stay left-to-right */
+html[lang="ar"]{--ui:"IBM Plex Sans Arabic","Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+html[lang="ar"] body{font-size:16.5px;line-height:1.75}
+html[lang="ar"] header.top p{font-size:14.5px}
+html[lang="ar"] .hook{line-height:1.8}
+.wsq,.qsq,.sheet .big .sq,svg.strokes{direction:ltr}
+.ltr{direction:ltr;unicode-bidi:isolate}
+.kb .r,.cell .r,.prompt,#qflash,.word .ro,.word .kana{direction:ltr;unicode-bidi:isolate}
+html[lang="ar"] .word{align-items:flex-start}
+html[lang="ar"] .word .kana,html[lang="ar"] .word .ro{align-self:flex-start;text-align:start}
+.langseg{max-width:260px;margin:4px 0 14px;margin-inline-start:auto}
+.langseg button{font-size:15px}
+.langrow{display:flex;align-items:center;gap:12px;margin:14px 0 0}
+.langrow .seg{flex:1;max-width:280px}

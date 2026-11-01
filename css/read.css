@@ -1,0 +1,26 @@
+/* read */
+.rules{background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:4px 16px;margin:12px 0}
+.rules summary{cursor:pointer;font-weight:700;padding:10px 0;color:var(--jade)}
+.rules[open]{padding-bottom:14px}
+.rules p{margin:0 0 8px}
+.rules p:last-child{margin:0}
+.rules .kana{font-family:var(--kana);font-size:18px}
+.words{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.word{position:relative;display:flex;flex-direction:column;align-items:flex-start;text-align:start;padding-block:12px;padding-inline:14px 44px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);min-height:74px}
+.word .kana{font-family:var(--kana);font-size:24px;line-height:1.25}
+.word .ro,.word .mean{font-size:14px;color:var(--pencil);visibility:hidden}
+.word .ro{color:var(--ink);font-weight:500}
+.word.open .ro,.word.open .mean,.show-ro .word .ro,.show-mean .word .mean{visibility:visible}
+.say{position:absolute;inset-inline-end:6px;top:6px;width:36px;height:36px;border-radius:50%;border:0;background:none;display:grid;place-items:center;color:var(--pencil)}
+.say svg{width:20px;height:20px}
+.sentences{display:grid;gap:8px}
+.sentences .word{padding-inline-end:48px}
+.sentences .word .kana{font-size:22px}
+.bigsay{width:120px;height:120px;border-radius:50%;margin:6px auto 20px;display:grid;place-items:center;border:1.5px solid var(--grid);background:var(--surface);color:var(--jade)}
+.bigsay svg{width:48px;height:48px}
+.qsq.yo .k{font-size:clamp(60px,20vw,86px)}
+.focus.yo{grid-template-columns:repeat(auto-fill,minmax(62px,1fr))}
+.focus.yo .k{font-size:21px}
+.missed .kb{width:64px}
+.missed .k{font-size:30px}
+.sheet .big{flex-wrap:wrap}

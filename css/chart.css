@@ -1,0 +1,8 @@
+/* chart */
+.chart{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 6px;margin-top:14px}
+.chart.y3{grid-template-columns:repeat(3,minmax(0,1fr));max-width:330px}
+.chart .hd{font-size:12px;color:var(--pencil);text-align:center;padding-bottom:2px}
+.cell .k{font-size:30px}
+.chart.y3 .cell .k{font-size:32px}
+.blank{aspect-ratio:1/1}
+

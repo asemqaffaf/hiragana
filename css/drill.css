@@ -1,0 +1,33 @@
+/* drill */
+.qtop{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--jade);transition:width .25s}
+.count{font-size:14px;color:var(--pencil);min-width:56px;text-align:end}
+.qsq{width:min(64vw,230px);margin:0 auto}
+.qsq .k{font-size:clamp(90px,34vw,140px)}
+.qsq.two{width:auto;display:flex;gap:6px;justify-content:center;background:none;border:0;aspect-ratio:auto}
+.qsq.two::before,.qsq.two::after{display:none}
+.prompt{font-size:56px;font-weight:700;text-align:center;line-height:1.1;margin:10px 0 18px}
+.answer{max-width:380px;margin:18px auto 0}
+.answer input{width:100%;min-height:54px;font-size:22px;text-align:center;border-radius:8px;border:1.5px solid var(--grid);background:var(--surface);letter-spacing:.04em}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:380px;margin:0 auto}
+.choices .sq .k{font-size:clamp(46px,15vw,64px)}
+.fb{max-width:420px;margin:18px auto 0;padding:14px 16px;border-radius:10px;background:var(--red-soft)}
+.fb .ans{font-size:22px;font-weight:700}
+.fb .ans .kana{font-family:var(--kana);font-size:28px}
+.mark{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;overflow:visible}
+.mark circle,.mark path{fill:none;stroke:var(--red);stroke-width:4.5;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;opacity:0}
+.mark.ok circle{opacity:.9;animation:draw .42s ease-out forwards}
+.mark.no path{opacity:.9;animation:draw .36s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.flash{min-height:30px;text-align:center;font-size:22px;font-weight:700;color:var(--red);margin-top:8px}
+.result{font-family:var(--kana);font-size:64px;font-weight:600;line-height:1;margin:10px 0 6px}
+.missed{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.modes{display:grid;gap:8px}
+.mode{display:flex;flex-direction:column;align-items:flex-start;text-align:start;padding:12px 14px;border-radius:10px;border:1.5px solid var(--grid);background:var(--surface)}
+.mode b{font-size:16px}
+.mode span{font-size:14px;color:var(--pencil)}
+.mode[aria-pressed="true"]{border-color:var(--jade);box-shadow:inset 0 0 0 1.5px var(--jade);background:var(--jade-soft)}
+details.more{margin-top:12px}
+details.more summary{cursor:pointer;color:var(--jade);font-weight:700;padding:6px 0}
+

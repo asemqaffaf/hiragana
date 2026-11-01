@@ -1,0 +1,8 @@
+@media (prefers-reduced-motion:reduce){
+  .mark.ok circle,.mark.no path{animation-duration:.01s}
+  .bar i{transition:none}
+}
+@media (min-width:600px){
+  .cell .k{font-size:38px}
+  header.top h1{font-size:40px}
+}

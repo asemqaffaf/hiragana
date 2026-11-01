@@ -1,0 +1,51 @@
+/* progress page: one jade ramp, light to dark, for magnitude; text stays in ink colours */
+:root{--s0:var(--line);--s1:#CFE5DD;--s2:#8CC3B1;--s3:#4E9A84;--s4:#2A7361}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--s1:#24423A;--s2:#2F6A5A;--s3:#4E9A84;--s4:#7CC8B3}}
+nav.tabs button{font-size:12px}
+.pstat{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:14px 10px;margin:16px 0 4px}
+.pstat div{display:flex;flex-direction:column;gap:2px;border-inline-start:3px solid var(--s3);padding-inline-start:10px}
+.pstat b{font-size:28px;line-height:1.1;font-weight:700}
+.pstat span{font-size:13px;color:var(--pencil);line-height:1.3}
+.road{list-style:none;margin:14px 0 0;padding:0;position:relative}
+.road li{position:relative;display:grid;grid-template-columns:34px 1fr;gap:12px;padding-bottom:18px}
+.road li::before{content:"";position:absolute;inset-inline-start:16px;top:30px;bottom:0;border-inline-start:2px solid var(--line)}
+.road li:last-child::before{display:none}
+.road li.done::before{border-color:var(--s3)}
+.road .node{width:34px;height:34px;border-radius:50%;border:2px solid var(--grid);background:var(--surface);position:relative}
+.road .node svg{position:absolute;inset:-4px;width:42px;height:42px;overflow:visible}
+.road .node circle{fill:none;stroke:var(--red);stroke-width:3;stroke-linecap:round}
+.road li.done .node{border-color:var(--s3)}
+.road li.now .node{border:3px solid var(--jade);box-shadow:0 0 0 4px var(--jade-soft)}
+.road li.later .node{border-style:dashed}
+.rhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.rbar{height:8px;border-radius:4px;background:var(--s0);overflow:hidden;margin:6px 0 4px}
+.rbar i{display:block;height:100%;border-radius:4px;background:var(--s4)}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:0 8px;border-radius:999px;border:1.5px solid var(--grid);margin-inline-start:6px}
+.tag.now{border-color:var(--jade);color:var(--jade)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;margin:6px 0 4px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.mapt{margin:12px 0 4px;color:var(--pencil)}
+.cmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:2px}
+.cmap.yo{grid-template-columns:repeat(auto-fill,minmax(46px,1fr))}
+.cmap button{aspect-ratio:1/1;border:0;border-radius:4px;font-family:var(--kana);font-size:17px;padding:0;color:var(--ink)}
+.cmap.yo button{aspect-ratio:auto;min-height:34px;font-size:15px}
+.lv-new{background:var(--s0)}
+.lv-learning{background:var(--s2)}
+.lv-solid{background:var(--s4);color:var(--jade-ink) !important}
+.cal{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:2px;margin-top:10px;max-width:520px}
+.cal i{display:block;min-width:0;aspect-ratio:1/1;border-radius:4px;background:var(--s0)}
+.cal i.a1{background:var(--s1)}.cal i.a2{background:var(--s2)}.cal i.a3{background:var(--s3)}.cal i.a4{background:var(--s4)}
+.cal i.today{outline:2px solid var(--ink);outline-offset:1px}
+.calx{display:flex;justify-content:space-between;max-width:520px;margin-top:4px}
+.rounds{position:relative;display:flex;align-items:flex-end;gap:2px;height:120px;margin-top:12px;border-bottom:1.5px solid var(--grid);max-width:520px}
+.rounds i{flex:1;max-width:30px;background:var(--s4);border-radius:4px 4px 0 0}
+.rounds .goal{position:absolute;inset-inline:0;border-top:1.5px dashed var(--pencil)}
+/* completed letters: a small red まる in the corner */
+.strip .sq.cl::after,.kb.cl .sq::after,.cmap button.cl::after{content:"";position:absolute;top:3px;inset-inline-end:3px;width:9px;height:9px;border-radius:50%;border:2px solid var(--red);background:var(--surface);z-index:2}
+.cmap button{position:relative}
+.legend i.lv-cl{background:var(--surface);border:2px solid var(--red);border-radius:50%}
+.wcomp{margin:4px 0 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:22px}
+.tag.done{border-color:var(--red);color:var(--red);margin-inline-start:0}
+.wdone{flex-wrap:wrap}
+.btn[hidden],.tool[hidden]{display:none}

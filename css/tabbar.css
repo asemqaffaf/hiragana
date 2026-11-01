@@ -1,0 +1,11 @@
+/* bottom bar: plain icons with words */
+nav.tabs button{gap:3px;font-size:13px}
+nav.tabs button svg{width:24px;height:24px;color:var(--pencil)}
+nav.tabs button[aria-selected="true"] svg{color:var(--jade)}
+nav.tabs button[aria-selected="true"]{color:var(--ink)}
+nav.tabs button[aria-selected="true"]::before{content:"";position:absolute;top:0;inset-inline:22%;height:3px;border-radius:0 0 3px 3px;background:var(--jade)}
+nav.tabs button{position:relative}
+body.kid nav.tabs button svg{width:28px;height:28px}
+.subnav{margin:0 0 14px}
+.subnav[hidden]{display:none}
+.subnav .seg{max-width:460px}

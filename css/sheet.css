@@ -1,0 +1,14 @@
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,20,16,.42);z-index:40}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-height:90%;overflow:auto;background:var(--paper);border-radius:14px 14px 0 0;padding:14px 18px calc(22px + env(safe-area-inset-bottom,0px))}
+.sheet .in{max-width:560px;margin:0 auto}
+.sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--grid);margin:0 auto 12px;position:relative}
+.sheet .grab::before{content:"";position:absolute;inset:-16px -60px -10px}
+.sheet .grab{touch-action:none}
+.sheet .big{display:flex;gap:10px;align-items:center}
+.sheet .big .sq{width:min(46vw,190px)}
+.sheet .big .sq .k.txt{font-size:clamp(56px,17vw,78px)}
+.sheet .rom{font-size:40px;font-weight:700;line-height:1;margin-inline-start:8px}
+.sheet .rom small{display:block;font-size:14px;font-weight:400;color:var(--pencil);margin-top:6px}
+.sheet .hook{font-size:17px;margin-top:14px}
+

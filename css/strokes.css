@@ -1,0 +1,9 @@
+/* stroke svg */
+svg.strokes{position:absolute;inset:6%;width:88%;height:88%;z-index:1;overflow:visible}
+svg.strokes path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+svg.strokes .gd path{stroke:var(--grid);stroke-width:3.4}
+svg.strokes .ik path{stroke:var(--ink);stroke-width:3.6}
+svg.strokes .nm text{font-size:7.5px;fill:var(--red);font-family:var(--ui)}
+svg.strokes.no-guide .gd{display:none}
+svg.strokes.no-num .nm{display:none}
+

@@ -1,0 +1,8 @@
+/* child mode: bigger targets and text */
+body.kid{font-size:18px}
+body.kid .btn,body.kid .tool{min-height:58px;font-size:17px}
+body.kid .tool svg{width:26px;height:26px}
+body.kid .chip{min-height:46px;font-size:17px}
+body.kid .wstat{font-size:18px}
+body.kid nav.tabs button{min-height:64px;font-size:13px}
+body.kid nav.tabs button .g{font-size:24px}

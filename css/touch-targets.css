@@ -1,0 +1,16 @@
+/* ---------- tap targets: at least 44 px, as iOS asks ---------- */
+#homeBtn{padding:4px 8px;margin:-4px -8px}
+.back{min-height:44px}
+.chip{min-height:44px;min-width:44px}
+details.more summary,.rules summary,details.fold > summary,.wtips summary{min-height:44px;box-sizing:border-box;padding-block:11px}
+.toggles label,.avpick label,.opts label{min-height:44px}
+#wUncomplete{padding:12px 8px}
+.word .say{width:44px;height:44px;top:4px;inset-inline-end:2px}
+.cmap{grid-template-columns:repeat(auto-fill,minmax(44px,1fr))}
+.cmap.yo button{min-height:44px}
+footer.credit a{display:inline-block;padding:14px 4px;margin:-14px -4px}
+@media (max-height:720px) and (max-width:699px){
+  .rowpick .chip{min-height:40px;min-width:44px;padding:0 12px}
+  .back{min-height:44px}
+  .wsq{width:min(100%,360px,calc(100svh - 526px - env(safe-area-inset-bottom,0px)))}
+}
