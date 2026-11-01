@@ -12,5 +12,5 @@ footer.credit a{display:inline-block;padding:14px 4px;margin:-14px -4px}
 @media (max-height:720px) and (max-width:699px){
   .rowpick .chip{min-height:40px;min-width:44px;padding:0 12px}
   .back{min-height:44px}
-  .wsq{width:min(100%,360px,calc(100svh - 526px - env(safe-area-inset-bottom,0px)))}
+  .wsq{width:min(100%,360px,calc(100svh - 540px - env(safe-area-inset-bottom,0px)))}
 }

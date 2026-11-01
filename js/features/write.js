@@ -1,4 +1,5 @@
 import {hasClip, speakFull} from '../core/audio.js';
+import {reduceAnim} from '../core/motion.js';
 import {showTab} from '../core/nav.js';
 import {commit, logActivity, me, state} from '../core/storage.js';
 import {ui} from '../core/ui-state.js';
@@ -47,12 +48,24 @@ function newAttempt() { return {k: ui.writeK, tpl: strokeTemplates(ui.writeK), i
 function wSay(text, cls) { const el = $('#wStat'); if (!el) return; el.textContent = text; el.className = 'wstat' + (cls ? ' ' + cls : ''); }
 function startText() { return t('w.start', {n: ui.wq.tpl.pts.length, nums: ui.writeNums}); }
 function setMark(on) { const m = $('#wsq .mark'); if (m) m.setAttribute('class', 'mark' + (on ? ' ok' : '')); }
+/* The bar under the writing area. Writing a lesson's letters: it is always there, Next waits (dimmed) until the letter is written.
+   Free writing: it appears once the letter is written. */
+function showDone(on) {
+  const dn = $('#wDone'); if (!dn) return;
+  dn.hidden = !on && !ui.lessonWrite;
+  dn.classList.toggle('waiting', !on);
+  const nx = $('#wNext', dn), again = $('#wAgain', dn);
+  if (nx) { nx.disabled = !on; nx.setAttribute('aria-disabled', String(!on)); }
+  if (again) again.hidden = !on;
+  /* the writing area sits above this bar, so on a short phone it can be off screen when the letter is finished */
+  if (on && !reduceAnim()) dn.scrollIntoView({block: 'nearest', behavior: 'smooth'}); else if (on) dn.scrollIntoView({block: 'nearest'});
+}
 function restartAttempt() {
   ui.wq = newAttempt(); ui.demoShown = false;
   if (ui.writeSvg) { ui.writeSvg.clearHint(); ui.writeSvg.showUpTo(0); }
   if (ui.pad) ui.pad.clear();
   setMark(false);
-  const dn = $('#wDone'); if (dn) dn.hidden = true;
+  showDone(false);
   wSay(startText());
 }
 function finishWrite() {
@@ -70,7 +83,7 @@ function finishWrite() {
   else wSay(t('w.finished', {m: ui.wq.miss}), 'bad');
   const c = $('#wCount'); if (c) c.textContent = cleanText(ui.wq.k);
   const bar = $('.strip [data-wk="' + ui.wq.k + '"] .wm'); if (bar) bar.style.setProperty('--m', Math.min(wsOf(ui.wq.k).p, CLEAN_GOAL) / CLEAN_GOAL);
-  const dn = $('#wDone'); if (dn) dn.hidden = false;
+  showDone(true);
   refreshComplete();
   if (canComplete(ui.wq.k)) wSay(t('cl.ready', {k: ui.wq.k}), 'good');
   else if (!isComplete(ui.wq.k) && !(state.heard[ui.wq.k] > 0) && wsOf(ui.wq.k).p >= CLEAN_GOAL) wSay(t('cl.listen'), 'good');
@@ -126,13 +139,15 @@ export function renderWrite(play) {
     ? tool('wHint', ICON.hint, t('write.hint')) + tool('wUndo', ICON.undo, t('write.undo')) + tool('wClear', ICON.restart, t('write.restart'))
     : tool('wUndo', ICON.undo, t('write.undo')) + tool('wClear', ICON.clear, t('write.clear'));
   h += '</div>';
-  h += '<div class="btnrow wdone" id="wDone" hidden><button class="btn red" id="wCompleteBtn" hidden></button><button class="btn primary" id="wAgain">' + t('write.again') + '</button><button class="btn" id="wNext">' + (nx.k ? t('write.next') + ' <span class="kana">' + nx.k + '</span>' : t('lesson.back')) + '</button></div>';
+  h += '<div class="btnrow wdone actionbar inflow" id="wDone" hidden><button class="btn" id="wAgain" hidden>' + t('write.again') + '</button><button class="btn primary" id="wNext" disabled aria-disabled="true">' + (nx.k ? t('write.next') + ' <span class="kana">' + nx.k + '</span>' : t('lesson.back')) + '</button></div>';
+  h += '<button class="btn red" id="wCompleteBtn" hidden></button>';
   if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
   h += '<div class="toggles opts"><label><input type="checkbox" id="wGuide"' + (ui.writeGuide ? ' checked' : '') + '> ' + t('write.guide') + '</label><label><input type="checkbox" id="wNums"' + (ui.writeNums ? ' checked' : '') + '> ' + t('write.nums') + '</label><label><input type="checkbox" id="wCheck"' + (ui.writeCheck ? ' checked' : '') + '> ' + t('write.check') + '</label></div>';
   h += '<details class="more wtips"><summary>' + t('write.howTitle') + '</summary><p class="small">' + (ui.writeCheck ? t('write.howCheck') : t('write.howFree')) + '</p></details>';
   h += '</div></div>';
   const root = $('#tab-write');
   root.innerHTML = h;
+  showDone(false);
   const rp = $('.rowpick', root), rc = rp && $('[aria-pressed="true"]', rp);
   if (rc) rp.scrollLeft += (rc.getBoundingClientRect().left + rc.offsetWidth / 2) - (rp.getBoundingClientRect().left + rp.clientWidth / 2);
   const wsq = $('#wsq', root);
@@ -157,7 +172,7 @@ export function renderWrite(play) {
   if (hb) hb.onclick = () => { if (ui.wq && !ui.wq.done && ui.writeSvg) { if (ui.demoShown) { ui.demoShown = false; ui.writeSvg.showUpTo(ui.wq.i); } ui.writeSvg.hint(ui.wq.i); } };
   $('#wUndo', root).onclick = () => {
     if (!ui.writeCheck || !ui.wq) { if (ui.pad) ui.pad.undo(); return; }
-    if (ui.wq.done) { ui.wq.done = false; ui.wq.i = ui.wq.tpl.pts.length - 1; setMark(false); $('#wDone', root).hidden = true; }
+    if (ui.wq.done) { ui.wq.done = false; ui.wq.i = ui.wq.tpl.pts.length - 1; setMark(false); showDone(false); }
     else if (ui.wq.i > 0) ui.wq.i--;
     ui.wq.sm = 0; ui.demoShown = false;
     if (ui.pad) ui.pad.clear();

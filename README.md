@@ -55,7 +55,8 @@ Live: https://asemqaffaf.github.io/hiragana/
 
 ```
 index.html            page shell: loads css/*.css (the load order is the cascade order), then js/main.js
-css/                  one file per area (base, components, plan, drill, write, motion, touch-targets ...)
+css/                  one file per area (base, components, plan, drill, write, motion, touch-targets ...);
+                      ios.css is loaded last and holds the iOS 26 look: filled-tint buttons, glass bars, spring motion
 js/
   main.js             entry point: imports everything and starts the app
   util.js             DOM and date helpers, shared SVG snippets
@@ -70,7 +71,8 @@ js/
     render-all.js     re-render the visible pages
   features/           one file per page: plan, lesson, daily, drill, write, read, chart,
                       progress, profile, login, language, gamify (levels, badges, toasts)
-  ui/                 bottom sheets, swipe to close, the ひらがな home button
+  ui/                 bottom sheets, swipe to close, the ひらがな home button, thumb.js (the gliding highlight
+                      behind the selected tab or segment)
   strokes/            stroke drawing (draw.js) and stroke checking (check.js)
   i18n/               core.js (t(), plurals), en.js, ar.js, ar-content.js, helpers.js
   data/               letters, plan, words, phrases, KanjiVG stroke paths, audio manifest
@@ -83,6 +85,7 @@ Conventions:
 - Shared view state lives in `ui` (`core/ui-state.js`). The data model (`state`, `students`, `LANG`) is exported by the module that owns it; other modules read it and replace it with `replaceState` and `replaceLang`.
 - Interface text lives only in `js/i18n/`, and every key used in code exists in both English and Arabic.
 - Everything animated is switched off under `prefers-reduced-motion`.
+- The look follows iOS 26: Liquid Glass is approximated with blur, translucency and an edge highlight (CSS has no refraction). The bars fall back to solid fills when `backdrop-filter` is missing or the device asks to reduce transparency.
 - Tap targets are at least 44 px. Page height is budgeted with `svh` and `env(safe-area-inset-*)`.
 
 ## Run and test locally

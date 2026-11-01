@@ -35,7 +35,7 @@ export function renderDaily() {
   let h = '<h2>' + t('tab.daily') + '</h2><p class="muted">' + t('daily.intro') + '</p>';
   h += '<div class="meettop"><span class="small muted" id="dHeard">' + t('daily.heard', {n: heard, m: list.length}) + '</span><div class="rbar"><i style="width:' + Math.round(heard / Math.max(1, list.length) * 100) + '%"></i></div></div>';
   h += '<div class="dlist">' + list.map(dailyCard).join('') + '</div>';
-  h += '<div class="btnrow meetnav"><button class="btn primary" id="dDone">' + t('daily.done') + '</button></div>';
+  h += '<div class="btnrow meetnav actionbar"><button class="btn primary" id="dDone">' + t('daily.done') + '</button></div>';
   const root = $('#tab-daily');
   root.innerHTML = h;
   root.onclick = e => {

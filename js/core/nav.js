@@ -9,6 +9,7 @@ import {renderProfile} from '../features/profile.js';
 import {renderProgress} from '../features/progress.js';
 import {renderRead} from '../features/read.js';
 import {renderWrite} from '../features/write.js';
+import {moveThumb} from '../ui/thumb.js';
 import {t} from '../i18n/core.js';
 import {closeSheet} from '../ui/sheet.js';
 import {$, $$} from '../util.js';
@@ -27,6 +28,7 @@ function renderSubnav(name) {
   lastSub[g] = name;
   el.hidden = false;
   el.innerHTML = '<div class="seg" role="tablist" aria-label="' + t('nav.' + g) + '">' + subs.map(s => '<button role="tab" data-sub="' + s + '" aria-selected="' + (s === name) + '" aria-pressed="' + (s === name) + '">' + t('tab.' + s) + '</button>').join('') + '</div>';
+  moveThumb($('.seg', el), 'subnav');
   $$('[data-sub]', el).forEach(b => b.onclick = () => { if (b.dataset.sub !== ui.currentTab) showTab(b.dataset.sub, {root: ui.rootView, letter: carryLetter(b.dataset.sub)}); });
 }
 /* The letter that Words and Phrases follow: from Write it is the letter being written, and between Words and Phrases it stays while the page is filtered */
@@ -50,6 +52,7 @@ export function showTab(name, opts) {
   ui.currentTab = name;
   $$('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.nav === GROUP[name] ? 'true' : 'false'));
   const wb = $('#whoBtn'); if (wb) { if (name === 'profile') wb.setAttribute('aria-current', 'page'); else wb.removeAttribute('aria-current'); }
+  moveThumb($('nav.tabs .in'), 'tabs');
   renderSubnav(name);
   $$('.tab').forEach(s => { s.hidden = s.id !== 'tab-' + name; });
   if (name === 'write') renderWrite();
@@ -89,3 +92,19 @@ $$('nav.tabs button').forEach(b => b.addEventListener('click', () => {
   const g = b.dataset.nav, target = g === 'home' ? 'plan' : g === 'letters' ? 'chart' : g === 'progress' ? 'progress' : lastSub[g];
   if (target !== ui.currentTab) showTab(target, {root: true}); else window.scrollTo(0, 0);
 }));
+
+/* iOS 26: the tab bar shrinks to icons while the page scrolls down and comes back when it scrolls up or reaches the top */
+(function () {
+  let lastY = window.scrollY, ticking = false;
+  const root = document.documentElement;
+  const update = () => {
+    ticking = false;
+    const y = window.scrollY;
+    if (y < 40 || y < lastY - 6) root.classList.remove('navmin');
+    else if (y > lastY + 6) root.classList.add('navmin');
+    if (Math.abs(y - lastY) > 6 || y < 40) lastY = y;
+  };
+  window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, {passive: true});
+  /* the highlight is measured in pixels, so measure again when the size of the screen changes */
+  window.addEventListener('resize', () => { moveThumb($('nav.tabs .in'), 'tabs', true); moveThumb($('#subnav .seg'), 'subnav', true); });
+})();

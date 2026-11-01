@@ -48,7 +48,7 @@ export function renderMeet() {
   h += '<div class="meetrom ltr">' + rom(k) + '</div>';
   h += '<button class="btn primary bigbtn" id="meetHear">' + SPEAK_SVG.replace('<svg', '<svg width="24" height="24"') + ' ' + t('card.hear') + '</button>';
   h += '<p class="hook">' + explain(k) + '</p>' + exampleHtml(k) + moreExHtml(k) + '</div>';
-  h += '<div class="btnrow meetnav"><button class="btn" id="meetPrev"' + (ui.meetI ? '' : ' disabled') + '>' + t('meet.prev') + '</button><button class="btn primary" id="meetNext">' + (last ? t('meet.finish') : t('meet.next')) + '</button></div>';
+  h += '<div class="btnrow meetnav actionbar"><button class="btn" id="meetPrev"' + (ui.meetI ? '' : ' disabled') + '>' + t('meet.prev') + '</button><button class="btn primary" id="meetNext">' + (last ? t('meet.finish') : t('meet.next')) + '</button></div>';
   const root = $('#tab-meet');
   root.innerHTML = '<h2>' + t('tab.meet') + '</h2>' + h;
   if (renderMeet.last !== undefined && renderMeet.last !== ui.meetI && ui.currentTab === 'meet') replay($('.meetcard', root), 'flip');

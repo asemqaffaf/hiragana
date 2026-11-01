@@ -1,0 +1,130 @@
+/* ---------- iOS look: tinted buttons, glass bars ----------
+   Loaded last on purpose: this file is the platform look (iOS 26) on top of the base components.
+   Liquid Glass is approximated with blur, translucency and an edge highlight; there is no refraction in CSS.
+   Where blur is unavailable, or the person asked iOS to reduce transparency, the bars are solid. */
+:root{
+  --fill:#17805F; --fill-ink:#FFFFFF;                 /* prominent button: saturated tint, white label (4.9:1) */
+  --gray-fill:rgba(120,120,128,.16);                   /* iOS fill colour for secondary controls */
+  --glass:var(--surface); --glass-strong:var(--paper);
+  --glass-edge:rgba(255,255,255,.7); --glass-hi:rgba(255,255,255,.65); --glass-shadow:0 8px 28px rgba(24,36,30,.16),0 1px 3px rgba(24,36,30,.10);
+  --gap0:max(10px,calc(env(safe-area-inset-bottom,0px) - 12px)); --tabh:62px;
+  --dock:calc(var(--gap0) + var(--tabh)); /* distance from the screen bottom to the top of the tab bar */
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--glass-edge:rgba(255,255,255,.16); --glass-hi:rgba(255,255,255,.14); --glass-shadow:0 10px 32px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.4); --gray-fill:rgba(120,120,128,.30)}
+}
+:root[data-theme="dark"]{--glass-edge:rgba(255,255,255,.16); --glass-hi:rgba(255,255,255,.14); --glass-shadow:0 10px 32px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.4); --gray-fill:rgba(120,120,128,.30)}
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) and (color:color-mix(in srgb,red 50%,blue)){
+  :root{--glass:color-mix(in srgb,var(--surface) 62%,transparent); --glass-strong:color-mix(in srgb,var(--paper) 78%,transparent)}
+  nav.tabs,.actionbar,.who,.sheet{-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8)}
+}
+@media (prefers-reduced-transparency:reduce){
+  :root{--glass:var(--surface) !important; --glass-strong:var(--paper) !important}
+  nav.tabs,.actionbar,.who,.sheet{-webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+}
+
+/* buttons: prominent (filled tint), gray (tinted label on a gray fill), destructive, as on iOS */
+.btn{border:0;border-radius:999px;min-height:48px;padding:0 22px;background:var(--gray-fill);color:var(--jade);font-weight:600}
+.btn.primary{background:var(--fill);color:var(--fill-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.24)}
+.btn.red{background:var(--red-soft);color:var(--red)}
+@supports (color:color-mix(in srgb,red 50%,blue)){.btn.red{background:color-mix(in srgb,var(--red) 14%,transparent)}}
+.btn:active{filter:brightness(.92)}
+.chip{border:0;background:var(--gray-fill)}
+.chip[aria-pressed="true"]{background:var(--fill);color:var(--fill-ink)}
+.tool{border:0;border-radius:16px;background:var(--gray-fill);color:var(--jade);font-weight:600}
+.tool.primary{background:var(--fill);color:var(--fill-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.24)}
+
+/* segmented control: gray capsule, the selected segment is a raised capsule */
+.seg{padding:3px;gap:2px;border:0;border-radius:999px;background:var(--gray-fill);overflow:visible}
+.seg button{border:0;border-radius:999px;color:var(--ink);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg button[aria-pressed="true"]{background:rgba(255,255,255,.18);box-shadow:none}}
+:root[data-theme="dark"] .seg button[aria-pressed="true"]{background:rgba(255,255,255,.18);box-shadow:none}
+
+/* tab bar: a floating glass capsule; the selected tab sits on a lighter pill */
+nav.tabs{--gap:max(10px,calc(env(safe-area-inset-bottom,0px) - 12px));left:max(12px,calc((100vw - 696px) / 2));right:max(12px,calc((100vw - 696px) / 2));bottom:var(--gap);padding:4px;border:0;border-radius:34px;background:var(--glass);box-shadow:var(--glass-shadow),inset 0 0 0 1px var(--glass-edge),inset 0 1px 0 var(--glass-hi)}
+nav.tabs button{min-height:54px;border-radius:30px}
+nav.tabs button svg,nav.tabs button .g{color:var(--pencil)}
+nav.tabs button[aria-selected="true"]{background:var(--gray-fill);color:var(--jade);font-weight:700}
+nav.tabs button[aria-selected="true"] svg{color:var(--jade)}
+nav.tabs button[aria-selected="true"]::before{display:none}
+.wrap{padding-bottom:calc(var(--gap0) + 62px + 64px)}
+html{scroll-padding-bottom:calc(var(--dock) + 24px)}
+
+/* the action bar: Back and Next stay on screen, above the tab bar, instead of ending up behind it */
+.actionbar{position:sticky;bottom:calc(var(--dock) + 10px);z-index:15;flex-wrap:nowrap;gap:8px;margin-top:16px;padding:8px;border-radius:34px;background:var(--glass);box-shadow:var(--glass-shadow),inset 0 0 0 1px var(--glass-edge),inset 0 1px 0 var(--glass-hi)}
+.actionbar[hidden]{display:none}
+.actionbar .btn{flex:1 1 0;min-width:0;min-height:50px}
+.actionbar .btn.primary{flex-grow:1.6}
+.actionbar .btn[hidden]{display:none}
+/* on the Write page the bar stays in the page flow, below the tools: a floating bar would sit on top of the writing area */
+.actionbar.inflow{position:static;margin-top:10px;padding:0;border-radius:0;background:none;box-shadow:none;-webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+.wdone.actionbar{max-width:380px;margin-inline:auto}
+
+/* the profile pill and sheets */
+.who{border:0;background:var(--glass);box-shadow:inset 0 0 0 1px var(--glass-edge),0 2px 10px rgba(24,36,30,.10)}
+.sheet{border-radius:28px 28px 0 0;background:var(--glass-strong);box-shadow:0 -12px 40px rgba(0,0,0,.2),inset 0 1px 0 var(--glass-hi)}
+.sheet .grab{background:var(--gray-fill);background:color-mix(in srgb,var(--ink) 28%,transparent)}
+.scrim{background:rgba(10,20,16,.36)}
+
+/* content cards: softer corners */
+.dcard,.mx,.word,.phfilter{border-radius:18px}
+.back{font-weight:600}
+#toast{bottom:calc(var(--dock) + 12px);border-radius:22px}
+
+/* ---------- iOS 26 motion ----------
+   Springs for things that arrive or are pressed, iOS's own ease-out (.32,.72,0,1) for things that slide. */
+:root{--spring:cubic-bezier(.34,1.45,.64,1); --spring-soft:cubic-bezier(.3,1.25,.5,1); --slide:cubic-bezier(.32,.72,0,1)}
+@supports (transition-timing-function:linear(0,1)){
+  :root{
+    --spring:linear(0,.009,.035 2.1%,.141 4.4%,.723 12.9%,.938 16.7%,1.017 19.4%,1.077 22.1%,1.121 25%,1.149 28.1%,1.159 31.5%,1.147 35.2%,1.06 43.3%,1.017 48.3%,.99 53.2%,.98 58.6%,.991 69.4%,1.003 80%,1);
+    --spring-soft:linear(0,.02 1.6%,.12 4%,.45 9.5%,.78 15%,.97 20%,1.04 24%,1.06 28%,1.04 34%,1.01 42%,.995 52%,.998 66%,1);
+  }
+}
+
+/* the moving highlight (tab bar and segmented control) */
+.has-thumb{position:relative}
+.has-thumb > .thumb{position:absolute;left:0;top:0;bottom:0;z-index:0;pointer-events:none;transition:transform .5s var(--spring),width .5s var(--spring),scale .35s var(--spring),opacity .2s}
+.has-thumb > button{position:relative;z-index:1}
+nav.tabs .has-thumb > .thumb,nav.tabs .in > .thumb{border-radius:30px;background:var(--gray-fill)}
+.seg.has-thumb > .thumb{top:3px;bottom:3px;border-radius:999px;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+.seg.has-thumb button[aria-pressed="true"],nav.tabs .has-thumb button[aria-selected="true"]{background:none;box-shadow:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg.has-thumb > .thumb{background:rgba(255,255,255,.18);box-shadow:none}}
+:root[data-theme="dark"] .seg.has-thumb > .thumb{background:rgba(255,255,255,.18);box-shadow:none}
+/* pressing the selected tab or segment lifts the glass, as in iOS 26 */
+.has-thumb:has(> button:active) > .thumb{scale:1.07}
+
+/* buttons: pressed in at once, released with a spring */
+.btn,.tool,.chip,nav.tabs button,.seg button{transition:transform .45s var(--spring),scale .45s var(--spring),background-color .2s,color .2s,filter .2s}
+.btn:active,.tool:active,.chip:active{transform:scale(.95);transition-duration:.12s}
+nav.tabs button:active,.seg button:active{transform:none}
+nav.tabs button:active svg{transform:scale(.88)}
+nav.tabs button svg{transition:transform .45s var(--spring),color .2s}
+
+/* the tab bar shrinks to icons while scrolling down */
+nav.tabs button .tl{display:block;max-height:20px;overflow:hidden;transition:max-height .35s var(--slide),opacity .2s,margin .35s var(--slide)}
+nav.tabs{transition:padding .35s var(--slide)}
+nav.tabs button{transition:min-height .4s var(--spring),transform .45s var(--spring),background-color .2s,color .2s}
+html.navmin{--tabh:52px}
+html.navmin nav.tabs button{min-height:44px}
+html.navmin nav.tabs button .tl{max-height:0;opacity:0;margin-top:-3px}
+.actionbar{transition:bottom .4s var(--slide)}
+@media (max-height:700px){:root{--tabh:56px} nav.tabs button{min-height:48px} .actionbar .btn{min-height:46px}}
+
+/* arriving things: sheets and the toast spring up, pages slide in with iOS's curve */
+.sheet{animation-duration:.55s;animation-timing-function:var(--spring-soft)}
+.scrim{animation-duration:.3s}
+.sheet.out{animation-timing-function:var(--slide) !important;animation-duration:.3s !important}
+.scrim.out{animation-duration:.3s !important}
+.tab.enter > *{animation-duration:.5s;animation-timing-function:var(--slide)}
+.actionbar{animation:barIn .55s var(--spring-soft) .15s backwards}
+@keyframes barIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
+#toast{transition:opacity .25s,transform .55s var(--spring-soft);transform:translateY(24px) scale(.94)}
+#toast.show{transform:none}
+.meetcard.flip,.qsq .k.flip{animation-duration:.5s;animation-timing-function:var(--spring-soft)}
+@media (prefers-reduced-motion:reduce){
+  .has-thumb > .thumb,.btn,.tool,.chip,nav.tabs,nav.tabs button,nav.tabs button svg,nav.tabs button .tl,.seg button,.actionbar,#toast{transition:none !important}
+  .actionbar{animation:none !important}
+  .has-thumb:has(> button:active) > .thumb{scale:1}
+  .btn:active,.tool:active,.chip:active,nav.tabs button:active svg{transform:none}
+}

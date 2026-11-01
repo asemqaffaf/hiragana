@@ -82,7 +82,7 @@ html.themeanim body,html.themeanim body *{transition:background-color .35s,color
 .phfilter{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0 4px;padding:12px 14px;border:1.5px solid var(--jade);border-radius:12px;background:var(--jade-soft)}
 .phfilter .kana{font-family:var(--kana);font-size:34px;line-height:1;color:var(--ink)}
 .phfilter .phft{flex:1 1 140px;font-weight:600}
-.phfilter .btn{min-height:40px;flex:0 0 auto}
+.phfilter .btn{min-height:44px;flex:0 0 auto}
 
 /* the page behind an open sheet stays put */
 html.sheet-open{overflow:hidden;scrollbar-gutter:stable;overscroll-behavior:none}
