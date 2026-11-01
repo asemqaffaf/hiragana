@@ -191,7 +191,14 @@ Object.assign(STR.ar, {
   'ph.nothing': 'لا شيء يستخدم {k} بعد.',
   'ph.all': 'عرض كل العبارات',
   'ph.showingAll': 'كل العبارات',
-  'ph.only': 'عبارات فيها {k} فقط'
+  'ph.only': 'عبارات فيها {k} فقط',
+  'rd.with': 'كلمات فيها {k}',
+  'rd.noneFor': 'لا توجد كلمة فيها {k} بعد. جمل فيها:',
+  'rd.nothing': 'لا شيء يستخدم {k} بعد.',
+  'rd.all': 'عرض كل الكلمات',
+  'rd.showingAll': 'كل الكلمات',
+  'rd.only': 'كلمات فيها {k} فقط',
+  'rd.words': 'كلمات'
 });
 Object.assign(STR.ar, {
   'pf.look': 'المظهر', 'th.mode': 'فاتح أم داكن', 'th.bg': 'لون الخلفية',

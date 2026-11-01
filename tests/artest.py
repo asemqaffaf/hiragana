@@ -75,7 +75,9 @@ async def main():
         R['ar_latin_write'] = await visible_latin(pg)
         await pg.screenshot(path='shots/ar_write.png')
         # read tab
-        await go(pg, "read"); await pg.check('#rMean'); await pg.wait_for_timeout(100)
+        await go(pg, "read")
+        if await pg.query_selector('#rdAll'): await pg.click('#rdAll')  # coming from Write, Words is filtered to the letter
+        await pg.check('#rMean'); await pg.wait_for_timeout(100)
         R['ar_words'] = await pg.eval_on_selector_all('#tab-read .word', 'e=>e.slice(0,3).concat(e.slice(-2)).map(x=>x.innerText.replace(/\\n/g," | "))')
         await pg.locator('#tab-read [data-say]').nth(3).click(); await pg.wait_for_timeout(700)
         await pg.screenshot(path='shots/ar_read.png')

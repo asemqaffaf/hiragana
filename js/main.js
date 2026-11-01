@@ -20,4 +20,4 @@ function boot() {
   else showLogin();
 }
 boot();
-if (/[#&]test\b/.test(location.hash)) window.__hira = {STR, phrasesFor: k => { ui.phFilter = ui.phLetter = k; showTab("phrases", {letter: k}); }, audioEl: () => htmlAudio, audioState: () => ({htmlOK, htmlFails, playTok, waState: actx && actx.state}), judgeStroke, strokeTemplates, parsePath, KVG, getState: () => state, getStudents: () => students};
+if (/[#&]test\b/.test(location.hash)) window.__hira = {STR, wordsFor: k => { ui.rdFilter = ui.rdLetter = k; showTab('read', {letter: k}); }, phrasesFor: k => { ui.phFilter = ui.phLetter = k; showTab("phrases", {letter: k}); }, audioEl: () => htmlAudio, audioState: () => ({htmlOK, htmlFails, playTok, waState: actx && actx.state}), judgeStroke, strokeTemplates, parsePath, KVG, getState: () => state, getStudents: () => students};

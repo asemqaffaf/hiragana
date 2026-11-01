@@ -196,7 +196,14 @@ Object.assign(STR.en, {
   'ph.nothing': 'Nothing uses {k} yet.',
   'ph.all': 'Show all phrases',
   'ph.showingAll': 'All phrases',
-  'ph.only': 'Only phrases with {k}'
+  'ph.only': 'Only phrases with {k}',
+  'rd.with': 'Words that use {k}',
+  'rd.noneFor': 'No word uses {k} yet. Sentences that do:',
+  'rd.nothing': 'Nothing uses {k} yet.',
+  'rd.all': 'Show all words',
+  'rd.showingAll': 'All words',
+  'rd.only': 'Only words with {k}',
+  'rd.words': 'Words'
 });
 Object.assign(STR.en, {
   'pf.look': 'Appearance', 'th.mode': 'Light or dark', 'th.bg': 'Background colour',

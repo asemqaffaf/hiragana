@@ -7,6 +7,7 @@ import {lesson, lessonOn, renderMeet, saveLesson} from '../features/lesson.js';
 import {renderPlan} from '../features/plan.js';
 import {renderProfile} from '../features/profile.js';
 import {renderProgress} from '../features/progress.js';
+import {renderRead} from '../features/read.js';
 import {renderWrite} from '../features/write.js';
 import {t} from '../i18n/core.js';
 import {closeSheet} from '../ui/sheet.js';
@@ -26,7 +27,15 @@ function renderSubnav(name) {
   lastSub[g] = name;
   el.hidden = false;
   el.innerHTML = '<div class="seg" role="tablist" aria-label="' + t('nav.' + g) + '">' + subs.map(s => '<button role="tab" data-sub="' + s + '" aria-selected="' + (s === name) + '" aria-pressed="' + (s === name) + '">' + t('tab.' + s) + '</button>').join('') + '</div>';
-  $$('[data-sub]', el).forEach(b => b.onclick = () => { if (b.dataset.sub !== ui.currentTab) showTab(b.dataset.sub, {root: ui.rootView, letter: b.dataset.sub === 'phrases' && ui.currentTab === 'write' && ui.writeK ? ui.writeK : undefined}); });
+  $$('[data-sub]', el).forEach(b => b.onclick = () => { if (b.dataset.sub !== ui.currentTab) showTab(b.dataset.sub, {root: ui.rootView, letter: carryLetter(b.dataset.sub)}); });
+}
+/* The letter that Words and Phrases follow: from Write it is the letter being written, and between Words and Phrases it stays while the page is filtered */
+function carryLetter(to) {
+  if (to !== 'phrases' && to !== 'read') return undefined;
+  if (ui.currentTab === 'write') return ui.writeK || undefined;
+  if (ui.currentTab === 'read') return ui.rdFilter || undefined;
+  if (ui.currentTab === 'phrases') return ui.phFilter || undefined;
+  return undefined;
 }
 function setHist(st, replace) { try { history[replace ? 'replaceState' : 'pushState'](st, '', '#' + st.tab); } catch (e) {} }
 export function showTab(name, opts) {
@@ -37,6 +46,7 @@ export function showTab(name, opts) {
   ui.rootView = opts.fromHistory ? (name === 'plan' || name === 'chart') : !!opts.root;
   const prevTab = ui.currentTab;
   if (name === 'phrases') { if (opts.letter !== undefined) ui.phFilter = ui.phLetter = opts.letter; else if (!opts.fromHistory) ui.phFilter = ui.phLetter = null; }
+  if (name === 'read') { if (opts.letter !== undefined) ui.rdFilter = ui.rdLetter = opts.letter; else if (!opts.fromHistory) ui.rdFilter = ui.rdLetter = null; }
   ui.currentTab = name;
   $$('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.nav === GROUP[name] ? 'true' : 'false'));
   const wb = $('#whoBtn'); if (wb) { if (name === 'profile') wb.setAttribute('aria-current', 'page'); else wb.removeAttribute('aria-current'); }
@@ -51,6 +61,7 @@ export function showTab(name, opts) {
   if (name === 'meet') renderMeet();
   if (name === 'daily') renderDaily();
   if (name === 'phrases') renderPhrases();
+  if (name === 'read') renderRead();
   if (name === 'read' && lessonOn()) { const x = lesson(); if (!x.r) { x.r = true; saveLesson(x); } }
   renderBack();
   window.scrollTo(0, 0);

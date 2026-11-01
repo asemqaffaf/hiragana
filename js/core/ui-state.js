@@ -8,6 +8,8 @@ export const ui = {
   rootView: true,
   phFilter: null,
   phLetter: null,
+  rdFilter: null,
+  rdLetter: null,
   resetArmed: false,
   lessonQuiz: false,
   lessonWrite: false,

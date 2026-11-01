@@ -1,19 +1,45 @@
 import {flash, speak} from '../core/audio.js';
+import {replay} from '../core/motion.js';
 import {curDay, dayNumber} from '../core/plan.js';
 import {ui} from '../core/ui-state.js';
-import {SENTENCES, WORDS} from '../data/content.js';
-import {DAILY_ALL} from '../data/daily.js';
+import {EXAMPLES, SENTENCES, WORDS} from '../data/content.js';
+import {DAILY_ALL, EXTRA} from '../data/daily.js';
 import {dailyCard, dailyFor, dailySoFar} from './daily.js';
-import {t} from '../i18n/core.js';
+import {isAr, t} from '../i18n/core.js';
 import {meanOf, wtitleOf} from '../i18n/helpers.js';
 import {$, SPEAK_SVG} from '../util.js';
 
 export function wordCard(w, cls) {
   return '<div class="word' + (cls || '') + '" role="button" tabindex="0" data-word><span class="kana" dir="ltr">' + w[0] + '</span><span class="ro" dir="ltr">' + w[1] + '</span><span class="mean">' + meanOf(w) + '</span><button class="say" data-say="' + w[0] + '" aria-label="' + t('read.hear', {w: w[0]}) + '">' + SPEAK_SVG + '</button></div>';
 }
-export function renderRead() {
-  const n = dayNumber();
-  let h = '<h2>' + t('tab.read') + '</h2><p class="muted">' + t('read.intro') + '</p>';
+/* Everything the Words page can show for one letter: the letter's own example words, the reading-list words, the daily words (with their
+   example sentence) and the reading sentences that use it. Each word appears once. */
+export function wordsWith(k) {
+  const daily = DAILY_ALL.filter(w => w[0].includes(k)), seen = new Set(daily.map(w => w[0])), plain = [];
+  const add = (kana, ro, mean) => { if (kana.includes(k) && !seen.has(kana)) { seen.add(kana); plain.push([kana, ro, mean]); } };
+  const pick = w => isAr() ? w[3] : w[2];
+  if (EXAMPLES[k]) add(EXAMPLES[k][0], EXAMPLES[k][1], pick(EXAMPLES[k]));
+  (EXTRA[k] || []).forEach(w => add(w[0], w[1], pick(w)));
+  Object.keys(EXTRA).forEach(x => EXTRA[x].forEach(w => add(w[0], w[1], pick(w))));
+  WORDS.forEach(g => g.items.forEach(w => add(w[0], w[1], meanOf(w))));
+  /* words that start with the letter first */
+  plain.sort((a, b) => b[0].startsWith(k) - a[0].startsWith(k));
+  return {daily, plain, sentences: SENTENCES.filter(s => s[0].includes(k))};
+}
+function renderWordsFor(k) {
+  const {daily, plain, sentences} = wordsWith(k), n = daily.length + plain.length;
+  let h = '<h2>' + t('tab.read') + '</h2>';
+  h += '<div class="phfilter"><span class="kana" dir="ltr">' + k + '</span><span class="phft">' + t(n ? 'rd.with' : sentences.length ? 'rd.noneFor' : 'rd.nothing', {k}) + '</span><button class="btn" id="rdAll" type="button">' + t('rd.all') + '</button></div>';
+  if (plain.length) h += '<h3>' + t('rd.words') + '</h3><div class="words">' + plain.map(w => wordCard(w, ' open')).join('') + '</div>';
+  if (daily.length) h += '<h3>' + t('daily.title') + '</h3><div class="dlist">' + daily.map(dailyCard).join('') + '</div>';
+  if (sentences.length) h += '<h3>' + t('read.sentences') + '</h3><div class="sentences">' + sentences.map(w => wordCard(w, ' open')).join('') + '</div>';
+  return h;
+}
+function allWordsHtml(n) {
+  let h = '<h2>' + t('tab.read') + '</h2>';
+  /* we know which letter the student came from: one tap goes back to it */
+  if (ui.rdLetter) h += '<div class="phfilter all"><span class="kana" dir="ltr">' + ui.rdLetter + '</span><span class="phft">' + t('rd.showingAll') + '</span><button class="btn primary" id="rdOnly" type="button">' + t('rd.only', {k: ui.rdLetter}) + '</button></div>';
+  h += '<p class="muted">' + t('read.intro') + '</p>';
   h += '<div class="toggles" style="justify-content:flex-start"><label><input type="checkbox" id="rRo"' + (ui.showRo ? ' checked' : '') + '> ' + t('read.showRo') + '</label><label><input type="checkbox" id="rMean"' + (ui.showMean ? ' checked' : '') + '> ' + t('read.showMean') + '</label></div>';
   h += '<details class="rules"' + (n >= 10 ? ' open' : '') + '><summary>' + t('read.rulesTitle') + '</summary>' + t('read.rules').map(x => '<p>' + x + '</p>').join('') + '</details>';
   const todayW = dailyFor(curDay()), soFar = dailySoFar(), later = DAILY_ALL.length - soFar.length - todayW.length;
@@ -24,18 +50,27 @@ export function renderRead() {
     h += '<h3>' + wtitleOf(g) + ' <span class="muted small">' + t('read.from', {d: g.from, notYet: n >= 1 && n < g.from}) + '</span></h3><div class="words">' + g.items.map(w => wordCard(w)).join('') + '</div>';
   });
   h += '<h3>' + t('read.sentences') + ' <span class="muted small">' + t('read.day12') + '</span></h3><div class="sentences">' + SENTENCES.map(w => wordCard(w)).join('') + '</div>';
-  const root = $('#tab-read');
-  root.innerHTML = h;
-  root.classList.toggle('show-ro', ui.showRo); root.classList.toggle('show-mean', ui.showMean);
-  $('#rRo', root).onchange = e => { ui.showRo = e.target.checked; root.classList.toggle('show-ro', ui.showRo); };
-  $('#rMean', root).onchange = e => { ui.showMean = e.target.checked; root.classList.toggle('show-mean', ui.showMean); };
+  return h;
+}
+export function renderRead() {
+  const k = ui.rdFilter, root = $('#tab-read');
+  root.innerHTML = k ? renderWordsFor(k) : allWordsHtml(dayNumber());
+  /* filtered pages always show romaji and meaning, so the checkboxes and the tap-to-open toggle only apply to the full list */
+  root.classList.toggle('show-ro', !k && ui.showRo); root.classList.toggle('show-mean', !k && ui.showMean);
+  const swap = filter => () => { ui.rdFilter = filter(); renderRead(); window.scrollTo(0, 0); replay($('.phfilter', root), 'swap'); };
+  const all = $('#rdAll', root); if (all) all.onclick = swap(() => null);
+  const only = $('#rdOnly', root); if (only) only.onclick = swap(() => ui.rdLetter);
+  if (!k) {
+    $('#rRo', root).onchange = e => { ui.showRo = e.target.checked; root.classList.toggle('show-ro', ui.showRo); };
+    $('#rMean', root).onchange = e => { ui.showMean = e.target.checked; root.classList.toggle('show-mean', ui.showMean); };
+  }
   root.onclick = e => {
     const db = e.target.closest('[data-dw]');
     if (db) { speak(db.dataset.dw + '|dw'); return; }
     const sb = e.target.closest('[data-say]');
     if (sb) { e.stopPropagation(); speak(sb.dataset.say); return; }
     const c = e.target.closest('[data-word]');
-    if (c) { c.classList.toggle('open'); const w = $('[data-say]', c); if (w) { speak(w.dataset.say); flash(c); } }
+    if (c) { if (!k) c.classList.toggle('open'); const w = $('[data-say]', c); if (w) { speak(w.dataset.say); flash(c); } }
   };
-  root.onkeydown = e => { const c = e.target.closest('[data-word]'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); c.classList.toggle('open'); } };
+  root.onkeydown = e => { const c = e.target.closest('[data-word]'); if (c && !k && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); c.classList.toggle('open'); } };
 }
