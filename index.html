@@ -227,6 +227,7 @@ footer.credit a{color:inherit}
 .sheet .in{max-width:560px;margin:0 auto}
 .sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--grid);margin:0 auto 12px;position:relative}
 .sheet .grab::before{content:"";position:absolute;inset:-16px -60px -10px}
+.sheet .grab{touch-action:none}
 .sheet .big{display:flex;gap:10px;align-items:center}
 .sheet .big .sq{width:min(46vw,190px)}
 .sheet .big .sq .k.txt{font-size:clamp(56px,17vw,78px)}
@@ -578,8 +579,8 @@ html[dir="rtl"]{--sx:-22px}
 .tab.enter{overflow-x:hidden}
 @supports (overflow:clip){.tab.enter{overflow-x:clip}}
 .tab.enter > *{animation:slideIn .38s cubic-bezier(.2,.7,.2,1) backwards}
-.tab.enter.back > *{--sx:-22px}
-[dir="rtl"] .tab.enter.back > *{--sx:22px}
+.tab.enter.rev > *{--sx:-22px}
+[dir="rtl"] .tab.enter.rev > *{--sx:22px}
 .tab.enter.first > *{animation-name:rise}
 .tab.enter > *:nth-child(2){animation-delay:.04s}.tab.enter > *:nth-child(3){animation-delay:.08s}
 .tab.enter > *:nth-child(4){animation-delay:.12s}.tab.enter > *:nth-child(5){animation-delay:.16s}
@@ -628,6 +629,12 @@ html.themeanim body,html.themeanim body *{transition:background-color .35s,color
   .btn:active,nav.tabs button:active,.cmap button:active,.cell:active,.tool:active,.say:active,.sbody:active,#homeBtn:active{transform:none}
   html.themeanim body,html.themeanim body *{transition:none !important}
 }
+
+/* whole boxes play when tapped */
+.mx,.word,.dcard{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,background-color .25s,border-color .25s}
+.mx:active,.word:active,.dcard:active{transform:scale(.985)}
+.mx.playing,.word.playing,.dcard.playing{background:var(--jade-soft);border-color:var(--jade)}
+@media (prefers-reduced-motion:reduce){.mx,.word,.dcard{transition:none}.mx:active,.word:active,.dcard:active{transform:none}}
 </style>
 </head>
 <body class="signed-out">
@@ -1978,7 +1985,14 @@ function moreExHtml(k) {
   if (!L || !L.length) return '';
   return '<div class="morex"><span class="small muted">' + t('ex.more', {k}) + '</span>' + L.map(w => '<div class="mx"><span class="kana" dir="ltr">' + w[0] + '</span><span class="ro ltr">' + w[1] + '</span><span class="mean">' + (isAr() ? w[3] : w[2]) + '</span><button class="say" type="button" data-say="' + w[0] + '" aria-label="' + t('read.hear', {w: w[0]}) + '">' + SPEAK_SVG + '</button></div>').join('') + '</div>';
 }
-function bindSay(root) { $$('.morex [data-say]', root).forEach(b => { b.onclick = e => { e.stopPropagation(); speak(b.dataset.say); }; }); }
+/* a quick highlight on whatever box was tapped, so the tap feels answered */
+function flash(el) { if (!el) return; el.classList.add('playing'); clearTimeout(el._pt); el._pt = setTimeout(() => el.classList.remove('playing'), 700); }
+function bindSay(root) {
+  $$('.morex .mx', root).forEach(r => {
+    const b = $('[data-say]', r); if (!b) return;
+    r.onclick = e => { e.stopPropagation(); speak(b.dataset.say); flash(r); };
+  });
+}
 function speak(text) {
   if (me() && LETTERS().includes(text)) { state.heard = Object.assign({}, state.heard, {[text]: (state.heard[text] || 0) + 1}); commit(); }
   if (AUD[text]) { playClip(text); return true; }
@@ -2299,13 +2313,13 @@ function enterAnim(name, opts, prevTab) {
   const el = $('#tab-' + name); if (!el) return;
   const first = firstTab; firstTab = false;
   if (reduceAnim() || (name === prevTab && !first && !opts.fromHistory)) return;
-  el.classList.remove('enter', 'back', 'first'); void el.offsetWidth;
+  el.classList.remove('enter', 'rev', 'first'); void el.offsetWidth;
   /* give map and calendar cells their wave order */
   $$('.cmap, .cal', el).forEach(g => Array.from(g.children).forEach((c, i) => c.style.setProperty('--i', Math.min(i, 40))));
-  el.classList.add('enter'); if (opts.fromHistory) el.classList.add('back'); if (first || opts.initial) el.classList.add('first');
+  el.classList.add('enter'); if (opts.fromHistory) el.classList.add('rev'); if (first || opts.initial) el.classList.add('first');
   if (name === 'progress') countUp(el);
   clearTimeout(enterTimer);
-  enterTimer = setTimeout(() => $$('.tab.enter').forEach(x => x.classList.remove('enter', 'back', 'first')), 1900);
+  enterTimer = setTimeout(() => $$('.tab.enter').forEach(x => x.classList.remove('enter', 'rev', 'first')), 1900);
 }
 function countUp(root) {
   $$('.pstat b', root).forEach(b => {
@@ -2501,8 +2515,8 @@ function renderDaily() {
   const root = $('#tab-daily');
   root.innerHTML = h;
   root.onclick = e => {
-    const b = e.target.closest('[data-dw]');
-    if (b) { hearDaily(b.dataset.dw); b.closest('.dcard').classList.add('heard'); const y = lesson(), n = list.filter(w => y.d.includes(w[0])).length; $('#dHeard', root).textContent = t('daily.heard', {n, m: list.length}); $('.rbar i', root).style.width = Math.round(n / list.length * 100) + '%'; }
+    const card = e.target.closest('.dcard'), b = e.target.closest('[data-dw]') || (card && $('[data-dw]', card));
+    if (b) { flash(card); hearDaily(b.dataset.dw); b.closest('.dcard').classList.add('heard'); const y = lesson(), n = list.filter(w => y.d.includes(w[0])).length; $('#dHeard', root).textContent = t('daily.heard', {n, m: list.length}); $('.rbar i', root).style.width = Math.round(n / list.length * 100) + '%'; }
   };
   list.forEach((w, i) => { if (x.d.includes(w[0])) root.querySelectorAll('.dcard')[i].classList.add('heard'); });
   $('#dDone', root).onclick = () => { if (lessonOn()) { const y = lesson(); y.dd = true; saveLesson(y); } showTab('plan'); };
@@ -2514,7 +2528,7 @@ function renderPhrases() {
   });
   const root = $('#tab-phrases');
   root.innerHTML = h;
-  root.onclick = e => { const sb = e.target.closest('[data-say]'); if (sb) { e.stopPropagation(); speak(sb.dataset.say); } };
+  root.onclick = e => { const c = e.target.closest('[data-word]'), sb = e.target.closest('[data-say]') || (c && $('[data-say]', c)); if (sb) { e.stopPropagation(); speak(sb.dataset.say); flash(c || sb.closest('.word')); if (c && !e.target.closest('[data-say]')) c.classList.toggle('open'); } };
 }
 
 /* ---------- progress and roadmap ---------- */
@@ -3142,7 +3156,7 @@ function renderRead() {
     const sb = e.target.closest('[data-say]');
     if (sb) { e.stopPropagation(); speak(sb.dataset.say); return; }
     const c = e.target.closest('[data-word]');
-    if (c) c.classList.toggle('open');
+    if (c) { c.classList.toggle('open'); const w = $('[data-say]', c); if (w) { speak(w.dataset.say); flash(c); } }
   };
   root.onkeydown = e => { const c = e.target.closest('[data-word]'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); c.classList.toggle('open'); } };
 }
@@ -3384,8 +3398,9 @@ function openProfile() {
     if (!d.on) {
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) { d = null; return; }
       if (dy < -6 && !d.grab) { d = null; return; }
-      if (dy < 6) return;
       if (!d.grab && d.s.scrollTop > 0) { d = null; return; }
+      if (dy > 0 && e.cancelable) e.preventDefault();   /* claim it now: once iOS starts its own bounce it is too late */
+      if (dy < 6) return;
       d.on = true; d.y0 = tc.clientY; d.s.style.animation = 'none'; d.s.style.transition = 'none';
       const sc = scrimEl(); if (sc) { sc.style.animation = 'none'; sc.style.transition = 'none'; }
     }
