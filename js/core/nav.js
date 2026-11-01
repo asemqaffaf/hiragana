@@ -103,7 +103,8 @@ $$('nav.tabs button').forEach(b => b.addEventListener('click', () => {
   const root = document.documentElement;
   const update = () => {
     ticking = false;
-    const y = window.scrollY;
+    /* the position is held inside the page: iOS stretches past the bottom and springs back, and that bounce is not scrolling up */
+    const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight), y = Math.min(Math.max(window.scrollY, 0), max);
     if (y < 40 || y < lastY - 6) root.classList.remove('navmin');
     else if (y > lastY + 6) root.classList.add('navmin');
     if (Math.abs(y - lastY) > 6 || y < 40) lastY = y;
