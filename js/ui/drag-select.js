@@ -83,6 +83,8 @@ const end = (e, cancel) => {
   restore(d);
   if (chosen && chosen.getAttribute('aria-selected') !== 'true' && chosen.getAttribute('aria-pressed') !== 'true') chosen.click();
 };
+/* belt and braces for iOS: while a finger is on the tab bar, nothing under it scrolls */
+document.addEventListener('touchmove', e => { if (drag && drag.tab && e.cancelable) e.preventDefault(); }, {passive: false, capture: true});
 document.addEventListener('pointerup', e => end(e, false), true);
 document.addEventListener('pointercancel', e => end(e, true), true);
 document.addEventListener('click', e => { if (swallow && Date.now() < swallow.until && e.isTrusted && swallow.c.contains(e.target)) { e.stopPropagation(); e.preventDefault(); } }, true);

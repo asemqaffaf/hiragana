@@ -147,7 +147,9 @@ nav.tabs .has-thumb > .thumb,nav.tabs .in > .thumb{border-radius:30px;background
 .lensin button.on svg,.lensin button.on .g{color:var(--jade)}
 @media (prefers-reduced-motion:reduce){.lens{display:none}}
 /* dragging along a segmented control: the glass follows the finger closely and stays lifted */
-nav.tabs .in,.seg{touch-action:pan-y}
+/* a finger on the tab bar never scrolls the page, on any screen; the segmented controls still let a vertical swipe through */
+nav.tabs,nav.tabs .in,nav.tabs button{touch-action:none}
+.seg{touch-action:pan-y}
 .has-thumb.dragging > .thumb{background:var(--glass-hi) !important;-webkit-backdrop-filter:saturate(1.8) brightness(1.1);backdrop-filter:saturate(1.8) brightness(1.1);
   box-shadow:0 8px 24px rgba(0,0,0,.28),inset 0 0 0 1px var(--glass-edge),inset 0 1px 0 var(--glass-hi) !important}
 .has-thumb.dragging > button{transition-duration:.15s}
