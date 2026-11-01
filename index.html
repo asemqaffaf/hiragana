@@ -644,6 +644,10 @@ html.themeanim body,html.themeanim body *{transition:background-color .35s,color
 /* the page behind an open sheet stays put */
 html.sheet-open{overflow:hidden;scrollbar-gutter:stable;overscroll-behavior:none}
 html.sheet-open body{overflow:hidden;overscroll-behavior:none}
+
+.phfilter.all{border-color:var(--grid);background:var(--surface)}
+.phfilter.swap{animation:cardIn .3s cubic-bezier(.2,.7,.2,1)}
+@media (prefers-reduced-motion:reduce){.phfilter.swap{animation:none}}
 </style>
 </head>
 <body class="signed-out">
@@ -1509,7 +1513,9 @@ Object.assign(STR.en, {
   'ph.with': 'Phrases that use {k}',
   'ph.noneFor': 'No phrase uses {k} yet. Words that do:',
   'ph.nothing': 'Nothing uses {k} yet.',
-  'ph.all': 'Show all phrases'
+  'ph.all': 'Show all phrases',
+  'ph.showingAll': 'All phrases',
+  'ph.only': 'Only phrases with {k}'
 });
 Object.assign(STR.en, {
   'pf.look': 'Appearance', 'th.mode': 'Light or dark', 'th.bg': 'Background colour',
@@ -1528,7 +1534,9 @@ Object.assign(STR.ar, {
   'ph.with': 'عبارات فيها {k}',
   'ph.noneFor': 'لا توجد عبارة فيها {k} بعد. كلمات فيها:',
   'ph.nothing': 'لا شيء يستخدم {k} بعد.',
-  'ph.all': 'عرض كل العبارات'
+  'ph.all': 'عرض كل العبارات',
+  'ph.showingAll': 'كل العبارات',
+  'ph.only': 'عبارات فيها {k} فقط'
 });
 Object.assign(STR.ar, {
   'pf.look': 'المظهر', 'th.mode': 'فاتح أم داكن', 'th.bg': 'لون الخلفية',
@@ -2322,6 +2330,7 @@ function renderSubnav(name) {
 }
 let currentTab = 'plan', navStack = [], sheetPushed = false, rootView = true;
 let phFilter = null;   /* a letter: the Phrases page then shows only what uses that letter */
+let phLetter = null;   /* the letter we came from, kept so the user can switch back after Show all */
 function setHist(st, replace) { try { history[replace ? 'replaceState' : 'pushState'](st, '', '#' + st.tab); } catch (e) {} }
 
 /* ---------- motion ---------- */
@@ -2358,7 +2367,7 @@ function showTab(name, opts) {
   else if (!opts.fromHistory && name !== currentTab) { navStack.push(currentTab); setHist({tab: name}, !!opts.replace); }
   rootView = opts.fromHistory ? (name === 'plan' || name === 'chart') : !!opts.root;
   const prevTab = currentTab;
-  if (name === 'phrases') { if (opts.letter !== undefined) phFilter = opts.letter; else if (!opts.fromHistory) phFilter = null; }
+  if (name === 'phrases') { if (opts.letter !== undefined) phFilter = phLetter = opts.letter; else if (!opts.fromHistory) phFilter = phLetter = null; }
   currentTab = name;
   $$('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.nav === GROUP[name] ? 'true' : 'false'));
   const wb = $('#whoBtn'); if (wb) { if (name === 'profile') wb.setAttribute('aria-current', 'page'); else wb.removeAttribute('aria-current'); }
@@ -2562,6 +2571,8 @@ function renderPhrases() {
       });
     } else if (pool.length) h += '<div class="sentences phr">' + pool.map(w => wordCard(w, ' open')).join('') + '</div>';
   } else {
+    /* showing everything, but we know which letter the user came from: one tap goes back to it */
+    if (phLetter) h += '<div class="phfilter all"><span class="kana" dir="ltr">' + phLetter + '</span><span class="phft">' + t('ph.showingAll') + '</span><button class="btn primary" id="phOnly" type="button">' + t('ph.only', {k: phLetter}) + '</button></div>';
     h += '<p class="muted">' + t('ph.intro') + '</p>';
     PHRASES.forEach(g => {
       h += '<h3>' + (isAr() ? g.ar : g.en) + ' <span class="muted small">' + t('ph.count', {n: g.items.length}) + '</span></h3><div class="sentences phr">' + g.items.map(p => wordCard([p[0], p[1], isAr() ? p[3] : p[2]], ' open')).join('') + '</div>';
@@ -2569,7 +2580,8 @@ function renderPhrases() {
   }
   const root = $('#tab-phrases');
   root.innerHTML = h;
-  const all = $('#phAll', root); if (all) all.onclick = () => { phFilter = null; renderPhrases(); window.scrollTo(0, 0); };
+  const all = $('#phAll', root); if (all) all.onclick = () => { phFilter = null; renderPhrases(); window.scrollTo(0, 0); replay($('.phfilter', root), 'swap'); };
+  const only = $('#phOnly', root); if (only) only.onclick = () => { phFilter = phLetter; renderPhrases(); window.scrollTo(0, 0); replay($('.phfilter', root), 'swap'); };
   root.onclick = e => { const c = e.target.closest('[data-word]'), sb = e.target.closest('[data-say]') || (c && $('[data-say]', c)); if (sb) { e.stopPropagation(); speak(sb.dataset.say); flash(c || sb.closest('.word')); } };
 }
 
@@ -3505,7 +3517,7 @@ function renderAll() {
   if (currentTab === 'write') renderWrite();
 }
 boot();
-if (/[#&]test\b/.test(location.hash)) window.__hira = {phrasesFor: k => { phFilter = k; showTab("phrases", {letter: k}); }, audioEl: () => htmlAudio, audioState: () => ({htmlOK, htmlFails, playTok, waState: actx && actx.state}), judgeStroke, strokeTemplates, parsePath, KVG, getState: () => state, getStudents: () => students};
+if (/[#&]test\b/.test(location.hash)) window.__hira = {STR, phrasesFor: k => { phFilter = phLetter = k; showTab("phrases", {letter: k}); }, audioEl: () => htmlAudio, audioState: () => ({htmlOK, htmlFails, playTok, waState: actx && actx.state}), judgeStroke, strokeTemplates, parsePath, KVG, getState: () => state, getStudents: () => students};
 
 })();
 </script>
