@@ -2528,7 +2528,7 @@ function renderPhrases() {
   });
   const root = $('#tab-phrases');
   root.innerHTML = h;
-  root.onclick = e => { const c = e.target.closest('[data-word]'), sb = e.target.closest('[data-say]') || (c && $('[data-say]', c)); if (sb) { e.stopPropagation(); speak(sb.dataset.say); flash(c || sb.closest('.word')); if (c && !e.target.closest('[data-say]')) c.classList.toggle('open'); } };
+  root.onclick = e => { const c = e.target.closest('[data-word]'), sb = e.target.closest('[data-say]') || (c && $('[data-say]', c)); if (sb) { e.stopPropagation(); speak(sb.dataset.say); flash(c || sb.closest('.word')); } };
 }
 
 /* ---------- progress and roadmap ---------- */
