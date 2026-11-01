@@ -225,7 +225,8 @@ footer.credit a{color:inherit}
 .scrim{position:fixed;inset:0;background:rgba(10,20,16,.42);z-index:40}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-height:90%;overflow:auto;background:var(--paper);border-radius:14px 14px 0 0;padding:14px 18px calc(22px + env(safe-area-inset-bottom,0px))}
 .sheet .in{max-width:560px;margin:0 auto}
-.sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--grid);margin:0 auto 12px}
+.sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--grid);margin:0 auto 12px;position:relative}
+.sheet .grab::before{content:"";position:absolute;inset:-16px -60px -10px}
 .sheet .big{display:flex;gap:10px;align-items:center}
 .sheet .big .sq{width:min(46vw,190px)}
 .sheet .big .sq .k.txt{font-size:clamp(56px,17vw,78px)}
@@ -605,6 +606,10 @@ html[dir="rtl"]{--sx:-22px}
 .scrim{animation:fadeIn .2s ease-out}
 .sheet{animation:sheetUp .3s cubic-bezier(.2,.8,.2,1)}
 #sheetRoot.swap .scrim,#sheetRoot.swap .sheet{animation:none}
+@keyframes sheetDown{from{transform:none}to{transform:translateY(100%)}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+.sheet.out{animation:sheetDown .22s cubic-bezier(.4,0,1,1) forwards !important;pointer-events:none}
+.scrim.out{animation:fadeOut .22s ease-in forwards !important;pointer-events:none}
 /* feedback and meeting cards */
 .fb{animation:rise .3s ease-out}
 .qsq .k.flip,.meetcard.flip{animation:cardIn .3s cubic-bezier(.2,.7,.2,1)}
@@ -2633,7 +2638,7 @@ function openSheet(k) {
   $('#shWrite', root).onclick = () => { writeK = parts[0]; writeGroup = groupOf(writeK); const had = closeSheet('nav'); showTab('write', {replace: had}); };
   $$('[data-close]', root).forEach(b => b.onclick = () => closeSheet());
   markSheetOpen();
-  (pl || $('#shSay', root)).focus();
+  (pl || $('#shSay', root)).focus({preventScroll: true});
   if (svg) setTimeout(() => svg.play(), 250);
 }
 /* mode: 'replace' = another card is about to take its place; 'pop' = the back gesture already left the card's
@@ -2641,7 +2646,13 @@ function openSheet(k) {
 function closeSheet(mode) {
   const root = $('#sheetRoot');
   if (!root.innerHTML) return false;
-  root.innerHTML = '';
+  const sh = $('.sheet', root);
+  if (sh && sh.classList.contains('out')) return false;   /* already sliding away */
+  if (!sh || reduceAnim() || mode === 'replace' || mode === 'nav' || mode === 'silent' || mode === 'dragged') root.innerHTML = '';
+  else {
+    sh.classList.add('out'); const sc = $('.scrim', root); if (sc) sc.classList.add('out');
+    setTimeout(() => { if (sh.isConnected && sh.classList.contains('out')) root.innerHTML = ''; }, 230);
+  }
   if (mode === 'replace') return false;
   const had = sheetPushed;
   if (mode !== 'pop') {
@@ -3353,8 +3364,56 @@ function openProfile() {
     loginMsg = '';
     showLogin();
   };
-  $('#pSwitch', root).focus();
+  $('#pSwitch', root).focus({preventScroll: true});
 }
+
+/* swipe a sheet down to close it, like iOS: it follows the finger, the backdrop fades, and it either goes or springs back */
+(function () {
+  const root = document.getElementById('sheetRoot'); if (!root) return;
+  let d = null;
+  const sheetEl = () => root.querySelector('.sheet'), scrimEl = () => root.querySelector('.scrim');
+  root.addEventListener('touchstart', e => {
+    const s = sheetEl(); if (!s || !e.touches || e.touches.length !== 1 || !s.contains(e.target)) { d = null; return; }
+    if (e.target.closest && e.target.closest('input,select,textarea')) { d = null; return; }
+    const tc = e.touches[0];
+    d = {s, y0: tc.clientY, x0: tc.clientX, grab: !!(e.target.closest && e.target.closest('.grab')), on: false, dy: 0, ly: tc.clientY, lt: performance.now(), v: 0};
+  }, {passive: true});
+  root.addEventListener('touchmove', e => {
+    if (!d) return;
+    const tc = e.touches[0], dy = tc.clientY - d.y0, dx = tc.clientX - d.x0, now = performance.now();
+    if (!d.on) {
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) { d = null; return; }
+      if (dy < -6 && !d.grab) { d = null; return; }
+      if (dy < 6) return;
+      if (!d.grab && d.s.scrollTop > 0) { d = null; return; }
+      d.on = true; d.y0 = tc.clientY; d.s.style.animation = 'none'; d.s.style.transition = 'none';
+      const sc = scrimEl(); if (sc) { sc.style.animation = 'none'; sc.style.transition = 'none'; }
+    }
+    if (e.cancelable) e.preventDefault();
+    d.dy = Math.max(0, tc.clientY - d.y0);
+    const dt = now - d.lt; if (dt > 0) d.v = 0.6 * d.v + 0.4 * ((tc.clientY - d.ly) / dt);
+    d.ly = tc.clientY; d.lt = now;
+    d.s.style.transform = 'translateY(' + d.dy + 'px)';
+    const sc = scrimEl(); if (sc) sc.style.opacity = String(Math.max(0, 1 - d.dy / Math.max(1, d.s.offsetHeight) * 0.9));
+  }, {passive: false});
+  const finish = cancel => {
+    const x = d; d = null; if (!x || !x.on) return;
+    const s = x.s, sc = scrimEl(), h = s.offsetHeight, fast = reduceAnim();
+    const go = !cancel && (x.dy > Math.min(140, h * 0.3) || (x.v > 0.5 && x.dy > 30));
+    if (go) {
+      if (fast) { closeSheet('dragged'); return; }
+      s.style.transition = 'transform .24s cubic-bezier(.4,0,1,1)'; s.style.transform = 'translateY(100%)';
+      if (sc) { sc.style.transition = 'opacity .24s'; sc.style.opacity = '0'; }
+      setTimeout(() => { if (sheetEl() === s) closeSheet('dragged'); }, 240);
+    } else {
+      s.style.transition = fast ? 'none' : 'transform .28s cubic-bezier(.2,.8,.2,1)'; s.style.transform = '';
+      if (sc) { sc.style.transition = fast ? 'none' : 'opacity .28s'; sc.style.opacity = ''; }
+      setTimeout(() => { if (sheetEl() === s) { s.style.transition = ''; if (sc) sc.style.transition = ''; } }, 300);
+    }
+  };
+  root.addEventListener('touchend', () => finish(false));
+  root.addEventListener('touchcancel', () => finish(true));
+})();
 (function () {
   const hb = document.getElementById('homeBtn'); if (!hb) return;
   const go = () => {
