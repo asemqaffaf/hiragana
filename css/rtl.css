@@ -8,14 +8,13 @@ html[lang="ar"] .hook{line-height:1.8}
 .kb .r,.cell .r,.prompt,#qflash,.word .ro,.word .kana{direction:ltr;unicode-bidi:isolate}
 html[lang="ar"] .word{align-items:flex-start}
 html[lang="ar"] .word .kana,html[lang="ar"] .word .ro{align-self:flex-start;text-align:start}
-.langpick{display:flex;flex-direction:column;align-items:center;gap:8px;margin:10px 0 22px}
+.langpick{display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 18px}
 .langcue{display:flex;align-items:center;gap:6px;color:var(--pencil);font-size:13px;font-weight:600;letter-spacing:.02em}
 .langcue svg{width:17px;height:17px;flex:0 0 auto}
-.langseg{width:100%;max-width:360px;margin:0;box-shadow:inset 0 0 0 .5px var(--glass-edge,rgba(0,0,0,.06))}
-.langseg button{flex:1 1 0;min-height:48px;padding-inline:20px;font-size:17px;white-space:nowrap}
+.langseg{width:fit-content;max-width:100%;margin:0;box-shadow:inset 0 0 0 .5px var(--glass-edge,rgba(0,0,0,.06))}
+.langseg button{flex:0 0 auto;min-width:112px;min-height:40px;padding-inline:18px;font-size:15px;font-weight:600;white-space:nowrap}
 /* many languages: a centred, wrapping set of buttons instead of one pill */
-.langseg.many{flex-wrap:wrap;justify-content:center;max-width:420px;border-radius:26px}
-.langseg.many button{flex:1 1 40%}
+.langseg.many{flex-wrap:wrap;justify-content:center;max-width:420px;border-radius:22px}
 body.signed-out header.top .ttl{justify-content:center;text-align:center}
 .langrow{display:flex;align-items:center;gap:12px;margin:14px 0 0}
 .langrow .seg{flex:1;max-width:280px}
