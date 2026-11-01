@@ -8,7 +8,7 @@ python3 -m http.server "$PORT" --bind 127.0.0.1 >/dev/null 2>&1 &
 SERVER=$!
 trap 'kill $SERVER 2>/dev/null' EXIT
 sleep 1
-for t in swipetest tallsheet locktest taptest phrasetap phfilter wordsfilter goals animtest lessontest ptest pftest artest cltest gregress phtest themetest ovf uitest2 audiotest smalls i18naudit audioaudit sheetsall; do
+for t in swipetest tallsheet locktest taptest phrasetap phfilter wordsfilter goals dragselect animtest lessontest ptest pftest artest cltest gregress phtest themetest ovf uitest2 audiotest smalls i18naudit audioaudit sheetsall; do
   echo "== $t"
   timeout 300 python3 "tests/$t.py" 2>&1 | tail -4 | cut -c1-200
 done

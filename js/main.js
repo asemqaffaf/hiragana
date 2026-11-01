@@ -2,6 +2,7 @@ import './i18n/en.js';
 import './i18n/ar.js';
 import './ui/sheet-swipe.js';
 import './ui/home-button.js';
+import './ui/drag-select.js';
 import {actx, htmlAudio, htmlFails, htmlOK, playTok} from './core/audio.js';
 import {showTab} from './core/nav.js';
 import {me, state, students} from './core/storage.js';

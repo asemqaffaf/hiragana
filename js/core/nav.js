@@ -92,9 +92,15 @@ window.addEventListener('popstate', e => {
   showTab(tab, {fromHistory: true});
 });
 export function markSheetOpen() { if (!ui.sheetPushed) { ui.sheetPushed = true; setHist({tab: ui.currentTab, sheet: true}); } }
+/* A tap on the tab bar answers at once (the highlight glides straight to it). The page behind it is drawn on the next
+   frame, and when several taps come quickly only the last one is drawn, so the bar never waits for pages nobody looks at. */
+let tabTap = 0;
+const markTabs = group => { $$('nav.tabs button').forEach(x => x.setAttribute('aria-selected', x.dataset.nav === group ? 'true' : 'false')); moveThumb($('nav.tabs .in'), 'tabs'); };
 $$('nav.tabs button').forEach(b => b.addEventListener('click', () => {
-  const g = b.dataset.nav, target = g === 'home' ? 'plan' : g === 'letters' ? 'chart' : g === 'progress' ? 'progress' : lastSub[g];
-  if (target !== ui.currentTab) showTab(target, {root: true}); else window.scrollTo(0, 0);
+  const g = b.dataset.nav, target = g === 'home' ? 'plan' : g === 'letters' ? 'chart' : g === 'progress' ? 'progress' : lastSub[g], id = ++tabTap;
+  if (target === ui.currentTab) { markTabs(GROUP[ui.currentTab]); window.scrollTo(0, 0); return; }
+  markTabs(g);
+  requestAnimationFrame(() => setTimeout(() => { if (id === tabTap) showTab(target, {root: true}); }, 0));
 }));
 
 /* iOS 26: the tab bar shrinks to icons while the page scrolls down and comes back when it scrolls up or reaches the top */

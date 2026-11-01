@@ -75,7 +75,8 @@ js/
   features/           one file per page: plan, lesson, daily, drill, write, read, chart,
                       progress, profile, login, language, gamify (levels, badges, toasts)
   ui/                 bottom sheets, swipe to close, the ひらがな home button, thumb.js (the gliding highlight
-                      behind the selected tab or segment)
+                      behind the selected tab or segment),
+                      drag-select.js (press and drag along the tab bar or a segmented control)
   strokes/            stroke drawing (draw.js) and stroke checking (check.js)
   i18n/               core.js (t(), plurals), en.js, ar.js, ar-content.js, helpers.js
   data/               letters, plan, words, phrases, KanjiVG stroke paths, audio manifest

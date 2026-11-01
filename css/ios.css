@@ -43,7 +43,7 @@
 
 /* tab bar: a floating glass capsule; the selected tab sits on a lighter pill */
 nav.tabs{--gap:max(10px,calc(env(safe-area-inset-bottom,0px) - 12px));left:max(12px,calc((100vw - 696px) / 2));right:max(12px,calc((100vw - 696px) / 2));bottom:var(--gap);padding:4px;border:0;border-radius:34px;background:var(--glass);box-shadow:var(--glass-shadow),inset 0 0 0 1px var(--glass-edge),inset 0 1px 0 var(--glass-hi)}
-nav.tabs button{min-height:calc(var(--tabh) - 8px);border-radius:30px}
+nav.tabs button{min-height:54px;border-radius:30px}
 nav.tabs button svg,nav.tabs button .g{color:var(--pencil)}
 nav.tabs button[aria-selected="true"]{background:var(--gray-fill);color:var(--jade);font-weight:700}
 nav.tabs button[aria-selected="true"] svg{color:var(--jade)}
@@ -132,25 +132,26 @@ nav.tabs .has-thumb > .thumb,nav.tabs .in > .thumb{border-radius:30px;background
 :root[data-theme="dark"] .seg.has-thumb > .thumb{background:rgba(255,255,255,.18);box-shadow:none}
 /* pressing the selected tab or segment lifts the glass, as in iOS 26 */
 .has-thumb:has(> button:active) > .thumb{scale:1.07}
+/* dragging along the bar: the glass follows the finger closely and stays lifted */
+nav.tabs .in,.seg{touch-action:pan-y}
+.has-thumb.dragging > .thumb{scale:1.12;transition:transform .2s var(--slide),width .2s var(--slide),scale .3s var(--spring)}
 
 /* buttons: pressed in at once, released with a spring */
 .btn,.tool,.chip,nav.tabs button,.seg button{transition:transform .45s var(--spring),scale .45s var(--spring),background-color .2s,color .2s,filter .2s}
 .btn:active,.tool:active,.chip:active{transform:scale(.95);transition-duration:.12s}
 nav.tabs button:active,.seg button:active{transform:none}
-nav.tabs button:active svg{transform:scale(.88)}
-nav.tabs button svg{transition:transform .45s var(--spring),color .2s}
+nav.tabs button:active svg{scale:.88}
 
-/* the tab bar shrinks to icons while scrolling down */
-/* One number drives the whole shrink: --tabh (the bar's height, 62px to 52px). It is animated as a length, so the bar, its
-   highlight, the sticky Next bar and the toast all move together, quickly and without a bounce. */
-@property --tabh{syntax:"<length>";inherits:true;initial-value:62px}
-:root{transition:--tabh .3s var(--slide)}
-nav.tabs button .tl{display:block;max-height:20px;overflow:hidden;transition:max-height .3s var(--slide),opacity .14s,margin .3s var(--slide)}
-nav.tabs button{transition:transform .45s var(--spring),background-color .2s,color .2s}
-html.navmin{--tabh:52px}
-html.navmin nav.tabs button .tl{max-height:0;opacity:0;margin-top:-3px}
-body.kid nav.tabs button{min-height:calc(var(--tabh) + 2px)}
-@media (max-height:700px){:root{--tabh:56px} .actionbar .btn{min-height:46px}}
+/* The tab bar shrinks to icons while scrolling down. Only transform, translate, scale and opacity change, so the browser
+   animates it on the graphics layer: it stays smooth while the page is moving under the finger, which iOS does not
+   manage for anything that changes layout (height, margins). The bar keeps its layout size; it is drawn smaller. */
+nav.tabs{transform-origin:50% 100%;transition:transform .32s var(--slide);will-change:transform}
+nav.tabs button .tl{display:block;transition:opacity .18s}
+nav.tabs button svg,nav.tabs button .g{transition:translate .32s var(--slide),scale .45s var(--spring),color .2s}
+html.navmin nav.tabs{transform:scale(.9)}
+html.navmin nav.tabs button .tl{opacity:0}
+html.navmin nav.tabs button svg,html.navmin nav.tabs button .g{translate:0 9px}
+@media (max-height:700px){:root{--tabh:56px} nav.tabs button{min-height:48px} .actionbar .btn{min-height:46px}}
 
 /* arriving things: sheets and the toast spring up, pages slide in with iOS's curve */
 .sheet{animation-duration:.55s;animation-timing-function:var(--spring-soft)}
@@ -168,5 +169,5 @@ body.kid nav.tabs button{min-height:calc(var(--tabh) + 2px)}
   .actionbar,.backbar .back,#backLabel.swap{animation:none !important}
   .back:active{scale:1}
   .has-thumb:has(> button:active) > .thumb{scale:1}
-  .btn:active,.tool:active,.chip:active,nav.tabs button:active svg{transform:none}
+  .btn:active,.tool:active,.chip:active,nav.tabs button:active svg{scale:1}
 }
