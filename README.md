@@ -5,7 +5,7 @@ Learn all 104 hiragana in English and Arabic. Includes a 14-day plan, stroke-by-
 Created by Asem Qaffaf.  
 Live: https://asemqaffaf.github.io/hiragana/
 
-## Backend-less and database-less
+## Backend-less and database-less full-stack application
 
 The app saves student progress across devices without a backend server or a database:
 
