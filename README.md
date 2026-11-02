@@ -41,12 +41,65 @@ Live: https://asemqaffaf.github.io/hiragana/
 
 ## Students
 
-- Create a student with a name, student ID, password (10 characters minimum), colour and start date. Pick a saved student and enter their password to continue. Reopening the app asks for the password again. Existing profiles ask to set a password on their next login.
+- The first screen asks **I'm new** or **I already have a profile**, and each choice opens its own screen. Create a student with a name, student ID, password (10 characters minimum), colour and start date. Pick a saved student and enter their password to continue. Reopening the app asks for the password again. Existing profiles ask to set a password on their next login.
 - Each student's progress is kept separately in the browser's `localStorage`. With cloud sync configured, changes also save to a private JSON file in Google Drive. A student can sign in on another device with their case-sensitive student ID and password after their first successful cloud save.
 - The profile offers **Save to cloud now**, **Restore cloud copy**, export and deletion. Restoring asks for a second tap before replacing local data. Deleting a profile queues deletion of its cloud data as well. Offline changes and deletions wait in a persistent outbox, and the app shows a save or error status. A newer cloud version causes a conflict instead of being overwritten: export local changes before restoring the cloud copy.
 - JSON export/import remains available without cloud sync. Imports create a new ID and ask for a new password; exports contain neither passwords nor cloud credentials. Photos stay in the browser.
-- Password credentials are derived with PBKDF2/SHA-256 (310,000 iterations, with a distinct salt per student ID). Only a hash of the derived credential is stored on the server. The browser keeps a verifier for offline login and caches the derived credential for background sync. This is a sign-in gate, not encryption of local data: use a trusted browser. There is no password recovery flow yet.
+- Password credentials are derived with PBKDF2/SHA-256 (310,000 iterations, with a distinct salt per student ID). Only a hash of the derived credential is stored on the server. The browser keeps a verifier for offline login and caches the derived credential for background sync. This is a sign-in gate, not encryption of local data: use a trusted browser. A forgotten password is reset by the teacher with a one-time code (see Where student data is saved).
 - Clearing site data deletes the local profiles, cached credentials and pending changes. Already-synced data can be read again using the student ID and password. A completed cloud deletion retains only an ownership hash and deletion marker, so delayed saves cannot recreate deleted personal data. Deleted IDs cannot be reused.
+
+## Where student data is saved
+
+By default everything stays in the student's own browser. With cloud sync switched on, each student's profile and progress is also saved to **one private JSON file in the teacher's Google Drive**, so they can sign in on another device and the teacher can see the whole class. There is no database server and no extra account: Google Drive is the storage and a small Google Apps Script is the gatekeeper.
+
+```
+Student's browser (GitHub Pages)
+   |  HTTPS POST: the student's record + a credential derived from their password
+   v
+Google Apps Script web app          <- runs as the teacher; checks every request
+   |  reads / writes
+   v
+students.json in the teacher's Drive   (private: only the script and the teacher can open it)
+```
+
+**What is saved, and where**
+
+| Data | In the browser | In the Drive file |
+| --- | --- | --- |
+| Name, colour, goal, language | yes | yes |
+| Progress (letters, drills, streak, badges) | yes | yes |
+| Profile photo | yes | **never** |
+| Password | **never** | **never**; only a hash of a derived credential |
+
+**Who can do what**
+
+| Person | Can | Cannot |
+| --- | --- | --- |
+| A student | Save and read their own record with their password | Read or change another student's record |
+| The teacher | Export every student (`GET <web app URL>?key=TEACHER_KEY`), open the Drive file, reset a forgotten password | Read a student's password (nobody can) |
+| Anyone else with the web app address | Create a new student ID, up to the limits below | Read, change or delete an existing student |
+
+**How it is protected**
+
+- The Drive file is shared with nobody. The script runs as the teacher, so it needs no public access. Set the file to **Restricted**.
+- Passwords are stretched with PBKDF2 (310,000 iterations, salted per student ID). The server stores only a hash of the result.
+- Ten wrong passwords lock that student ID for 15 minutes.
+- The script holds at most 500 students and 5 MB, and accepts at most 60 new student IDs per hour.
+- Requests carry credentials in the POST body, never in a URL. The teacher key lives only in the Apps Script project properties, not in the app or the repository.
+- The web app address is not in the repository. A GitHub secret supplies it when the site is deployed (see below). It is still visible to anyone who opens the site, so the protections above are the real defence.
+
+**Teacher guide**
+
+- **See everyone:** open `<web app URL>?key=<TEACHER_KEY>` in a browser for the class as JSON, or open `students.json` in Drive.
+- **Forgotten password:** in the Apps Script project set the Script property `RESET_ID` to the student's ID, run `resetStudentFromProperty` in the editor, and read the one-time code in the execution log. Give it to the student. On **I already have a profile** they open "Sign in with a student ID", enter their ID, a new password and the code. Progress is kept, the code works once, expires after 24 hours, and five wrong guesses cancel it.
+- **Remove a student:** the student deletes their profile in the app. Only an ownership marker stays, so a late save cannot bring the data back.
+
+**Limits to know about**
+
+- Anyone with the web app address can create fake student IDs, up to the limits above. These are spam and do not affect real students.
+- Someone who knows a student's ID can lock that student out for 15 minutes by guessing. A reset code is the fix if it keeps happening.
+- Student names and progress sit in plain text in the teacher's Drive. Keep the file private and think about local rules on children's data.
+- Two devices for the same student share one record. If both change it, the app reports a conflict instead of overwriting.
 
 ## Set up cloud sync
 
@@ -56,11 +109,11 @@ Live: https://asemqaffaf.github.io/hiragana/
 4. Add that `/exec` URL as a repository secret named `SYNC_URL` (Settings > Secrets and variables > Actions) and set Pages to deploy from GitHub Actions. The deploy workflow writes it into `js/core/cloud-config.js`, so it is not stored in the repo. For local testing, put it in that file without committing it. An empty `SYNC_URL` disables cloud sync. A reachable URL alone is not a working deployment: it must run the updated handlers.
 5. Create a disposable student, open Profile, and wait for **Saved to cloud**. In a different browser, use **Sign in with a student ID** to verify both the password and the saved progress. Delete the disposable profile to remove its personal data from the cloud.
 
-The API uses HTTPS plain-text POST bodies containing JSON, keeping student credentials out of URLs. `action` supports `create`, `read`, `update`, `save` (upsert), `delete` and legacy credential migration (`password`). All student operations require the credential that claimed the ID. Reads return the profile, progress and version timestamp, never the ownership hash. Updates use the last-read timestamp to detect conflicts. The existing teacher export is `GET ?key=TEACHER_KEY`; without the correct key it returns `denied`.
+The API uses HTTPS plain-text POST bodies containing JSON, keeping student credentials out of URLs. `action` supports `create`, `read`, `update`, `save` (upsert), `delete`, `recover` (teacher reset code) and legacy credential migration (`password`). All student operations require the credential that claimed the ID. Reads return the profile, progress and version timestamp, never the ownership hash. Updates use the last-read timestamp to detect conflicts. The existing teacher export is `GET ?key=TEACHER_KEY`; without the correct key it returns `denied`.
 
 ## How it works
 
-- Vanilla HTML, CSS and native ES modules, plus an `audio/` folder. No framework, no bundler, no build step, no dependencies apart from Google Fonts. GitHub Pages serves the repository root as it is. See Code structure below.
+- Vanilla HTML, CSS and native ES modules, plus an `audio/` folder. No framework, no bundler, no build step, no dependencies apart from Google Fonts. The repository is the site: a small GitHub Actions workflow copies it, fills in the cloud sync address from a secret, and publishes it to GitHub Pages. See Code structure below.
 - Stroke order comes from KanjiVG and is drawn as inline SVG, animated with requestAnimationFrame.
 - The Write tab checks each stroke for order, direction, position and shape. Strokes are resampled to 32 points and compared with discrete Fréchet distance; loop direction (for ゜) uses the shoelace formula.
 - Works on iPhone and Android: safe areas, no zoom when typing, touch handwriting, sound that is not muted by the silent switch, and it can be added to the Home Screen as an app.
