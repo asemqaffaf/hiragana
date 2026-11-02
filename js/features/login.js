@@ -38,7 +38,7 @@ import { $, $$, esc, isObject, must, todayISO } from '../util.js';
 /* ---------- student sign-in and profile creation ---------- */
 /** @type {string | null} */
 let selectedLogin = null;
-/** Which view the first screen shows: signing in, or creating a profile. @type {'in' | 'new' | null} */
+/** Which screen is showing: the first choice, signing in, or creating a profile. @type {'choose' | 'in' | 'new' | null} */
 let loginMode = null;
 /** @param {string} prefix @param {boolean} create */
 function passwordFields(prefix, create) {
@@ -108,15 +108,15 @@ export function showLogin() {
   }
   const list = students.list.slice().sort((x, y) => (y.last || 0) - (x.last || 0));
   let h = langChip(LANG);
-  const mode = loginMode || (list.length ? 'in' : 'new');
-  h += '<h2>' + t(mode === 'in' ? (list.length ? 'login.who' : 'auth.signIn') : 'login.create') + '</h2>';
-  h += '<div class="seg" role="tablist">' +
-    ['in', 'new'].map((m) => '<button type="button" role="tab" data-mode="' + m + '" aria-selected="' + (m === mode) + '">' +
-      t(m === 'in' ? 'auth.signIn' : 'login.newTab') + '</button>').join('') + '</div>';
-  h += '<p class="muted">' + t(mode === 'in' ? (list.length ? 'login.tapName' : 'login.idHint') : 'login.addName') + '</p>';
+  const mode = loginMode || (list.length ? 'in' : syncOn ? 'choose' : 'new');
+  h += '<h2>' + t(mode === 'choose' ? 'login.welcome' : mode === 'new' ? 'login.create' : list.length ? 'login.who' : 'auth.signIn') + '</h2>';
+  h += '<p class="muted">' + t(mode === 'choose' ? 'login.chooseHint' : mode === 'new' ? 'login.addName' : list.length ? 'login.tapName' : 'login.idHint') + '</p>';
   if (!canStore) h += '<p class="note warn">' + t('login.blocked') + '</p>';
   if (ui.loginMsg) h += '<p class="fmsg" role="alert">' + esc(t(ui.loginMsg)) + '</p>';
   h += cloudDeleteNote();
+  h += '<div id="modeChoose"' + (mode === 'choose' ? '' : ' hidden') + '><div class="paths">' +
+    '<button type="button" class="pathcard" data-mode="new"><b>' + t('login.choiceNew') + '</b><span>' + t('login.choiceNewSub') + '</span></button>' +
+    '<button type="button" class="pathcard" data-mode="in"><b>' + t('login.choiceIn') + '</b><span>' + t('login.choiceInSub') + '</span></button></div></div>';
   h += '<div id="modeIn"' + (mode === 'in' ? '' : ' hidden') + '>';
   if (list.length)
     h +=
@@ -154,7 +154,7 @@ export function showLogin() {
     '</span><input id="csCode" dir="ltr" maxlength="64" autocomplete="off" autocapitalize="none" spellcheck="false"></label></details>' +
     '<p class="fmsg" id="csMsg" role="alert"></p><div class="btnrow">' +
     '<button class="btn primary" type="submit">' + t('auth.signIn') + '</button></div></form></details>';
- h += '</div><div id="modeNew"' + (mode === 'new' ? '' : ' hidden') + '>';
+ h += '<p class="swap"><button type="button" class="link" data-mode="new">' + t('login.toNew') + '</button></p></div><div id="modeNew"' + (mode === 'new' ? '' : ' hidden') + '>';
   h +=
     '<form id="newStudent" class="sform" novalidate autocomplete="off">';
   h +=
@@ -190,14 +190,16 @@ export function showLogin() {
     t('login.import') +
     '</button><span class="muted">' +
     t('login.importHint') +
-    '</span></p><p class="fmsg" id="imMsg" role="alert"></p></div></details><input type="file" id="importFile" accept="application/json,.json" hidden></div>';
+    '</span></p><p class="fmsg" id="imMsg" role="alert"></p></div></details><input type="file" id="importFile" accept="application/json,.json" hidden>' +
+    (syncOn ? '<p class="swap"><button type="button" class="link" data-mode="in">' + t('login.toIn') + '</button></p>' : '') + '</div>';
   h += '<footer class="credit"><p>' + t('credits') + '</p>' + byline() + '</footer>';
   root.innerHTML = h;
   ui.loginMsg = '';
   $$('[data-mode]', root).forEach((b) => {
     b.onclick = () => {
-      loginMode = b.dataset.mode === 'new' ? 'new' : 'in';
+      loginMode = b.dataset.mode === 'new' ? 'new' : b.dataset.mode === 'choose' ? 'choose' : 'in';
       showLogin();
+      window.scrollTo(0, 0);
     };
   });
   must('[data-change-lang]', root).onclick = () => {
