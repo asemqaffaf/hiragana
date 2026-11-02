@@ -4,7 +4,9 @@
  * After changing this file: Manage deployments > Edit > New version > Deploy.
  *
  * POST JSON (text/plain): {action, id, secret, student?, progress?}
- * Actions: create, read, update, save (upsert, also the legacy default), delete, password.
+ * Actions: create, read, update, save (upsert, also the legacy default), delete, password, recover.
+ * A forgotten password is reset by the teacher: set the Script property RESET_ID to the student id, run
+ * resetStudentFromProperty in the editor, and read the one-time code in the execution log (valid 24 hours).
  * Only the secret that claimed an id can access it. Secrets stay out of URLs.
  * GET ?key=TEACHER_KEY keeps the teacher's read-only export available.
  */
@@ -21,7 +23,7 @@ function doPost(e) {
     const rec = JSON.parse(raw);
     if (!plainObject(rec)) return reply({ ok: false, error: 'invalid' });
     const action = rec.action || 'save';
-    if (['create', 'read', 'update', 'save', 'delete', 'password'].indexOf(action) === -1)
+    if (['create', 'read', 'update', 'save', 'delete', 'password', 'recover'].indexOf(action) === -1)
       return reply({ ok: false, error: 'bad action' });
     const id = rec.id || (rec.student && rec.student.id);
     if (typeof id !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(id) ||
@@ -43,6 +45,23 @@ function doPost(e) {
     const db = JSON.parse(file.getBlob().getDataAsString() || '{}');
     if (!plainObject(db)) throw new Error('Invalid database');
     const existing = Object.prototype.hasOwnProperty.call(db, id) ? db[id] : null;
+    if (action === 'recover') {
+      // The reset code proves the teacher approved this; the new credential is the request's secret.
+      const okCode = typeof rec.code === 'string' && rec.code.length >= 6 && rec.code.length <= 64 &&
+        /^[a-f0-9]{64}$/.test(rec.secret);
+      if (!okCode || !existing || existing.deleted || !existing.resetHash || Date.now() > existing.resetExpires)
+        return reply({ ok: false, error: 'bad code' });
+      if (existing.resetHash !== sha256(rec.code)) {
+        existing.resetTries = (existing.resetTries || 0) + 1;
+        if (existing.resetTries >= 5) clearReset(existing);
+        file.setContent(JSON.stringify(db));
+        return reply({ ok: false, error: 'bad code' });
+      }
+      existing.hash = sha256(rec.secret);
+      clearReset(existing);
+      file.setContent(JSON.stringify(db));
+      return reply({ ok: true });
+    }
     let hash = sha256(rec.secret);
     const nextHash = action === 'password' ? sha256(rec.newSecret) : null;
     // Retrying a password migration after a lost reply is safe with either credential.
@@ -93,6 +112,34 @@ function doGet(e) {
   } catch (err) {
     return reply({ ok: false, error: 'storage' });
   }
+}
+
+/** Teacher tool: run from the editor after setting the RESET_ID Script property. */
+function resetStudentFromProperty() {
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty('RESET_ID');
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const file = dbFile();
+    const db = JSON.parse(file.getBlob().getDataAsString() || '{}');
+    if (!id || !Object.prototype.hasOwnProperty.call(db, id) || db[id].deleted) throw new Error('No such student: ' + id);
+    const code = Utilities.getUuid().replace(/-/g, '').slice(0, 10);
+    db[id].resetHash = sha256(code);
+    db[id].resetExpires = Date.now() + 24 * 60 * 60 * 1000;
+    db[id].resetTries = 0;
+    file.setContent(JSON.stringify(db));
+    Logger.log('Reset code for ' + id + ': ' + code + ' (valid 24 hours)');
+    return code;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function clearReset(entry) {
+  delete entry.resetHash;
+  delete entry.resetExpires;
+  delete entry.resetTries;
 }
 
 function plainObject(value) {

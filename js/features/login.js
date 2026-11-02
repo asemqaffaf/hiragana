@@ -1,5 +1,5 @@
 import { showTab } from '../core/nav.js';
-import { signInCloud, syncOn } from '../core/cloud.js';
+import { recoverCloud, signInCloud, syncOn } from '../core/cloud.js';
 import { hasPassword, setPassword, verifyPassword } from '../core/passwords.js';
 import { goalOf } from '../core/plan.js';
 import { renderAll } from '../core/render-all.js';
@@ -142,7 +142,9 @@ export function showLogin() {
   if (syncOn) h += '<details class="more"><summary>' + t('auth.otherDevice') +
     '</summary><form id="cloudSignIn" class="sform" novalidate><label class="field"><span class="small muted">' +
     t('auth.id') + '</span><input id="csId" dir="ltr" maxlength="64" autocomplete="username" autocapitalize="none" spellcheck="false"></label>' +
-    passwordFields('cs', false) + '<p class="fmsg" id="csMsg" role="alert"></p><div class="btnrow">' +
+    passwordFields('cs', false) + '<label class="field"><span class="small muted">' + t('auth.resetCode') +
+    '</span><input id="csCode" dir="ltr" maxlength="64" autocomplete="off" autocapitalize="none" spellcheck="false"></label>' +
+    '<p class="fmsg" id="csMsg" role="alert"></p><div class="btnrow">' +
     '<button class="btn primary" type="submit">' + t('auth.signIn') + '</button></div></form></details>';
   h +=
     (list.length ? '<h3>' + t('login.add') + '</h3>' : '') +
@@ -224,7 +226,9 @@ export function showLogin() {
       const id = must('#csId', cloudSignIn, HTMLInputElement).value.trim();
       const password = must('#csPassword', cloudSignIn, HTMLInputElement).value;
       const local = students.list.find((p) => p.id === id);
-      if (local && hasPassword(id)) {
+      const resetCode = must('#csCode', cloudSignIn, HTMLInputElement).value.trim();
+      if (resetCode) await recoverCloud(id, resetCode, password);
+      if (local && hasPassword(id) && !resetCode) {
         if (!await verifyPassword(id, password)) throw new Error('credentials');
         if (cloudSignIn.isConnected) login(id);
       } else {
@@ -237,7 +241,8 @@ export function showLogin() {
     } catch (error) {
       const code = error instanceof Error ? error.message : '';
       must('#csMsg', cloudSignIn).textContent = t(code === 'deployment' ? 'cloud.error.deployment' :
-        code === 'network' ? 'cloud.error.network' : code === 'pending' ? 'auth.pending' : 'auth.wrong');
+        code === 'network' ? 'cloud.error.network' : code === 'pending' ? 'auth.pending' :
+        code === 'bad code' ? 'auth.badCode' : 'auth.wrong');
     } finally { button.disabled = false; }
   };
   must('#newStudent', root).onsubmit = async (e) => {

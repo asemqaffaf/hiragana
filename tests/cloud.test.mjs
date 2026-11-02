@@ -155,3 +155,24 @@ test('client passwords, cross-device login, queue isolation, restore, retry and 
   assert.deepEqual(Object.keys(api.db().first).sort(), ['deleted', 'hash']);
   assert.ok(requests.every((data) => !JSON.stringify(data).includes('my-long-test-password')));
 });
+
+test('A teacher reset code lets a student set a new password, once, and only before it expires or is guessed', () => {
+  const api = appsScriptFixture();
+  const record = payload('forgot', 'a'.repeat(64));
+  assert.equal(api.post({ ...record, action: 'create' }).ok, true);
+  const fresh = 'b'.repeat(64);
+  assert.equal(api.post({ id: 'forgot', secret: fresh, action: 'recover', code: '123456789a' }).error, 'bad code', 'no reset requested');
+  const code = api.reset('forgot');
+  assert.equal(api.post({ id: 'forgot', secret: fresh, action: 'recover', code: 'wrong-code-1' }).error, 'bad code');
+  assert.equal(api.post({ id: 'forgot', secret: 'z'.repeat(20), action: 'recover', code }).error, 'bad code', 'credential must be a derived secret');
+  assert.equal(api.post({ id: 'forgot', secret: fresh, action: 'read' }).error, 'not yours', 'a reset alone grants nothing');
+  assert.equal(api.post({ id: 'forgot', secret: fresh, action: 'recover', code }).ok, true);
+  assert.equal(api.post({ id: 'forgot', secret: fresh, action: 'read' }).ok, true, 'new password works');
+  assert.equal(api.post({ id: 'forgot', secret: record.secret, action: 'read' }).error, 'not yours', 'old password is gone');
+  assert.equal(api.post({ id: 'forgot', secret: 'c'.repeat(64), action: 'recover', code }).error, 'bad code', 'code is single-use');
+  assert.equal(api.post({ id: 'forgot', secret: fresh, action: 'read' }).student.name, 'Learner', 'progress is kept');
+  const guessed = api.reset('forgot');
+  for (let i = 0; i < 5; i++) api.post({ id: 'forgot', secret: 'd'.repeat(64), action: 'recover', code: 'guess-' + i + '-xx' });
+  assert.equal(api.post({ id: 'forgot', secret: 'd'.repeat(64), action: 'recover', code: guessed }).error, 'bad code', 'five wrong guesses cancel the reset');
+  assert.equal(JSON.stringify(api.get('teacher-test-key')).includes('reset'), false, 'export hides reset data');
+});

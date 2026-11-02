@@ -415,6 +415,8 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   "auth.set": "Set password and sign in",
   "auth.enter": "Enter your password to open this student.",
   "auth.enroll": "This existing profile needs a password. Set one now; it will sync when a connection is available.",
+  "auth.resetCode": "Reset code from your teacher (only if you forgot your password; the password above becomes your new one)",
+  "auth.badCode": "The reset code is wrong or has expired. Ask your teacher for a new one.",
   "auth.otherDevice": "Sign in with a student ID",
   "auth.length": "Use between 10 and 256 characters.",
   "auth.mismatch": "The passwords do not match.",

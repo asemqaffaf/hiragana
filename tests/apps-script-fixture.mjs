@@ -6,6 +6,7 @@ export function appsScriptFixture(initial = {}) {
   let content = JSON.stringify(initial);
   let writes = 0;
   let locked = false;
+  let resetId = '';
   const context = vm.createContext({
     LockService: { getScriptLock: () => ({
       waitLock() { if (locked) throw new Error('already locked'); locked = true; },
@@ -15,11 +16,13 @@ export function appsScriptFixture(initial = {}) {
       getBlob: () => ({ getDataAsString: () => content }),
       setContent(value) { content = value; writes++; },
     }) },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: () => 'teacher-test-key' }) },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: (name) => (name === 'RESET_ID' ? resetId : 'teacher-test-key') }) },
+    Logger: { log() {} },
     Utilities: {
       newBlob: (text) => ({ getBytes: () => Buffer.from(text) }),
       DigestAlgorithm: { SHA_256: 'sha256' },
       computeDigest: (_, text) => [...createHash('sha256').update(text).digest()],
+      getUuid: () => '12345678-9abc-def0-1234-56789abcdef0',
     },
     ContentService: {
       MimeType: { JSON: 'application/json' },
@@ -32,6 +35,7 @@ export function appsScriptFixture(initial = {}) {
     get: (key) => JSON.parse(context.doGet({ parameter: { key } }).text),
     db: () => JSON.parse(content),
     writes: () => writes,
+    reset: (id) => { resetId = id; return context.resetStudentFromProperty(); },
     corrupt: () => { content = 'broken'; },
     locked: () => locked,
   };

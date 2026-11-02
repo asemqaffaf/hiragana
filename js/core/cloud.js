@@ -9,7 +9,7 @@ import {
 } from './store.js';
 import { isObject } from '../util.js';
 
-/** @typedef {{id: string, action: 'save' | 'delete', student?: import('../../types/app').Student, progress?: import('../../types/app').Progress, newSecret?: string}} Job */
+/** @typedef {{id: string, action: 'save' | 'delete', student?: import('../../types/app').Student, progress?: import('../../types/app').Progress, newSecret?: string, code?: string}} Job */
 /** @typedef {'local' | 'pending' | 'saving' | 'saved' | 'offline' | 'error' | 'restoring' | 'restored'} SyncState */
 /** @typedef {{state: SyncState, error?: string}} SyncStatus */
 export const syncOn = SYNC_URL.startsWith('https://');
@@ -234,6 +234,15 @@ export async function signInCloud(id, password) {
   await rememberPassword(id, secret);
   writeCloudVersion(id, result.savedAt);
   return { student: { ...student, id, name: student.name }, progress: result.progress };
+}
+
+/** Set a new password with a one-time code from the teacher. Sign in afterwards to load the data.
+ * @param {string} id @param {string} code @param {string} password
+ */
+export async function recoverCloud(id, code, password) {
+  if (!syncOn || !validId(id) || pending.has(id)) throw new Error(pending.has(id) ? 'pending' : 'credentials');
+  if (password.length < 10 || password.length > 256) throw new Error('credentials');
+  await requestCloud('recover', id, { code: code.trim() }, await passwordSecret(id, password));
 }
 
 /** Subscribe once. Existing local data is queued when login selects the student. */
