@@ -5,13 +5,13 @@ Learn all 104 hiragana in English and Arabic. Includes a 14-day plan, stroke-by-
 Created by Asem Qaffaf.  
 Live: https://asemqaffaf.github.io/hiragana/
 
-## Backend-less and database-less full-stack application
+## Backend-less and database-less full-stack application (Google Apps Script + Google Drive)
 
-The app saves student progress across devices without a backend server or a database:
+The app saves student progress across devices without a backend server or a database, using only a free Google account:
 
 - **Static site:** Hosted on GitHub Pages with plain HTML, CSS, and JavaScript modules. No build step and no framework.
-- **Google Apps Script instead of a server:** A small script ([`scripts/google-apps-script.gs`](scripts/google-apps-script.gs)) runs under the teacher's Google account and handles save, read, delete, and password reset requests.
-- **One JSON file instead of a database:** All students are saved in one private `students.json` file in the teacher's Google Drive (set to **Restricted**). Apps Script locks the file on each write so two students saving at once never overwrite each other.
+- **Google Apps Script instead of a server:** A small script ([`scripts/google-apps-script.gs`](scripts/google-apps-script.gs)) runs on Google's infrastructure under the teacher's Google account and handles save, read, delete, and password reset requests.
+- **Google Drive instead of a database:** All students are saved in one private `students.json` file in the teacher's Google Drive (set to **Restricted**). Apps Script locks the file (`LockService`) on each write so two students saving at once never overwrite each other.
 - **Offline-first:** Changes save to `localStorage` first and sync in the background when online.
 - **Password protection:** Passwords are hashed in the browser with PBKDF2 (310,000 iterations). Only a SHA-256 hash is stored in Drive, never the password.
 
