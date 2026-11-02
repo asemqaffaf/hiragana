@@ -156,7 +156,7 @@ export function renderBack() {
   must('#backBtn').setAttribute('aria-label', t('backTo', { page }));
   if (lab.textContent !== page) {
     lab.textContent = page;
-    if (!bar.hidden) replay(lab, 'swap');
+    if (!bar.hidden) replay(lab, 'lblswap');
   }
 }
 must('#backBtn').addEventListener('click', () => {

@@ -103,7 +103,7 @@ html,body{overscroll-behavior-x:none}
 .pathcard span{color:var(--pencil)}
 .pathcard:active{transform:translateY(1px)}
 .pathcard:hover,.pathcard:focus-visible{border-color:var(--jade)}
-.swap{margin-top:20px}
+p.swap{margin-top:20px}
 .sform{max-width:420px}
 .sform .field input{max-width:none;width:100%}
 .swatches{border:0;padding:0;margin:14px 0 0;display:flex;gap:10px;flex-wrap:wrap}

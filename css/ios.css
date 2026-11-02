@@ -81,7 +81,7 @@ html{scroll-padding-bottom:calc(var(--dock) + 24px)}
 .back:active svg{transform:translateX(-3px)}
 [dir="rtl"] .back:active svg{transform:scaleX(-1) translateX(-3px)}
 .backbar:not([hidden]) .back{animation:backIn .55s var(--spring-soft) backwards}
-#backLabel.swap{display:inline-block;animation:backSwap .42s var(--spring-soft)}
+#backLabel.lblswap{display:inline-block;animation:backSwap .42s var(--spring-soft)}
 @keyframes backIn{from{opacity:0;scale:.82;transform:translateX(calc(var(--sx) * -.5))}to{opacity:1;scale:1;transform:none}}
 @keyframes backSwap{from{opacity:0;transform:translateX(calc(var(--sx) * .45))}to{opacity:1;transform:none}}
 
@@ -184,7 +184,7 @@ html.navmin nav.tabs button svg,html.navmin nav.tabs button .g{translate:0 9px}
 .meetcard.flip,.qsq .k.flip{animation-duration:.5s;animation-timing-function:var(--spring-soft)}
 @media (prefers-reduced-motion:reduce){
   .back,.has-thumb > .thumb,.btn,.tool,.chip,nav.tabs,nav.tabs button,:root,nav.tabs button svg,nav.tabs button .tl,.seg button,.actionbar,#toast{transition:none !important}
-  .actionbar,.backbar .back,#backLabel.swap{animation:none !important}
+  .actionbar,.backbar .back,#backLabel.lblswap{animation:none !important}
   .back:active{scale:1}
   .has-thumb:has(> button:active) > .thumb{scale:1}
   .btn:active,.tool:active,.chip:active,nav.tabs button:active svg{scale:1}

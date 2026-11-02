@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SUITES = (
     'cloudtest',
     'localetest', 'refactortest', 'swipetest', 'tallsheet', 'locktest', 'taptest',
-    'phrasetap', 'phfilter', 'wordsfilter', 'goals', 'dragselect', 'barscroll',
+    'phrasetap', 'phfilter', 'wordsfilter', 'goals', 'dragselect', 'barscroll', 'backbar',
     'animtest', 'lessontest', 'ptest', 'pftest', 'artest', 'cltest', 'gregress',
     'phtest', 'themetest', 'ovf', 'uitest2', 'audiotest', 'smalls', 'i18naudit',
     'audioaudit', 'sheetsall',

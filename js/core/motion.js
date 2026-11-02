@@ -24,6 +24,7 @@ export function pageSnapshot(el, opts) {
   c.className = 'pagesnap' + (opts.fromHistory ? ' pop' : ' push'); c.hidden = false; c.inert = true; c.setAttribute('aria-hidden', 'true');
   c.style.cssText = 'left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + Math.max(0, Math.min(r.height, innerHeight - r.top)) + 'px';
   document.body.appendChild(c);
+  c.addEventListener('animationend', (e) => { if (e.target === c) c.remove(); });
   setTimeout(() => c.remove(), 700);
   return c;
 }
