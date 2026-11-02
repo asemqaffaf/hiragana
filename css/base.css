@@ -60,7 +60,7 @@ fieldset{min-inline-size:0;min-width:0;max-width:100%;box-sizing:border-box}
 :root[data-theme="dark"] .tint .tp{--c:var(--cd)!important;--s:var(--sd)!important;--g:var(--gd)!important}
 .tint:has(input:checked){border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft);font-weight:700}
 .tint:has(input:focus-visible){outline:3px solid var(--jade);outline-offset:2px}
-*,*::before,*::after{box-sizing:inherit}
+*,*::before,*::after{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));background:var(--paper)}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
 button,input,select,textarea{font:inherit;color:inherit}

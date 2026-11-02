@@ -32,7 +32,7 @@ async def main():
             R[lang + '_pf_hint'] = await pg.text_content('#pfReasonHint')
             await pg.select_option('#pfReason', 'all'); R[lang + '_pf_hint_all'] = await pg.text_content('#pfReasonHint')
             await pg.tap('#editStudent button[type=submit], form.pform button[type=submit]'); await pg.wait_for_timeout(300)
-            await pg.reload(); await pg.wait_for_timeout(500)
+            await pg.reload(); await unlock_student(pg); await pg.wait_for_timeout(500)
             await pg.tap('nav [data-nav="practice"]'); await pg.wait_for_timeout(200); await pg.tap('#subnav [data-sub="phrases"]'); await pg.wait_for_timeout(300)
             R[lang + '_all_sections'] = [await pg.locator('#tab-phrases h3').count(), await pg.locator('#phScope').count()]
             await pg.tap('nav [data-nav="progress"]'); await pg.wait_for_timeout(300)

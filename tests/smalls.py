@@ -9,7 +9,7 @@ async def main():
         b = await p.chromium.launch(); ctx = await b.new_context(**p.devices['iPhone 13']); pg = await ctx.new_page()
         await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
         await pg.tap('[data-lang="en"]'); await pg.fill('#nsName','Asem Qaffaf'); await submit_student(pg); await pg.wait_for_timeout(600)
-        await pg.evaluate(SEED); await pg.reload(); await pg.wait_for_timeout(900)
+        await pg.evaluate(SEED); await pg.reload(); await unlock_student(pg); await pg.wait_for_timeout(900)
         seen = {}
         for where in ['plan','chart','drill','write','read','phrases','progress','profile','meet','daily']:
             await go(pg, where)

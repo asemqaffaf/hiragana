@@ -114,9 +114,10 @@ export function showLogin() {
   if (!canStore) h += '<p class="note warn">' + t('login.blocked') + '</p>';
   if (ui.loginMsg) h += '<p class="fmsg" role="alert">' + esc(t(ui.loginMsg)) + '</p>';
   h += cloudDeleteNote();
-  h += '<div id="modeChoose"' + (mode === 'choose' ? '' : ' hidden') + '><div class="paths">' +
-    '<button type="button" class="pathcard" data-mode="new"><b>' + t('login.choiceNew') + '</b><span>' + t('login.choiceNewSub') + '</span></button>' +
-    '<button type="button" class="pathcard" data-mode="in"><b>' + t('login.choiceIn') + '</b><span>' + t('login.choiceInSub') + '</span></button></div></div>';
+  if (mode === 'choose')
+    h += '<div id="modeChoose"><div class="paths">' +
+      '<button type="button" class="pathcard" data-mode="new"><b>' + t('login.choiceNew') + '</b><span>' + t('login.choiceNewSub') + '</span></button>' +
+      '<button type="button" class="pathcard" data-mode="in"><b>' + t('login.choiceIn') + '</b><span>' + t('login.choiceInSub') + '</span></button></div></div>';
   h += '<div id="modeIn"' + (mode === 'in' ? '' : ' hidden') + '>';
   if (list.length)
     h +=
@@ -132,7 +133,7 @@ export function showLogin() {
             avatar(p) +
             '<span class="sn"><b dir="auto">' +
             esc(p.name) +
-            '</b><span class="muted small">' +
+            '</b><span class="muted small" dir="ltr">' +
             esc(p.id) +
             '</span></span></button>',
         )
@@ -154,7 +155,7 @@ export function showLogin() {
     '</span><input id="csCode" dir="ltr" maxlength="64" autocomplete="off" autocapitalize="none" spellcheck="false"></label></details>' +
     '<p class="fmsg" id="csMsg" role="alert"></p><div class="btnrow">' +
     '<button class="btn primary" type="submit">' + t('auth.signIn') + '</button></div></form></details>';
- h += '<p class="swap"><button type="button" class="link" data-mode="new">' + t('login.toNew') + '</button></p></div><div id="modeNew"' + (mode === 'new' ? '' : ' hidden') + '>';
+  h += (mode === 'in' ? '<p class="swap"><button type="button" class="link" data-mode="new">' + t('login.toNew') + '</button></p>' : '') + '</div><div id="modeNew"' + (mode === 'new' ? '' : ' hidden') + '>';
   h +=
     '<form id="newStudent" class="sform" novalidate autocomplete="off">';
   h +=
@@ -191,7 +192,7 @@ export function showLogin() {
     '</button><span class="muted">' +
     t('login.importHint') +
     '</span></p><p class="fmsg" id="imMsg" role="alert"></p></div></details><input type="file" id="importFile" accept="application/json,.json" hidden>' +
-    (syncOn ? '<p class="swap"><button type="button" class="link" data-mode="in">' + t('login.toIn') + '</button></p>' : '') + '</div>';
+    (mode === 'new' && (syncOn || list.length) ? '<p class="swap"><button type="button" class="link" data-mode="in">' + t('login.toIn') + '</button></p>' : '') + '</div>';
   h += '<footer class="credit"><p>' + t('credits') + '</p>' + byline() + '</footer>';
   root.innerHTML = h;
   ui.loginMsg = '';
@@ -243,9 +244,11 @@ export function showLogin() {
       const password = must('#csPassword', cloudSignIn, HTMLInputElement).value;
       const local = students.list.find((p) => p.id === id);
       const resetCode = must('#csCode', cloudSignIn, HTMLInputElement).value.trim();
-      if (resetCode) await recoverCloud(id, resetCode, password);
-      if (local && hasPassword(id) && !resetCode) {
-        if (!await verifyPassword(id, password)) throw new Error('credentials');
+      if (resetCode) {
+        await recoverCloud(id, resetCode, password);
+        must('#csCode', cloudSignIn, HTMLInputElement).value = '';
+      }
+      if (local && hasPassword(id) && !resetCode && await verifyPassword(id, password)) {
         if (cloudSignIn.isConnected) login(id);
       } else {
         const data = await signInCloud(id, password);
@@ -257,7 +260,7 @@ export function showLogin() {
     } catch (error) {
       const code = error instanceof Error ? error.message : '';
       must('#csMsg', cloudSignIn).textContent = t(code === 'deployment' ? 'cloud.error.deployment' :
-        code === 'network' ? 'cloud.error.network' : code === 'pending' ? 'auth.pending' :
+        code === 'network' ? 'cloud.error.network' : code === 'pending' ? 'auth.pending' : code === 'length' ? 'auth.length' :
         code === 'bad code' ? 'auth.badCode' : code === 'locked' ? 'auth.locked' : code === 'busy' || code === 'full' ? 'auth.busy' : 'auth.wrong');
     } finally { button.disabled = false; }
   };
@@ -348,7 +351,7 @@ export function showLogin() {
       showLogin();
     }
   };
-  const first = $('[data-login]', root) || nameInput;
+  const first = mode === 'new' ? nameInput : mode === 'in' ? $('[data-login]', root) || $('#csId', root, HTMLInputElement) : $('[data-mode]', root);
   if (first && !matchMedia('(pointer: coarse)').matches) first.focus();
 }
 /** @param {string} id */
@@ -371,6 +374,7 @@ export function renderWho() {
 }
 function enterApp() {
   selectedLogin = null;
+  loginMode = null;
   const student = me();
   if (!student) return showLogin();
   setLang(student.lang || deviceLang());
@@ -397,6 +401,8 @@ function enterApp() {
   showTab(location.hash.slice(1), { initial: true });
 }
 export function switchStudent() {
+  selectedLogin = null;
+  loginMode = null;
   clearCurrentStudent();
   ui.session = null;
   ui.wq = null;

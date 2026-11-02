@@ -34,6 +34,7 @@ async def main():
             # second student has its own theme, switching restores
             await pg.click('#whoBtn'); await pg.click('#pSwitch'); await pg.wait_for_timeout(150)
             R[lang + '_login_bg'] = await pg.evaluate(BG)
+            await pg.click('#login [data-mode="new"]')
             await pg.fill('#nsName', 'Ken'); await submit_student(pg); await pg.wait_for_timeout(250)
             R[lang + '_ken_inherits'] = await pg.evaluate("document.documentElement.dataset.tint + '/' + document.documentElement.dataset.theme")
             await pg.click('#whoBtn'); await pg.click('.tint:has(input[value="sand"])'); await pg.click('[data-mode="light"]')

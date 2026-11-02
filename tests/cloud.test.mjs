@@ -200,6 +200,10 @@ test('Apps Script locks an id after repeated wrong passwords and keeps the right
   assert.equal(api.post(wrong).error, 'locked', 'the tenth miss locks the id');
   assert.equal(api.post({ id: 'target', secret: record.secret, action: 'read' }).error, 'locked', 'even the right password waits');
   assert.equal(api.post({ ...payload('someone-else', 'e'.repeat(64)), action: 'create' }).ok, true, 'other ids are unaffected');
+  const code = api.reset('target');
+  const recovered = '1'.repeat(64);
+  assert.equal(api.post({ id: 'target', secret: recovered, action: 'recover', code }).ok, true);
+  assert.equal(api.post({ id: 'target', secret: recovered, action: 'read' }).ok, true, 'a teacher reset unlocks the id');
 });
 
 test('Apps Script caps new students per hour and refuses to grow past its limits', () => {

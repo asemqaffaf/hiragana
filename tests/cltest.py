@@ -52,7 +52,7 @@ async def main():
             R[lang + '_completed'] = [await pg.text_content('#wStat'), await pg.text_content('#wComplete'), await pg.get_attribute('.strip [data-wk="あ"]', 'class')]
             await pg.click('#wUncomplete'); R[lang + '_undo'] = [await pg.text_content('#wComplete'), await pg.get_attribute('.strip [data-wk="あ"]', 'class')]
             await pg.click('#wCompleteBtn'); await pg.wait_for_timeout(100)
-            await pg.reload(); await pg.wait_for_timeout(400)
+            await pg.reload(); await unlock_student(pg); await pg.wait_for_timeout(400)
             await go(pg, "chart"); R[lang + '_chart_badge'] = await pg.get_attribute('#tab-chart [data-open="あ"]', 'class')
             await go(pg, "progress"); await pg.wait_for_timeout(200)
             R[lang + '_tiles'] = await pg.eval_on_selector_all('.pstat div', 'e=>e.map(x=>x.innerText.replace(/\\n/g," "))')

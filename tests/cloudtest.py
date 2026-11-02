@@ -10,6 +10,7 @@ from playwright.async_api import async_playwright
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 ROOT = Path(__file__).resolve().parent.parent
 PASSWORD = 'Cloud-study-password-2026'
+RESET_PASSWORD = 'Reset-study-password-2026'
 
 
 async def main():
@@ -22,21 +23,27 @@ async def main():
     def db():
         return json.load(urllib.request.urlopen(endpoint + '/db'))
 
+    def reset_code(student_id):
+        req = urllib.request.Request(endpoint + '/reset', data=json.dumps({'id': student_id}).encode(), headers={'Content-Type': 'application/json'})
+        return json.load(urllib.request.urlopen(req))['code']
+
     async def route_cloud(route):
         data = route.request.post_data
-        assert PASSWORD not in data
+        assert PASSWORD not in data and RESET_PASSWORD not in data
         requests.append(json.loads(data))
         response = urllib.request.urlopen(urllib.request.Request(endpoint + '/api', data=data.encode(), headers={'Content-Type': 'text/plain'}))
         await route.fulfill(body=response.read(), content_type='application/json', headers={'Access-Control-Allow-Origin': '*'})
 
-    async def page_for(browser):
+    async def page_for(browser, lang='en'):
         context = await browser.new_context(viewport={'width': 390, 'height': 844})
+        await context.route('**/js/core/cloud-config.js', lambda route: route.fulfill(
+            body="export const SYNC_URL = 'https://script.google.com/macros/s/TEST/exec';", content_type='text/javascript'))
         await context.route('https://script.google.com/macros/s/**', route_cloud)
         page = await context.new_page()
         page.on('pageerror', lambda error: errors.append(str(error)))
         await page.emulate_media(reduced_motion='reduce')
         await page.goto(BASE + '#test')
-        await page.click('[data-lang="en"]')
+        await page.click(f'[data-lang="{lang}"]')
         return context, page
 
     async def save(page):
@@ -47,6 +54,7 @@ async def main():
         async with async_playwright() as playwright:
             browser = await playwright.chromium.launch()
             c1, first = await page_for(browser)
+            await first.click('#login [data-mode="new"]')
             await first.fill('#nsName', 'Cloud learner')
             await first.fill('#nsId', 'cloud-learner')
             await first.fill('#nsPassword', 'short')
@@ -82,9 +90,23 @@ async def main():
             await first.click('#whoBtn')
             await save(first)
 
+            # Check Arabic/RTL Welcome, New-student, Sign-in and Forgot-password screens on a fresh browser, then switch to English.
+            c2, second = await page_for(browser, lang='ar')
+            assert await second.locator('html').get_attribute('dir') == 'rtl'
+            assert await second.evaluate('document.documentElement.scrollWidth <= innerWidth')
+            await second.screenshot(path=str(ROOT / 'shots/ar_welcome.png'), full_page=True)
+            await second.click('#login [data-mode="new"]')
+            await second.locator('#imPassword').evaluate("el => el.closest('details').open = true")
+            assert await second.evaluate('document.documentElement.scrollWidth <= innerWidth')
+            await second.screenshot(path=str(ROOT / 'shots/ar_new.png'), full_page=True)
+            await second.click('#login [data-mode="in"]')
+            await second.locator('#csCode').evaluate("el => el.closest('details').open = true")
+            await second.screenshot(path=str(ROOT / 'shots/ar_signin.png'), full_page=True)
+            assert await second.evaluate('document.documentElement.scrollWidth <= innerWidth')
+            await second.click('[data-change-lang]')
+            await second.click('[data-lang="en"]')
+
             # A fresh browser can read the same record using only ID and password.
-            c2, second = await page_for(browser)
-            await second.locator('#cloudSignIn').evaluate("el => el.closest('details').open = true")
             await second.fill('#csId', 'cloud-learner')
             await second.fill('#csPassword', 'incorrect-password')
             await second.click('#cloudSignIn button[type=submit]')
@@ -111,6 +133,37 @@ async def main():
             await first.wait_for_function("document.querySelector('#pfName').value === 'Newer cloud name'")
             assert await first.locator('[data-cloud-status]').last.inner_text() == 'Cloud copy restored.'
             await first.screenshot(path=str(ROOT / 'shots/cloud-profile-en.png'), full_page=True)
+
+            # Teacher reset-code flow in the browser: wrong code fails, short new password fails, valid code resets and signs in.
+            await first.click('#pSwitch')
+            code = reset_code('cloud-learner')
+            await first.locator('#cloudSignIn').evaluate("el => el.closest('details').open = true")
+            await first.locator('#csCode').evaluate("el => el.closest('details').open = true")
+            await first.fill('#csId', 'cloud-learner')
+            await first.fill('#csPassword', RESET_PASSWORD)
+            await first.fill('#csCode', 'wrong-code')
+            await first.click('#cloudSignIn button[type=submit]')
+            await first.wait_for_function("document.querySelector('#csMsg').textContent.includes('reset code')")
+            await first.fill('#csPassword', 'short')
+            await first.fill('#csCode', code)
+            await first.click('#cloudSignIn button[type=submit]')
+            await first.wait_for_function("document.querySelector('#csMsg').textContent.includes('10')")
+            await first.fill('#csPassword', RESET_PASSWORD)
+            await first.fill('#csCode', code)
+            await first.click('#cloudSignIn button[type=submit]')
+            await first.locator('#whoBtn').wait_for(state='visible')
+            assert await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 4
+            await first.click('#whoBtn')
+            await save(first)
+
+            # The other device can sign in with the newly reset password too.
+            await second.click('#pSwitch')
+            await second.locator('#cloudSignIn').evaluate("el => el.closest('details').open = true")
+            await second.fill('#csId', 'cloud-learner')
+            await second.fill('#csPassword', RESET_PASSWORD)
+            await second.click('#cloudSignIn button[type=submit]')
+            await second.locator('#whoBtn').wait_for(state='visible')
+            await second.click('#whoBtn')
 
             # Arabic fields and live sync status remain readable on a narrow screen.
             await second.select_option('#pfLang', 'ar')

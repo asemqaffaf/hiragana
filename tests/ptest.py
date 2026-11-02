@@ -58,6 +58,7 @@ async def main():
         # switch, add second student, duplicate check
         await pg.click('#pSwitch'); await pg.wait_for_timeout(150)
         R['5_login_list'] = await pg.eval_on_selector_all('.student', 'e=>e.map(x=>x.innerText.replace(/\\n/g," | "))')
+        await pg.click('#login [data-mode="new"]')
         await pg.fill('#nsName', 'aya'); await submit_student(pg); R['5_duplicate'] = await pg.text_content('#nsMsg')
         await pg.fill('#nsName', 'Ken'); await pg.click('.sw:nth-child(4) input', force=True); await submit_student(pg); await pg.wait_for_timeout(150)
         await go(pg, "plan")

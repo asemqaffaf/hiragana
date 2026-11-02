@@ -57,7 +57,7 @@ async def main():
                     await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
                     if scheme == 'light' and lang == 'en' and dname == 'SE-320': pass
                     await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName','Asem Qaffaf'); await submit_student(pg); await pg.wait_for_timeout(600)
-                    await pg.evaluate(SEED); await pg.reload(); await pg.wait_for_timeout(900)
+                    await pg.evaluate(SEED); await pg.reload(); await unlock_student(pg); await pg.wait_for_timeout(900)
                     for where in ['plan','chart','drill','write','read','phrases','progress','profile','meet','daily']:
                         try: await go(pg, where)
                         except Exception as e: errs.append(f'nav-{where}: {str(e)[:80]}'); continue

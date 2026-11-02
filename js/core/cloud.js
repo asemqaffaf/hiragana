@@ -241,7 +241,7 @@ export async function signInCloud(id, password) {
  */
 export async function recoverCloud(id, code, password) {
   if (!syncOn || !validId(id) || pending.has(id)) throw new Error(pending.has(id) ? 'pending' : 'credentials');
-  if (password.length < 10 || password.length > 256) throw new Error('credentials');
+  if (password.length < 10 || password.length > 256) throw new Error('length');
   await requestCloud('recover', id, { code: code.trim() }, await passwordSecret(id, password));
 }
 

@@ -63,6 +63,8 @@ function doPost(e) {
         return reply({ ok: false, error: 'bad code' });
       }
       existing.hash = sha256(rec.secret);
+      delete existing.fails;
+      delete existing.lockedUntil;
       clearReset(existing);
       file.setContent(JSON.stringify(db));
       return reply({ ok: true });

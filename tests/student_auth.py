@@ -27,6 +27,8 @@ async def unlock_student(page, name=None):
 
 
 async def prepare_import(page):
+    if await page.locator('#modeNew').is_hidden():
+        await page.click('#login [data-mode="new"]')
     await page.locator('#imPassword').evaluate("el => el.closest('details').open = true")
     await page.fill('#imPassword', PASSWORD)
     await page.fill('#imConfirm', PASSWORD)
