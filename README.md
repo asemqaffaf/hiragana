@@ -1,4 +1,4 @@
-# Hiragana in 14 days
+# ひらがな Hiragana in 14 days
 
 Learn all 104 hiragana in English and Arabic. Includes a 14-day plan, stroke-by-stroke writing practice, drills, and reading practice with audio.
 

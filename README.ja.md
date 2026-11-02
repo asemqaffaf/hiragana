@@ -1,4 +1,4 @@
-# 14日で学ぶひらがな (Hiragana in 14 days)
+# ひらがな Hiragana in 14 days
 
 [English](README.md) | [日本語](README.ja.md) | [العربية](README.ar.md)
 
