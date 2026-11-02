@@ -18,6 +18,9 @@ const { dailyFor } = await import('../js/core/daily.js');
 const { todayISO } = await import('../js/util.js');
 const { replaceLang } = await import('../js/i18n/core.js');
 const pages = await import('../js/core/pages.js');
+const passwords = await import('../js/core/passwords.js');
+const remembered = await import('../js/core/remembered-login.js');
+const storage = await import('../js/core/storage.js');
 
 let studentNumber = 0;
 function student(pace = 14) {
@@ -117,4 +120,50 @@ test('rendering a page does not run its entry action', () => {
   pages.renderPage('meet');
   assert.equal(entries, 1);
   assert.equal(renders, 2);
+});
+
+test('remembered sign-in expires without renewal and rejects missing or changed credentials', async () => {
+  const learner = student();
+  assert.equal(remembered.rememberLogin(learner.id), false, 'legacy profiles must first enroll a password');
+  await passwords.setPassword(learner.id, 'Remember-test-password-2026');
+  assert.equal(remembered.rememberedStudent(), null, 'setting a password does not opt in');
+  assert.equal(remembered.rememberLogin(learner.id), true);
+  const login = storage.readRememberedLogin();
+  assert.equal(remembered.rememberedStudent(), learner.id);
+  assert.deepEqual(storage.readRememberedLogin(), login, 'restoring never extends expiry');
+  storage.writeRememberedLogin({ ...login, expiresAt: Date.now() - 1 });
+  assert.equal(remembered.rememberedStudent(), null);
+  assert.equal(storage.readRememberedLogin(), null);
+  for (const corrupt of [[], 'bad', { id: learner.id }, { ...login, expiresAt: Date.now() + 2 * remembered.REMEMBER_LOGIN_MS }]) {
+    saved.set('hiragana14-remembered-login-v1', JSON.stringify(corrupt));
+    assert.equal(remembered.rememberedStudent(), null);
+  }
+  remembered.rememberLogin(learner.id);
+  const secret = storage.readSyncSecret(learner.id);
+  saved.delete('hiragana14-sync-' + learner.id);
+  assert.equal(remembered.rememberedStudent(), null);
+  storage.writeSyncSecret(learner.id, secret);
+  remembered.rememberLogin(learner.id);
+  storage.writePasswordVerifier(learner.id, 'changed-verifier');
+  assert.equal(remembered.rememberedStudent(), null);
+});
+
+test('sign-out, profile removal and local password changes forget remembered sign-in', async () => {
+  const first = student();
+  await passwords.setPassword(first.id, 'Remember-test-password-2026');
+  remembered.rememberLogin(first.id);
+  const second = student();
+  store.removeStudent(second.id);
+  assert.equal(remembered.rememberedStudent(), first.id, 'removing another profile leaves the remembered login');
+  store.clearCurrentStudent();
+  assert.equal(remembered.rememberedStudent(), null);
+  remembered.rememberLogin(first.id);
+  await passwords.setPassword(first.id, 'Changed-test-password-2026');
+  assert.equal(remembered.rememberedStudent(), null);
+  remembered.rememberLogin(first.id);
+  await passwords.rememberPassword(first.id, await passwords.passwordSecret(first.id, 'Cloud-test-password-2026'));
+  assert.equal(remembered.rememberedStudent(), null, 'cloud login or password reset invalidates the prior record');
+  remembered.rememberLogin(first.id);
+  store.removeStudent(first.id);
+  assert.equal(remembered.rememberedStudent(), null);
 });

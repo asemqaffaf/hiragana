@@ -42,6 +42,9 @@ function storageWorks() {
 }
 
 export const canStore = storageWorks();
+export const readRememberedLogin = () => read('hiragana14-remembered-login-v1');
+/** @param {{id: string, expiresAt: number, verifier: string} | null} login */
+export const writeRememberedLogin = (login) => write('hiragana14-remembered-login-v1', login);
 export const readStudents = () => read(STUDENTS_KEY);
 /** @param {import('../../types/app').StudentList} students */
 export const writeStudents = (students) => write(STUDENTS_KEY, students);

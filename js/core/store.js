@@ -3,6 +3,7 @@ import { ALL } from '../data/letters.js';
 import { isObject, todayISO } from '../util.js';
 import { AGES, JLEVELS, MINUTES, PACES, REASONS } from './goals.js';
 import { localeIds, supportedLocale } from '../i18n/core.js';
+import { forgetLogin } from './remembered-login.js';
 import {
   readStudents,
   writeStudents,
@@ -328,6 +329,7 @@ export function restoreStudent(student, progress) {
 /** @param {string} id */
 export function removeStudent(id) {
   if (!students.list.some((student) => student.id === id)) return;
+  forgetLogin(id);
   deleteProgress(id);
   students.list = students.list.filter((p) => p.id !== id);
   if (students.current === id) {
@@ -339,6 +341,7 @@ export function removeStudent(id) {
 }
 
 export function clearCurrentStudent() {
+  forgetLogin();
   students.current = null;
   writeStudents(students);
 }
