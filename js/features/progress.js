@@ -38,17 +38,18 @@ export function renderProgress() {
   /* where you are: one card with the day, the lessons finished, and the way to the next step */
   h +=
     '<section class="pghero"><p class="pbig">' +
+    t('pg.lessonsBig', { v: doneDays, m: total }) +
+    '</p><div class="rbar" role="img" aria-label="' +
+    t('pg.lessonsBig', { v: doneDays, m: total }) +
+    '"><i style="width:' +
+    Math.round((doneDays / total) * 100) +
+    '%"></i></div><p class="small">' +
     (today < 1
       ? t('plan.starts', { date: fmt(state.start) })
       : today > total
         ? t('plan.complete')
-        : t('plan.dayOf', { n: today, total })) +
-    '</p><div class="rbar" role="img" aria-label="' +
-    t('pg.lessonsDone', { v: doneDays, m: total }) +
-    '"><i style="width:' +
-    Math.round((doneDays / total) * 100) +
-    '%"></i></div><p class="small">' +
-    t('pg.lessonsDone', { v: doneDays, m: total }) +
+        : t('pg.todayIs', { n: today })) +
+    (streak > 1 ? ' ' + t('pg.streakLine', { n: streak }) : '') +
     '</p>' +
     (today >= 1 && today <= total
       ? '<div class="btnrow"><button class="btn primary" id="pgToday">' +
@@ -86,7 +87,13 @@ export function renderProgress() {
   );
   const rest = Array.from({ length: total }, (_, i) => i + 1).filter((dn) => !near.includes(dn));
   h +=
-    '<h3>' + t('pg.lessons') + '</h3><ol class="lessons">' + near.map(lessonRow).join('') + '</ol>';
+    '<h3>' +
+    t('pg.lessons') +
+    '</h3><p class="small muted">' +
+    t('pg.lessonsIntro') +
+    '</p><ol class="lessons">' +
+    near.map(lessonRow).join('') +
+    '</ol>';
   h += '<details class="more fold"><summary>' + t('pg.more') + '</summary>';
   if (rest.length)
     h +=
@@ -105,7 +112,12 @@ export function renderProgress() {
     [t('chart.dak'), DAK25],
     [t('chart.yoon'), YOON33],
   ];
-  h += '<section class="pgsub"><h4>' + t('pg.letters') + '</h4><div class="groups">';
+  h +=
+    '<section class="pgsub"><h4>' +
+    t('pg.letters') +
+    '</h4><p class="small muted">' +
+    t('pg.lettersIntro', { v: lv.solid }) +
+    '</p><div class="groups">';
   groups.forEach(([title, list]) => {
     const so = solidIn(list),
       le = list.filter((k) => level(k) === 'learning').length;
@@ -186,7 +198,9 @@ export function renderProgress() {
   h +=
     '<section class="pgsub"><h4>' +
     t('pg.activity') +
-    '</h4><div class="cal" role="img" aria-label="' +
+    '</h4><p class="small muted">' +
+    t('pg.calLine', { n: cells.filter((c) => c.n).length }) +
+    '</p><div class="cal" role="img" aria-label="' +
     t('pg.activity') +
     ': ' +
     t('pg.calSum', { n: cells.filter((c) => c.n).length }) +
