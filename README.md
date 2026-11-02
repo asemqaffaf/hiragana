@@ -1,5 +1,10 @@
-| 🇯🇵 **日本語** | [🇬🇧 **English**](README.en.md) | [🇸🇦 **العربية**](README.ar.md) |
-| :---: | :---: | :---: |
+<table width="100%">
+  <tr>
+    <td align="center" width="33%">🇯🇵 <b>日本語</b></td>
+    <td align="center" width="33%"><a href="README.en.md">🇬🇧 <b>English</b></a></td>
+    <td align="center" width="33%"><a href="README.ar.md">🇸🇦 <b>العربية</b></a></td>
+  </tr>
+</table>
 
 # ひらがな Hiragana in 14 days
 
