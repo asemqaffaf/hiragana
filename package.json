@@ -5,7 +5,7 @@
   "description": "Development tooling only. The app itself has no build step and no runtime dependencies.",
   "scripts": {
     "typecheck": "tsc -p jsconfig.json",
-    "test:core": "node --test tests/core.test.mjs tests/i18n.test.mjs"
+    "test:core": "node --test tests/core.test.mjs tests/i18n.test.mjs tests/cloud.test.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.0"

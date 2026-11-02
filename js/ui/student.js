@@ -1,4 +1,5 @@
 import { COLORS, me, students } from '../core/store.js';
+import { syncOn } from '../core/cloud.js';
 import { A46 } from '../data/letters.js';
 import { t } from '../i18n/core.js';
 import { esc } from '../util.js';
@@ -55,5 +56,5 @@ export function swatches(name, chosen) {
 
 export function syncText() {
   const p = me();
-  return t('sync', { name: p ? esc(p.name) : '' });
+  return t(syncOn ? 'cloud.hint' : 'sync', { name: p ? esc(p.name) : '' });
 }

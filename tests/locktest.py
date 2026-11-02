@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -14,8 +15,8 @@ async def main():
         for lang, dev in [('en','iPhone 13'),('ar','iPhone SE'),('en','iPhone SE landscape'),('ar','iPhone 13 landscape')]:
             ctx = await b.new_context(**p.devices[dev]); pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
             cdp = await ctx.new_cdp_session(pg)
-            await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
-            await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName','M'); await pg.tap('#newStudent button[type=submit]'); await pg.wait_for_timeout(500)
+            await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+            await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName','M'); await submit_student(pg); await pg.wait_for_timeout(500)
             await pg.tap('nav [data-nav="letters"]'); await pg.wait_for_timeout(1300)
             await pg.evaluate("window.scrollTo(0, 300)"); await pg.wait_for_timeout(100)
             y0 = await pg.evaluate("scrollY"); R[lang+dev[-3:]+'_start_scrollY'] = y0

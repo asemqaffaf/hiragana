@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -27,10 +28,10 @@ async def main():
         pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.add_init_script("window.__plays=[];const op=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){const el=this;const r=op.call(this);const i=window.__plays.push('pending')-1;r.then(()=>setTimeout(()=>window.__plays[i]=el.src.split('/').pop()+' rate='+el.playbackRate+' dur='+(el.duration||0).toFixed(2),400)).catch(e=>window.__plays[i]='err:'+e.name);return r;};")
         await pg.emulate_media(reduced_motion='reduce')
-        await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+        await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
         await pg.click('[data-lang="en"]')
         await pg.fill('#nsName', 'Kid'); await pg.select_option('#nsAge', 'child'); await pg.select_option('#nsPace', '7'); await pg.select_option('#nsMin', '20'); await pg.select_option('#nsReason', 'travel')
-        await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(250)
+        await submit_student(pg); await pg.wait_for_timeout(250)
         R['kid'] = [await pg.evaluate("document.body.classList.contains('kid')"), await pg.text_content('#appSub'), await pg.text_content('#tab-plan h2'), await pg.text_content('#tab-plan .dtitle')]
         R['task_minutes'] = await pg.eval_on_selector_all('#tab-plan .today ol.tasks li', 'e=>e.map(x=>x.textContent.match(/\\(.*\\)$/)[0])')
         # card: example and Hear plays letter+example at slow speed
@@ -81,7 +82,7 @@ async def main():
         await pg.click('#whoBtn'); await pg.wait_for_timeout(200)
         if await pg.locator('#pfDrillWeak').count():
             await pg.click('#pfDrillWeak'); await pg.wait_for_timeout(200); R['drill_these'] = [await pg.evaluate('location.hash'), await pg.locator('#qtopWrap, .prompt, #qk').count()]
-        await pg.reload(); await pg.wait_for_timeout(400)
+        await pg.reload(); await unlock_student(pg); await pg.wait_for_timeout(400)
         R['reload'] = [await pg.evaluate("document.documentElement.lang"), await pg.locator('#whoBtn .av img').count()]
         assert R['after_save'][0] == 'rtl', R['after_save']
         assert R['after_save'][2] is False, R['after_save']

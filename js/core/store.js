@@ -250,6 +250,15 @@ export function subscribeProgress(listener) {
   return () => progressListeners.delete(listener);
 }
 
+/** @typedef {{id: string, action: 'save' | 'delete'}} StudentChange */
+/** @type {Set<(change: StudentChange) => void>} */
+const studentListeners = new Set();
+/** Called after a student is added, selected, updated or removed. @param {(change: StudentChange) => void} listener */
+export function subscribeStudents(listener) {
+  studentListeners.add(listener);
+  return () => studentListeners.delete(listener);
+}
+
 // Progress actions use this boundary. Persistence never imports features or emits UI effects.
 /**
  * @param {(progress: import('../../types/app').Progress) => void} change
@@ -277,6 +286,7 @@ export function addStudent(student, progress) {
   students.current = record.id;
   writeStudents(students);
   restoreProgress(progress, { persist: true });
+  studentListeners.forEach((listener) => listener({ id: record.id, action: 'save' }));
   return record;
 }
 
@@ -288,6 +298,7 @@ export function selectStudent(id) {
   students.current = id;
   writeStudents(students);
   restoreProgress(readProgress(id));
+  studentListeners.forEach((listener) => listener({ id, action: 'save' }));
   return student;
 }
 
@@ -297,14 +308,34 @@ export function updateStudent(id, patch) {
   if (!student) return;
   Object.assign(student, cleanStudent({ ...student, ...patch, id }));
   writeStudents(students);
+  studentListeners.forEach((listener) => listener({ id, action: 'save' }));
+}
+
+/** Replaces a cloud copy without generating an outgoing save. @param {import('../../types/app').RawStudent} student @param {unknown} progress */
+export function restoreStudent(student, progress) {
+  const local = students.list.find((p) => p.id === student.id);
+  if (!local) return;
+  const record = cleanStudent(student);
+  record.av.img = local.av.img; // Photos never leave this browser.
+  record.last = local.last;
+  Object.assign(local, record);
+  writeStudents(students);
+  const restored = normalize(progress);
+  writeProgress(student.id, restored);
+  if (students.current === student.id) state = restored;
 }
 
 /** @param {string} id */
 export function removeStudent(id) {
+  if (!students.list.some((student) => student.id === id)) return;
   deleteProgress(id);
   students.list = students.list.filter((p) => p.id !== id);
-  if (students.current === id) students.current = null;
+  if (students.current === id) {
+    students.current = null;
+    state = normalize(null);
+  }
   writeStudents(students);
+  studentListeners.forEach((listener) => listener({ id, action: 'delete' }));
 }
 
 export function clearCurrentStudent() {

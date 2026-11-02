@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -18,8 +19,8 @@ async def main():
         for lang in ['en', 'ar']:
             pg = await b.new_page(viewport={'width': 390, 'height': 844}); pg.on('pageerror', lambda e: errs.append(str(e)))
             await pg.emulate_media(reduced_motion='reduce')
-            await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
-            await pg.click(f'[data-lang="{lang}"]'); await pg.fill('#nsName', 'L'); await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(250)
+            await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+            await pg.click(f'[data-lang="{lang}"]'); await pg.fill('#nsName', 'L'); await submit_student(pg); await pg.wait_for_timeout(250)
             R[lang + '_nav'] = await pg.eval_on_selector_all('nav.tabs .tl', 'e=>e.map(x=>x.textContent)')
             R[lang + '_steps'] = await pg.eval_on_selector_all('.steps li', 'e=>e.map(x=>x.className + ": " + x.querySelector("b").textContent)')
             R[lang + '_start'] = await pg.text_content('#goNext')

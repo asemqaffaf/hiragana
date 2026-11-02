@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -8,9 +9,9 @@ async def main():
         b = await p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required'])
         ctx = await b.new_context(**p.devices['iPhone 13']); pg = await ctx.new_page(); errs = []
         pg.on('pageerror', lambda e: errs.append(str(e)))
-        await pg.goto(BASE + '#test'); await pg.wait_for_timeout(400)
+        await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(400)
         await pg.tap('[data-lang="en"]')
-        await pg.fill('#nsName', 'Au'); await pg.tap('#newStudent button[type=submit]'); await pg.wait_for_timeout(300)
+        await pg.fill('#nsName', 'Au'); await submit_student(pg); await pg.wait_for_timeout(300)
         R = {}
         await pg.tap('nav [data-nav="letters"]'); await pg.wait_for_timeout(200)
         # rapid replays: every tap interrupts the clip that is still loading or playing

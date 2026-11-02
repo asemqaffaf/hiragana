@@ -50,6 +50,9 @@
 <link rel="modulepreload" href="js/core/render-all.js">
 <link rel="modulepreload" href="js/core/stats.js">
 <link rel="modulepreload" href="js/core/storage.js">
+<link rel="modulepreload" href="js/core/cloud.js">
+<link rel="modulepreload" href="js/core/cloud-config.js">
+<link rel="modulepreload" href="js/core/passwords.js">
 <link rel="modulepreload" href="js/core/store.js">
 <link rel="modulepreload" href="js/core/ui-state.js">
 <link rel="modulepreload" href="js/data/audio-manifest.js">
@@ -83,6 +86,7 @@
 <link rel="modulepreload" href="js/strokes/check.js">
 <link rel="modulepreload" href="js/strokes/draw.js">
 <link rel="modulepreload" href="js/ui/appearance.js">
+<link rel="modulepreload" href="js/ui/cloud-sync.js">
 <link rel="modulepreload" href="js/ui/daily-card.js">
 <link rel="modulepreload" href="js/ui/drag-select.js">
 <link rel="modulepreload" href="js/ui/home-button.js">
@@ -103,6 +107,7 @@
   <button class="who" id="whoBtn" type="button" aria-haspopup="dialog" hidden></button>
 </header>
 <main class="wrap">
+  <p id="cloudSummary" class="small muted" role="status" aria-live="polite" hidden></p>
   <section id="login" aria-label="Choose a student" hidden></section>
   <div class="backbar" id="backBar" hidden><button class="back" id="backBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="backLabel">Back</span></button></div>
   <div class="subnav" id="subnav" hidden></div>

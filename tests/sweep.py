@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -53,9 +54,9 @@ async def main():
                     ctx = await b.new_context(**kw, color_scheme=scheme); pg = await ctx.new_page(); errs = []
                     pg.on('pageerror', lambda e: errs.append('pageerror:' + str(e)))
                     pg.on('console', lambda m: errs.append('console:' + m.text[:90]) if m.type == 'error' and 'ERR_TUNNEL' not in m.text and 'Failed to load resource' not in m.text else None)
-                    await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+                    await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
                     if scheme == 'light' and lang == 'en' and dname == 'SE-320': pass
-                    await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName','Asem Qaffaf'); await pg.tap('#newStudent button[type=submit]'); await pg.wait_for_timeout(600)
+                    await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName','Asem Qaffaf'); await submit_student(pg); await pg.wait_for_timeout(600)
                     await pg.evaluate(SEED); await pg.reload(); await pg.wait_for_timeout(900)
                     for where in ['plan','chart','drill','write','read','phrases','progress','profile','meet','daily']:
                         try: await go(pg, where)

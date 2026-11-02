@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -6,8 +7,8 @@ sys.argv=['x']; exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(); ctx = await b.new_context(**p.devices['iPhone 13']); pg = await ctx.new_page()
-        await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
-        await pg.tap('[data-lang="en"]'); await pg.fill('#nsName','Asem Qaffaf'); await pg.tap('#newStudent button[type=submit]'); await pg.wait_for_timeout(600)
+        await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+        await pg.tap('[data-lang="en"]'); await pg.fill('#nsName','Asem Qaffaf'); await submit_student(pg); await pg.wait_for_timeout(600)
         await pg.evaluate(SEED); await pg.reload(); await pg.wait_for_timeout(900)
         seen = {}
         for where in ['plan','chart','drill','write','read','phrases','progress','profile','meet','daily']:

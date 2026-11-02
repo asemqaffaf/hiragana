@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -10,8 +11,8 @@ async def main():
         for lang, scheme in [('en', 'light'), ('ar', 'dark')]:
             ctx = await b.new_context(viewport={'width': 390, 'height': 844}, color_scheme=scheme)
             pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
-            await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
-            await pg.click(f'[data-lang="{lang}"]'); await pg.fill('#nsName', 'Aya'); await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(250)
+            await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+            await pg.click(f'[data-lang="{lang}"]'); await pg.fill('#nsName', 'Aya'); await submit_student(pg); await pg.wait_for_timeout(250)
             R[lang + '_default_bg'] = await pg.evaluate(BG)
             await pg.click('#whoBtn'); await pg.wait_for_timeout(200)
             R[lang + '_ctl'] = [await pg.eval_on_selector_all('[data-mode]', 'e=>e.map(x=>x.textContent+(x.getAttribute("aria-pressed")==="true"?"*":""))'), await pg.eval_on_selector_all('.tint span:last-child', 'e=>e.map(x=>x.textContent)')]
@@ -28,15 +29,15 @@ async def main():
             R[lang + '_system_bg'] = [await pg.evaluate(BG), await pg.evaluate("document.documentElement.dataset.theme || 'none'")]
             await pg.click('.tint:has(input[value="rose"])'); await pg.click('[data-mode="dark"]'); await pg.wait_for_timeout(100)
             # persists after reload, and no flash: attributes exist before app runs
-            await pg.reload(); await pg.wait_for_timeout(400)
+            await pg.reload(); await unlock_student(pg); await pg.wait_for_timeout(400)
             R[lang + '_reload'] = [await pg.evaluate(BG), await pg.evaluate("document.documentElement.dataset.tint + '/' + document.documentElement.dataset.theme")]
             # second student has its own theme, switching restores
             await pg.click('#whoBtn'); await pg.click('#pSwitch'); await pg.wait_for_timeout(150)
             R[lang + '_login_bg'] = await pg.evaluate(BG)
-            await pg.fill('#nsName', 'Ken'); await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(250)
+            await pg.fill('#nsName', 'Ken'); await submit_student(pg); await pg.wait_for_timeout(250)
             R[lang + '_ken_inherits'] = await pg.evaluate("document.documentElement.dataset.tint + '/' + document.documentElement.dataset.theme")
             await pg.click('#whoBtn'); await pg.click('.tint:has(input[value="sand"])'); await pg.click('[data-mode="light"]')
-            await pg.click('#pSwitch'); await pg.click('.student:has-text("Aya")'); await pg.wait_for_timeout(250)
+            await pg.click('#pSwitch'); await unlock_student(pg, 'Aya'); await pg.wait_for_timeout(250)
             R[lang + '_aya_back'] = await pg.evaluate("document.documentElement.dataset.tint + '/' + document.documentElement.dataset.theme")
             # export carries theme
             await pg.click('#whoBtn'); await pg.wait_for_timeout(150)
@@ -44,7 +45,7 @@ async def main():
             d = await dl.value; path = f'/tmp/th_{lang}.json'; await d.save_as(path)
             R[lang + '_export_theme'] = json.load(open(path))['student'].get('theme')
             # import restores it
-            await pg.click('#pSwitch'); await pg.set_input_files('#importFile', path); await pg.wait_for_timeout(300)
+            await pg.click('#pSwitch'); await prepare_import(pg); await pg.set_input_files('#importFile', path); await pg.wait_for_timeout(300)
             R[lang + '_import'] = await pg.evaluate("document.documentElement.dataset.tint + '/' + document.documentElement.dataset.theme")
             # every main page reads in dark+rose: contrast spot check of text on paper
             await pg.evaluate("document.documentElement.setAttribute('data-theme','dark');document.documentElement.setAttribute('data-tint','sky')")

@@ -1,4 +1,5 @@
 import { showTab } from '../core/nav.js';
+import { restoreCloud, saveCloudNow, syncOn } from '../core/cloud.js';
 import { goalOf } from '../core/plan.js';
 import { renderAll } from '../core/render-all.js';
 import { minutesToday, rowAcc, streakOf, todayText, weakest } from '../core/stats.js';
@@ -32,6 +33,7 @@ import {
 } from '../ui/profile-fields.js';
 import { applyStudent, applyTheme } from '../ui/appearance.js';
 import { kb } from '../ui/letter-button.js';
+import { cloudPanel } from '../ui/cloud-sync.js';
 import { K, LANG, t } from '../i18n/core.js';
 import { fmt } from '../i18n/helpers.js';
 import { $, $$, addDays, entriesOf, esc, must, todayISO, valuesOf } from '../util.js';
@@ -390,6 +392,8 @@ export function renderProfile() {
     '</button></div></form>';
   /* data */
   h += '<h3>' + t('pf.data') + '</h3><p class="small muted">' + syncText() + '</p>';
+  h += '<p class="small">' + t('auth.id') + ': <b dir="ltr">' + esc(p.id) + '</b></p>';
+  h += cloudPanel(p.id);
   h +=
     '<div class="btnrow"><button class="btn" id="pExport">' +
     t('p.export') +
@@ -398,10 +402,39 @@ export function renderProfile() {
     '</button></div>';
   h +=
     '<div class="btnrow"><button class="btn red" id="pDelete">' +
-    (pfDelArmed ? t('p.deleteConfirm', { name: esc(p.name) }) : t('p.delete')) +
+    (pfDelArmed ? t(syncOn ? 'cloud.deleteConfirm' : 'p.deleteConfirm', { name: esc(p.name) }) : t('p.delete')) +
     '</button></div>';
   const root = must('#tab-profile');
   root.innerHTML = h;
+  const cloudSave = $('#cloudSave', root, HTMLButtonElement);
+  const cloudRestore = $('#cloudRestore', root, HTMLButtonElement);
+  if (cloudSave) cloudSave.onclick = async () => {
+    cloudSave.disabled = true;
+    try { await saveCloudNow(p.id); }
+    finally { cloudSave.disabled = false; }
+  };
+  if (cloudRestore) {
+    let armed = false;
+    cloudRestore.onclick = async () => {
+      if (!armed) {
+        armed = true;
+        cloudRestore.textContent = t('cloud.restoreConfirm');
+        setTimeout(() => { armed = false; cloudRestore.textContent = t('cloud.restore'); }, 5000);
+        return;
+      }
+      cloudRestore.disabled = true;
+      try {
+        await restoreCloud(p.id);
+        if (me()?.id === p.id) {
+          setLang(p.lang);
+          applyStudent();
+          renderWho();
+          renderAll();
+        }
+      } catch { /* The cloud status explains the failure. */ }
+      finally { cloudRestore.disabled = false; }
+    };
+  }
   pfMsg = '';
   /** @param {Partial<import('../../types/app').Theme>} patch */
   const setTheme = (patch) => {

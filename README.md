@@ -41,10 +41,22 @@ Live: https://asemqaffaf.github.io/hiragana/
 
 ## Students
 
-- Passwordless login: pick your name on the first screen, or add a new student (name, colour, start date).
-- Each student's progress is kept separately in the browser's `localStorage`. There is no server and no database, so progress stays on the device and browser where it was made.
-- To move a student to another device, open the profile, tap **Export progress** to download a JSON file, then use **Import a student from a file** on the other device.
-- Clearing site data in the browser deletes all students on that device.
+- Create a student with a name, student ID, password (10 characters minimum), colour and start date. Pick a saved student and enter their password to continue. Reopening the app asks for the password again. Existing profiles ask to set a password on their next login.
+- Each student's progress is kept separately in the browser's `localStorage`. With cloud sync configured, changes also save to a private JSON file in Google Drive. A student can sign in on another device with their case-sensitive student ID and password after their first successful cloud save.
+- The profile offers **Save to cloud now**, **Restore cloud copy**, export and deletion. Restoring asks for a second tap before replacing local data. Deleting a profile queues deletion of its cloud data as well. Offline changes and deletions wait in a persistent outbox, and the app shows a save or error status. A newer cloud version causes a conflict instead of being overwritten: export local changes before restoring the cloud copy.
+- JSON export/import remains available without cloud sync. Imports create a new ID and ask for a new password; exports contain neither passwords nor cloud credentials. Photos stay in the browser.
+- Password credentials are derived with PBKDF2/SHA-256 (310,000 iterations, with a distinct salt per student ID). Only a hash of the derived credential is stored on the server. The browser keeps a verifier for offline login and caches the derived credential for background sync. This is a sign-in gate, not encryption of local data: use a trusted browser. There is no password recovery flow yet.
+- Clearing site data deletes the local profiles, cached credentials and pending changes. Already-synced data can be read again using the student ID and password. A completed cloud deletion retains only an ownership hash and deletion marker, so delayed saves cannot recreate deleted personal data. Deleted IDs cannot be reused.
+
+## Set up cloud sync
+
+1. Open the Apps Script project behind your web app deployment and replace its code with the entire [Google Apps Script](scripts/google-apps-script.gs). It already points to the configured Drive JSON file; change `FILE_ID` if needed.
+2. In Project Settings, add a Script property named `TEACHER_KEY` with a long random password. Keep this key out of the app and repository; it only authorizes the teacher's read-only export.
+3. Deploy as a web app, executing as you, with access set to **Anyone**. For an existing deployment, choose **Manage deployments → Edit → New version → Deploy**. Approve Drive access if prompted. The existing web app URL can stay the same.
+4. Put that `/exec` URL in [cloud-config.js](js/core/cloud-config.js), then publish the app changes. An empty `SYNC_URL` disables cloud sync. A reachable URL alone is not a working deployment: it must run the updated handlers.
+5. Create a disposable student, open Profile, and wait for **Saved to cloud**. In a different browser, use **Sign in with a student ID** to verify both the password and the saved progress. Delete the disposable profile to remove its personal data from the cloud.
+
+The API uses HTTPS plain-text POST bodies containing JSON, keeping student credentials out of URLs. `action` supports `create`, `read`, `update`, `save` (upsert), `delete` and legacy credential migration (`password`). All student operations require the credential that claimed the ID. Reads return the profile, progress and version timestamp, never the ownership hash. Updates use the last-read timestamp to detect conflicts. The existing teacher export is `GET ?key=TEACHER_KEY`; without the correct key it returns `denied`.
 
 ## How it works
 
@@ -137,12 +149,14 @@ Run a subset or just the core checks:
 
 ```sh
 PYTHON=.venv/bin/python tests/run_all.sh lessontest pftest localetest
-node --test tests/core.test.mjs tests/i18n.test.mjs
+npm run test:core
 python3 tests/architecture.py
 node scripts/check-locales.mjs --strict
 ```
 
 The suites cover swipe to close and the scroll lock, tap to play, the phrase filter, animations, the guided lesson, profiles with export and import, themes, Arabic layout, overflow at several phone sizes, and audio. The locale test injects additional languages to check registration, fallback, direction and persistence; the rendering test checks that re-rendering does not change progress. Existing browser suites run in Chromium with touch emulation. The new locale and rendering tests also support `BROWSER=webkit` after installing that Playwright browser; this does not replace testing on a real iPhone. `tests/sweep.py`, `tests/fit.py` and `tests/budget.py` are slower layout sweeps to run by hand.
+
+`cloudtest` runs the actual Apps Script handlers against mocked Google services, testing saves, reads in another browser, wrong passwords, updates, conflicts, restore and offline deletion. Normal browser suites disable cloud sync, and these tests never write to the live Drive file. Passing them does not verify deployment permissions, Google redirects or CORS; those require the live save/read check after deployment.
 
 ## Credits and terms
 
