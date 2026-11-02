@@ -25,6 +25,7 @@ export function appsScriptFixture(initial = {}) {
       isTrashed: () => trashed,
       setTrashed: (t) => { trashed = t; },
       getBlob: () => ({ getDataAsString: () => data, getBytes: () => Buffer.from(data) }),
+      getSize: () => Buffer.byteLength(data),
       setContent: (val) => { data = val; },
     };
     files.set(id, f);
@@ -59,6 +60,7 @@ export function appsScriptFixture(initial = {}) {
     isTrashed: () => false,
     setTrashed: () => {},
     getBlob: () => ({ getDataAsString: () => content, getBytes: () => Buffer.from(content) }),
+    getSize: () => Buffer.byteLength(content),
     setContent(value) { content = value; writes++; },
   };
 

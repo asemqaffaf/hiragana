@@ -77,11 +77,12 @@ function doPost(e) {
         return reply(out);
       }
       if (action === 'stats') {
+        const bytes = file.getSize ? file.getSize() : (file.getBlob().getBytes ? file.getBlob().getBytes().length : file.getBlob().getDataAsString().length);
         return reply({
           ok: true,
           activeStudents: Object.keys(db).filter(function (k) { return !db[k].deleted; }).length,
           deletedStudents: Object.keys(db).filter(function (k) { return db[k].deleted; }).length,
-          databaseBytes: file.getBlob().getBytes().length,
+          databaseBytes: bytes,
           maxStudents: MAX_STUDENTS,
           maxFileChars: MAX_FILE_CHARS,
           metrics: getMetrics(),
@@ -203,7 +204,8 @@ function doPost(e) {
     recordMetric('writes');
     return reply({ ok: true, savedAt: savedAt });
   } catch (err) {
-    return reply({ ok: false, error: locked ? 'storage' : 'invalid' });
+    const isLockTimeout = err && err.message && String(err.message).toLowerCase().indexOf('lock') !== -1;
+    return reply({ ok: false, error: isLockTimeout ? 'busy' : (locked ? 'storage' : 'invalid') });
   } finally {
     if (locked) lock.releaseLock();
   }

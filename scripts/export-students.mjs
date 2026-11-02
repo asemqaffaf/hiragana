@@ -101,6 +101,7 @@ async function main() {
   try {
     const response = await fetch(syncUrl, {
       method: 'POST',
+      redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       body: JSON.stringify(payload),
     });

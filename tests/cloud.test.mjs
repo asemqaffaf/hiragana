@@ -1,10 +1,15 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { cpSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import http from 'node:http';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { appsScriptFixture } from './apps-script-fixture.mjs';
+
+const execFileAsync = promisify(execFile);
 
 // The deployed site gets its sync address from a secret, so the repo's cloud-config.js is empty.
 // The client tests run against a copy of the app that has a test address.
@@ -297,4 +302,50 @@ test('Teacher stats endpoint tracks database size, student counts, and traffic m
   assert.equal(stats.maxStudents, 500);
   assert.ok(typeof stats.metrics === 'object');
   assert.ok(stats.metrics.writes >= 1);
+});
+
+test('Teacher export CLI tool exports students, checks stats, and triggers backups', async () => {
+  const api = appsScriptFixture();
+  api.post({ ...payload('cli-student', 'c'.repeat(64)), action: 'create' });
+
+  const server = http.createServer(async (req, res) => {
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Connection', 'close');
+    res.end(JSON.stringify(api.post(JSON.parse(body))));
+  });
+  server.unref();
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const port = server.address().port;
+  const url = 'http://127.0.0.1:' + port;
+
+  try {
+    // 1. Stats query
+    const { stdout: statsOutput } = await execFileAsync(process.execPath, ['scripts/export-students.mjs', url, '--key', 'teacher-test-key', '--stats']);
+    const statsData = JSON.parse(statsOutput);
+    assert.equal(statsData.ok, true);
+    assert.equal(statsData.activeStudents, 1);
+
+    // 2. Export to file
+    const exportFile = join(copy, 'exported-students.json');
+    await execFileAsync(process.execPath, ['scripts/export-students.mjs', url, '--key', 'teacher-test-key', '--out', exportFile]);
+    const exportedRecords = JSON.parse(readFileSync(exportFile, 'utf8'));
+    assert.equal(exportedRecords.length, 1);
+    assert.equal(exportedRecords[0].student.id, 'cli-student');
+    assert.equal('hash' in exportedRecords[0], false);
+
+    // 3. Trigger backup
+    const { stdout: backupOutput } = await execFileAsync(process.execPath, ['scripts/export-students.mjs', url, '--key', 'teacher-test-key', '--backup']);
+    const backupData = JSON.parse(backupOutput);
+    assert.equal(backupData.ok, true);
+
+    // 4. Invalid key fails with non-zero exit code
+    await assert.rejects(async () => {
+      await execFileAsync(process.execPath, ['scripts/export-students.mjs', url, '--key', 'wrong-key']);
+    });
+  } finally {
+    server.closeAllConnections?.();
+    server.close();
+  }
 });
