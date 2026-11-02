@@ -428,6 +428,8 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   "login.choiceInSub": "Sign in with your student ID and password",
   "login.toNew": "New here? Create a profile",
   "login.toIn": "Already have a profile? Sign in",
+  "auth.locked": "Too many wrong attempts. Wait 15 minutes, then try again.",
+  "auth.busy": "Sign-up is busy right now. Please try again in a little while.",
   "auth.otherDevice": "Sign in with a student ID",
   "auth.length": "Use between 10 and 256 characters.",
   "auth.mismatch": "The passwords do not match.",

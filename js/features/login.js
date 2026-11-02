@@ -258,7 +258,7 @@ export function showLogin() {
       const code = error instanceof Error ? error.message : '';
       must('#csMsg', cloudSignIn).textContent = t(code === 'deployment' ? 'cloud.error.deployment' :
         code === 'network' ? 'cloud.error.network' : code === 'pending' ? 'auth.pending' :
-        code === 'bad code' ? 'auth.badCode' : 'auth.wrong');
+        code === 'bad code' ? 'auth.badCode' : code === 'locked' ? 'auth.locked' : code === 'busy' || code === 'full' ? 'auth.busy' : 'auth.wrong');
     } finally { button.disabled = false; }
   };
   must('#newStudent', root).onsubmit = async (e) => {

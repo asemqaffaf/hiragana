@@ -449,6 +449,8 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   "login.choiceInSub": "سجّل الدخول بمعرّف الطالب وكلمة المرور",
   "login.toNew": "جديد هنا؟ أنشئ ملفًا",
   "login.toIn": "لديك ملف؟ سجّل الدخول",
+  "auth.locked": "محاولات خاطئة كثيرة. انتظر ١٥ دقيقة ثم حاول مرة أخرى.",
+  "auth.busy": "التسجيل مشغول الآن. حاول مرة أخرى بعد قليل.",
   "auth.otherDevice": "الدخول بمعرّف الطالب",
   "auth.length": "استخدم من 10 إلى 256 حرفاً.",
   "auth.mismatch": "كلمتا المرور غير متطابقتين.",

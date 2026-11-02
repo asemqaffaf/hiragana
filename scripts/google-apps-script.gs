@@ -12,6 +12,11 @@
  */
 const FILE_ID = '1NN9aPG1QkEVmsh0jkhVzsV3IOadZY6Ej';
 const MAX_BYTES = 200000;
+const MAX_STUDENTS = 500;        // total records kept in the file
+const MAX_FILE_CHARS = 5000000;  // total size of the file
+const MAX_NEW_PER_HOUR = 60;     // new student ids accepted per hour, across everyone
+const MAX_FAILS = 10;            // wrong passwords before an id is locked
+const LOCK_MS = 15 * 60 * 1000;  // how long a locked id refuses everything
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
@@ -65,8 +70,23 @@ function doPost(e) {
     let hash = sha256(rec.secret);
     const nextHash = action === 'password' ? sha256(rec.newSecret) : null;
     // Retrying a password migration after a lost reply is safe with either credential.
-    if (existing && existing.hash !== hash && existing.hash !== nextHash)
-      return reply({ ok: false, error: 'not yours' });
+    if (existing && existing.lockedUntil && Date.now() < existing.lockedUntil)
+      return reply({ ok: false, error: 'locked' });
+    if (existing && existing.hash !== hash && existing.hash !== nextHash) {
+      // Count wrong passwords so guessing is slow, and lock the id after too many.
+      existing.fails = (existing.fails || 0) + 1;
+      if (existing.fails >= MAX_FAILS) {
+        existing.fails = 0;
+        existing.lockedUntil = Date.now() + LOCK_MS;
+      }
+      file.setContent(JSON.stringify(db));
+      return reply({ ok: false, error: existing.lockedUntil && Date.now() < existing.lockedUntil ? 'locked' : 'not yours' });
+    }
+    if (existing && (existing.fails || existing.lockedUntil)) {
+      existing.fails = 0;
+      delete existing.lockedUntil;
+      file.setContent(JSON.stringify(db));
+    }
 
     if (action === 'delete') {
       // Keep only an ownership marker, so delayed saves cannot recreate deleted data.
@@ -86,6 +106,11 @@ function doPost(e) {
       return reply({ ok: false, error: 'conflict' });
     if (nextHash) hash = nextHash;
 
+    if (!existing) {
+      if (Object.keys(db).length >= MAX_STUDENTS || file.getBlob().getDataAsString().length > MAX_FILE_CHARS)
+        return reply({ ok: false, error: 'full' });
+      if (!allowNewStudent()) return reply({ ok: false, error: 'busy' });
+    }
     // Photos stay on the device, even if a caller accidentally includes one.
     if (plainObject(rec.student.av)) rec.student.av.img = '';
     const previousTime = existing ? Date.parse(existing.savedAt) || 0 : 0;
@@ -134,6 +159,15 @@ function resetStudentFromProperty() {
   } finally {
     lock.releaseLock();
   }
+}
+
+/** Limits how many new student ids anyone can create per hour. */
+function allowNewStudent() {
+  const cache = CacheService.getScriptCache();
+  const count = Number(cache.get('new-students') || 0);
+  if (count >= MAX_NEW_PER_HOUR) return false;
+  cache.put('new-students', String(count + 1), 3600);
+  return true;
 }
 
 function clearReset(entry) {

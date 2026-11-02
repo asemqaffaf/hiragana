@@ -7,6 +7,7 @@ export function appsScriptFixture(initial = {}) {
   let writes = 0;
   let locked = false;
   let resetId = '';
+  const cache = new Map();
   const context = vm.createContext({
     LockService: { getScriptLock: () => ({
       waitLock() { if (locked) throw new Error('already locked'); locked = true; },
@@ -18,6 +19,7 @@ export function appsScriptFixture(initial = {}) {
     }) },
     PropertiesService: { getScriptProperties: () => ({ getProperty: (name) => (name === 'RESET_ID' ? resetId : 'teacher-test-key') }) },
     Logger: { log() {} },
+    CacheService: { getScriptCache: () => ({ get: (k) => cache.get(k) ?? null, put: (k, v) => cache.set(k, v) }) },
     Utilities: {
       newBlob: (text) => ({ getBytes: () => Buffer.from(text) }),
       DigestAlgorithm: { SHA_256: 'sha256' },

@@ -176,3 +176,30 @@ test('A teacher reset code lets a student set a new password, once, and only bef
   assert.equal(api.post({ id: 'forgot', secret: 'd'.repeat(64), action: 'recover', code: guessed }).error, 'bad code', 'five wrong guesses cancel the reset');
   assert.equal(JSON.stringify(api.get('teacher-test-key')).includes('reset'), false, 'export hides reset data');
 });
+
+test('Apps Script locks an id after repeated wrong passwords and keeps the right one working afterwards', () => {
+  const api = appsScriptFixture();
+  const record = payload('target', 'f'.repeat(64));
+  assert.equal(api.post({ ...record, action: 'create' }).ok, true);
+  const wrong = { id: 'target', secret: '0'.repeat(64), action: 'read' };
+  for (let i = 0; i < 9; i++) assert.equal(api.post(wrong).error, 'not yours');
+  assert.equal(api.post({ id: 'target', secret: record.secret, action: 'read' }).ok, true, 'a success resets the count');
+  for (let i = 0; i < 9; i++) assert.equal(api.post(wrong).error, 'not yours');
+  assert.equal(api.post(wrong).error, 'locked', 'the tenth miss locks the id');
+  assert.equal(api.post({ id: 'target', secret: record.secret, action: 'read' }).error, 'locked', 'even the right password waits');
+  assert.equal(api.post({ ...payload('someone-else', 'e'.repeat(64)), action: 'create' }).ok, true, 'other ids are unaffected');
+});
+
+test('Apps Script caps new students per hour and refuses to grow past its limits', () => {
+  const api = appsScriptFixture();
+  let accepted = 0;
+  let busy = 0;
+  for (let i = 0; i < 70; i++) {
+    const result = api.post({ ...payload('kid' + i, 'a'.repeat(64)), action: 'create' });
+    if (result.ok) accepted++;
+    else if (result.error === 'busy') busy++;
+  }
+  assert.equal(accepted, 60);
+  assert.equal(busy, 10);
+  assert.equal(api.post({ ...payload('kid0', 'a'.repeat(64)), action: 'update' }).ok, true, 'existing students keep saving');
+});
