@@ -284,6 +284,13 @@ test('Automated versioned backups create timestamped copies and restore safely',
   // student-one is restored, student-two is gone
   assert.ok(api.db()['student-one']);
   assert.equal(api.db()['student-two'], undefined);
+
+  // If the backup folder is trashed, subsequent backups create a fresh non-trashed folder
+  api.folders().get('Hiragana Backups').setTrashed(true);
+  api.folders().delete('Hiragana Backups'); // clear the single-entry mock map so DriveApp can make a new one
+  const freshBackup = api.createBackup();
+  assert.equal(freshBackup.ok, true);
+  assert.equal(api.folders().get('Hiragana Backups').isTrashed(), false);
 });
 
 test('Teacher stats endpoint tracks database size, student counts, and traffic metrics', () => {

@@ -34,8 +34,11 @@ export function appsScriptFixture(initial = {}) {
 
   function makeFolder(name) {
     const folderFiles = [];
+    let trashed = false;
     const folder = {
       getName: () => name,
+      isTrashed: () => trashed,
+      setTrashed: (t) => { trashed = t; },
       createFile: (fileName, fileContent) => {
         const file = makeFile(fileName, fileContent);
         folderFiles.push(file);

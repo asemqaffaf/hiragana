@@ -105,8 +105,12 @@ function doPost(e) {
     }
 
     // 6. Fast lockout check from cache before acquiring lock
-    const cache = CacheService.getScriptCache();
-    if (action !== 'recover' && cache.get('locked:' + id)) {
+    let isLockedCached = false;
+    try {
+      const cache = CacheService.getScriptCache();
+      isLockedCached = action !== 'recover' && !!cache.get('locked:' + id);
+    } catch (_err) { /* ignore cache read error */ }
+    if (isLockedCached) {
       return reply({ ok: false, error: 'locked' });
     }
 
@@ -139,7 +143,7 @@ function doPost(e) {
       existing.hash = sha256(rec.secret);
       delete existing.fails;
       delete existing.lockedUntil;
-      cache.remove('locked:' + id);
+      try { CacheService.getScriptCache().remove('locked:' + id); } catch (_err) {}
       clearReset(existing);
       file.setContent(JSON.stringify(db));
       return reply({ ok: true });
@@ -148,7 +152,7 @@ function doPost(e) {
     const nextHash = action === 'password' ? sha256(rec.newSecret) : null;
     // Retrying a password migration after a lost reply is safe with either credential.
     if (existing && existing.lockedUntil && Date.now() < existing.lockedUntil) {
-      cache.put('locked:' + id, '1', Math.ceil((existing.lockedUntil - Date.now()) / 1000));
+      try { CacheService.getScriptCache().put('locked:' + id, '1', Math.ceil((existing.lockedUntil - Date.now()) / 1000)); } catch (_err) {}
       return reply({ ok: false, error: 'locked' });
     }
     if (existing && existing.hash !== hash && existing.hash !== nextHash) {
@@ -158,7 +162,7 @@ function doPost(e) {
       if (existing.fails >= MAX_FAILS) {
         existing.fails = 0;
         existing.lockedUntil = Date.now() + LOCK_MS;
-        cache.put('locked:' + id, '1', Math.ceil(LOCK_MS / 1000));
+        try { CacheService.getScriptCache().put('locked:' + id, '1', Math.ceil(LOCK_MS / 1000)); } catch (_err) {}
       }
       file.setContent(JSON.stringify(db));
       return reply({ ok: false, error: existing.lockedUntil && Date.now() < existing.lockedUntil ? 'locked' : 'not yours' });
@@ -166,7 +170,7 @@ function doPost(e) {
     if (existing && (existing.fails || existing.lockedUntil)) {
       existing.fails = 0;
       delete existing.lockedUntil;
-      cache.remove('locked:' + id);
+      try { CacheService.getScriptCache().remove('locked:' + id); } catch (_err) {}
       file.setContent(JSON.stringify(db));
     }
 
@@ -222,9 +226,11 @@ function performBackup() {
   JSON.parse(content);
   let folder;
   const folders = DriveApp.getFoldersByName(BACKUP_FOLDER_NAME);
-  if (folders.hasNext()) {
-    folder = folders.next();
-  } else {
+  while (folders.hasNext()) {
+    const f = folders.next();
+    if (!f.isTrashed()) { folder = f; break; }
+  }
+  if (!folder) {
     folder = DriveApp.createFolder(BACKUP_FOLDER_NAME);
   }
   const timestamp = Utilities.formatDate(new Date(), 'UTC', "yyyyMMdd'T'HHmmss'Z'");
@@ -288,7 +294,7 @@ function resetStudentFromProperty() {
     db[id].resetHash = sha256(code);
     db[id].resetExpires = Date.now() + 24 * 60 * 60 * 1000;
     db[id].resetTries = 0;
-    CacheService.getScriptCache().remove('locked:' + id);
+    try { CacheService.getScriptCache().remove('locked:' + id); } catch (_err) {}
     file.setContent(JSON.stringify(db));
     Logger.log('Reset code for ' + id + ': ' + code + ' (valid 24 hours)');
     return code;
@@ -299,20 +305,28 @@ function resetStudentFromProperty() {
 
 /** Limits how many new student ids anyone can create per hour. */
 function allowNewStudent() {
-  const cache = CacheService.getScriptCache();
-  const count = Number(cache.get('new-students') || 0);
-  if (count >= MAX_NEW_PER_HOUR) return false;
-  cache.put('new-students', String(count + 1), 3600);
-  return true;
+  try {
+    const cache = CacheService.getScriptCache();
+    const count = Number(cache.get('new-students') || 0);
+    if (count >= MAX_NEW_PER_HOUR) return false;
+    cache.put('new-students', String(count + 1), 3600);
+    return true;
+  } catch (_err) {
+    return true;
+  }
 }
 
 /** Fixed-window rate limiting helper using CacheService. */
 function checkRateLimit(key, limit, seconds) {
-  const cache = CacheService.getScriptCache();
-  const count = Number(cache.get(key) || 0);
-  if (count >= limit) return false;
-  cache.put(key, String(count + 1), seconds);
-  return true;
+  try {
+    const cache = CacheService.getScriptCache();
+    const count = Number(cache.get(key) || 0);
+    if (count >= limit) return false;
+    cache.put(key, String(count + 1), seconds);
+    return true;
+  } catch (_err) {
+    return true;
+  }
 }
 
 /** Records monitoring metrics in CacheService. */
