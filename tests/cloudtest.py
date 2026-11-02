@@ -77,7 +77,7 @@ async def main():
             await first.click('#whoBtn')
             await save(first)
             assert await first.locator('[data-cloud-status]').last.inner_text() == 'Saved to cloud.'
-            assert await first.locator('#cloudSummary').is_hidden()  # a normal save is not announced under the header
+            assert await first.locator('#cloudSummary').count() == 0  # nothing about saving sits under the header on every page
             await first.evaluate("import('./js/core/store.js').then(s => s.updateProgress(p => p.stats['あ'] = {b:2,c:4,w:1,t:600}))")
             await save(first)
             assert db()[student_id]['progress']['stats']['あ']['c'] == 4
@@ -134,7 +134,6 @@ async def main():
             await first.click('#pfForm button[type=submit]')
             await save(first)
             assert 'newer data' in await first.locator('[data-cloud-status]').last.inner_text()
-            assert 'newer data' in await first.locator('#cloudSummary').inner_text()  # a failed save still shows at the top
             assert db()[student_id]['student']['name'] == 'Newer cloud name'
             await first.click('#cloudRestore')
             await first.click('#cloudRestore')

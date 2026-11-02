@@ -28,7 +28,7 @@ async def main():
         for tab in ('progress', 'letters', 'practice'):
             await pg.tap('nav [data-nav=%s]' % tab)
             await pg.wait_for_timeout(900)
-            await pg.evaluate("document.querySelector('#whoBtn').click()")
+            await pg.evaluate("window.__hira.wordsFor('か')")
             await pg.wait_for_timeout(2200)
             R[tab] = await pg.evaluate("""(() => {
               const b = document.querySelector('#backBtn').getBoundingClientRect(), l = document.querySelector('#backLabel').getBoundingClientRect(), s = document.querySelector('#backBtn svg').getBoundingClientRect();

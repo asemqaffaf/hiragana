@@ -30,7 +30,7 @@ import {
 } from '../ui/profile-fields.js';
 import { applyStudent, deviceTheme } from '../ui/appearance.js';
 import { avatar, cleanName, nameTaken, swatches } from '../ui/student.js';
-import { cloudDeleteNote, renderCloudSummary } from '../ui/cloud-sync.js';
+import { cloudDeleteNote } from '../ui/cloud-sync.js';
 import { LANG, t } from '../i18n/core.js';
 import { closeSheet } from '../ui/sheet-state.js';
 import { $, $$, esc, isObject, must, todayISO } from '../util.js';
@@ -80,7 +80,6 @@ function readExport(d) {
 }
 /** The student picker and new-student form. */
 export function showLogin() {
-  renderCloudSummary(null);
   closeSheet('silent');
   ui.navStack = [];
   setLang(deviceLang());
@@ -366,7 +365,6 @@ export function login(id) {
 export function renderWho() {
   const p = me(),
     b = must('#whoBtn');
-  renderCloudSummary(p?.id || null);
   if (!p) {
     b.hidden = true;
     return;

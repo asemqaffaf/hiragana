@@ -19,14 +19,15 @@ async def main():
                 await pg.tap(f'nav [data-nav="{nav}"]'); await pg.wait_for_timeout(120)
                 vis[tab] = [await pg.is_visible('#backBar'), await pg.text_content('#backLabel')]
             await pg.tap('#whoBtn'); await pg.wait_for_timeout(120); vis['profile'] = [await pg.is_visible('#backBar'), await pg.text_content('#backLabel')]
-            R[lang + '_back_everywhere'] = vis
-            # tapping back from profile goes to the previous page; from Letters goes to Today
-            await pg.tap('#backBtn'); await pg.wait_for_timeout(150); R[lang + '_back_from_profile'] = await pg.evaluate('location.hash')
+            R[lang + '_back_on_tab_pages'] = vis  # none of these pages has Back
+            # a page opened from another page has Back, and Back returns to it
             await pg.tap('nav [data-nav="letters"]'); await pg.wait_for_timeout(100); R[lang + '_letters_back_hidden'] = await pg.is_hidden('#backBar')
-            await pg.tap('#whoBtn'); await pg.wait_for_timeout(100); await pg.tap('#backBtn'); await pg.wait_for_timeout(150)
-            R[lang + '_back_from_letters'] = await pg.evaluate('location.hash')
-            # sticky: scroll far down the Profile page, the bar stays at the top
-            await pg.tap('#whoBtn'); await pg.wait_for_timeout(100)
+            await pg.evaluate("window.__hira.wordsFor('か')"); await pg.wait_for_timeout(250)
+            R[lang + '_words_back_visible'] = await pg.is_visible('#backBar')
+            await pg.tap('#backBtn'); await pg.wait_for_timeout(250)
+            R[lang + '_back_from_words'] = await pg.evaluate('location.hash')
+            # sticky: scroll far down the Words page, the bar stays at the top
+            await pg.evaluate("window.__hira.wordsFor('か')"); await pg.wait_for_timeout(250)
             await pg.evaluate('window.scrollTo(0, 900)'); await pg.wait_for_timeout(150)
             R[lang + '_sticky_top'] = await pg.evaluate("Math.round(document.querySelector('#backBar').getBoundingClientRect().top)")
             await pg.evaluate('window.scrollTo(0, 0)')
