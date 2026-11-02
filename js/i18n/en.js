@@ -221,9 +221,9 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   'login.who': 'Who is studying?',
   'login.create': 'Create your student profile',
   'login.tapName':
-    'Tap your name to start. There is no password; each student’s progress is kept separately in this browser.',
+    'Tap your name and enter your password to continue.',
   'login.addName':
-    'Add your name to start. There is no password; your progress is kept in this browser on this device.',
+    'Create a profile with a password to keep your progress safe on this device and in the cloud.',
   'login.blocked':
     'This browser is blocking storage, which often happens in private browsing. You can still study, but nothing is kept after you close the page.',
   'login.add': 'Add a student',
@@ -417,6 +417,9 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   "auth.enroll": "This existing profile needs a password. Set one now; it will sync when a connection is available.",
   "auth.resetCode": "Reset code from your teacher (only if you forgot your password; the password above becomes your new one)",
   "auth.badCode": "The reset code is wrong or has expired. Ask your teacher for a new one.",
+  "auth.forgot": "Forgot your password?",
+  "login.newTab": "New student",
+  "login.idHint": "Enter your student ID and password to continue.",
   "auth.otherDevice": "Sign in with a student ID",
   "auth.length": "Use between 10 and 256 characters.",
   "auth.mismatch": "The passwords do not match.",

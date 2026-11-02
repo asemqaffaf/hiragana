@@ -38,6 +38,8 @@ import { $, $$, esc, isObject, must, todayISO } from '../util.js';
 /* ---------- student sign-in and profile creation ---------- */
 /** @type {string | null} */
 let selectedLogin = null;
+/** Which view the first screen shows: signing in, or creating a profile. @type {'in' | 'new' | null} */
+let loginMode = null;
 /** @param {string} prefix @param {boolean} create */
 function passwordFields(prefix, create) {
   return '<label class="field"><span class="small muted">' + t(create ? 'auth.newPassword' : 'auth.password') +
@@ -106,11 +108,16 @@ export function showLogin() {
   }
   const list = students.list.slice().sort((x, y) => (y.last || 0) - (x.last || 0));
   let h = langChip(LANG);
-  h += '<h2>' + t(list.length ? 'login.who' : 'login.create') + '</h2>';
-  h += '<p class="muted">' + t(list.length ? 'login.tapName' : 'login.addName') + '</p>';
+  const mode = loginMode || (list.length ? 'in' : 'new');
+  h += '<h2>' + t(mode === 'in' ? (list.length ? 'login.who' : 'auth.signIn') : 'login.create') + '</h2>';
+  h += '<div class="seg" role="tablist">' +
+    ['in', 'new'].map((m) => '<button type="button" role="tab" data-mode="' + m + '" aria-selected="' + (m === mode) + '">' +
+      t(m === 'in' ? 'auth.signIn' : 'login.newTab') + '</button>').join('') + '</div>';
+  h += '<p class="muted">' + t(mode === 'in' ? (list.length ? 'login.tapName' : 'login.idHint') : 'login.addName') + '</p>';
   if (!canStore) h += '<p class="note warn">' + t('login.blocked') + '</p>';
   if (ui.loginMsg) h += '<p class="fmsg" role="alert">' + esc(t(ui.loginMsg)) + '</p>';
   h += cloudDeleteNote();
+  h += '<div id="modeIn"' + (mode === 'in' ? '' : ' hidden') + '>';
   if (list.length)
     h +=
       '<div class="students">' +
@@ -139,15 +146,16 @@ export function showLogin() {
       passwordFields('si', create) + '<p class="fmsg" id="siMsg" role="alert"></p><div class="btnrow">' +
       '<button class="btn primary" type="submit">' + t(create ? 'auth.set' : 'auth.signIn') + '</button></div></form>';
   }
-  if (syncOn) h += '<details class="more"><summary>' + t('auth.otherDevice') +
+  if (syncOn) h += '<details class="more"' + (list.length ? '' : ' open') + '><summary>' + t('auth.otherDevice') +
     '</summary><form id="cloudSignIn" class="sform" novalidate><label class="field"><span class="small muted">' +
     t('auth.id') + '</span><input id="csId" dir="ltr" maxlength="64" autocomplete="username" autocapitalize="none" spellcheck="false"></label>' +
-    passwordFields('cs', false) + '<label class="field"><span class="small muted">' + t('auth.resetCode') +
-    '</span><input id="csCode" dir="ltr" maxlength="64" autocomplete="off" autocapitalize="none" spellcheck="false"></label>' +
+    passwordFields('cs', false) + '<details class="more"><summary>' + t('auth.forgot') +
+    '</summary><label class="field"><span class="small muted">' + t('auth.resetCode') +
+    '</span><input id="csCode" dir="ltr" maxlength="64" autocomplete="off" autocapitalize="none" spellcheck="false"></label></details>' +
     '<p class="fmsg" id="csMsg" role="alert"></p><div class="btnrow">' +
     '<button class="btn primary" type="submit">' + t('auth.signIn') + '</button></div></form></details>';
+ h += '</div><div id="modeNew"' + (mode === 'new' ? '' : ' hidden') + '>';
   h +=
-    (list.length ? '<h3>' + t('login.add') + '</h3>' : '') +
     '<form id="newStudent" class="sform" novalidate autocomplete="off">';
   h +=
     '<label class="field"><span class="small muted">' +
@@ -182,10 +190,16 @@ export function showLogin() {
     t('login.import') +
     '</button><span class="muted">' +
     t('login.importHint') +
-    '</span></p><p class="fmsg" id="imMsg" role="alert"></p></div></details><input type="file" id="importFile" accept="application/json,.json" hidden>';
+    '</span></p><p class="fmsg" id="imMsg" role="alert"></p></div></details><input type="file" id="importFile" accept="application/json,.json" hidden></div>';
   h += '<footer class="credit"><p>' + t('credits') + '</p>' + byline() + '</footer>';
   root.innerHTML = h;
   ui.loginMsg = '';
+  $$('[data-mode]', root).forEach((b) => {
+    b.onclick = () => {
+      loginMode = b.dataset.mode === 'new' ? 'new' : 'in';
+      showLogin();
+    };
+  });
   must('[data-change-lang]', root).onclick = () => {
     ui.langStep = true;
     showLogin();
