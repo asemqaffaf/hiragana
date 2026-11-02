@@ -1,6 +1,6 @@
 # Hiragana in 14 days
 
-[English](README.md) | [日本語](README.ja.md)
+[English](README.md) | [日本語](README.ja.md) | [العربية](README.ar.md)
 
 Learn all 104 hiragana in English and Arabic. Includes a 14-day plan, stroke-by-stroke writing practice, drills, and reading practice with audio.
 

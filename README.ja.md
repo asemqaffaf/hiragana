@@ -1,6 +1,6 @@
 # 14日で学ぶひらがな (Hiragana in 14 days)
 
-[English](README.md) | [日本語](README.ja.md)
+[English](README.md) | [日本語](README.ja.md) | [العربية](README.ar.md)
 
 英語とアラビア語で学べる、全104文字のひらがな学習アプリ。14日間の学習プラン、書き順に沿った筆順練習、ドリル、音声付きのリーディング練習を収録しています。
 
