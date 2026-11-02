@@ -433,6 +433,7 @@ export interface UiState {
   lessonWrite: boolean;
   meetI: number;
   chartView: ChartView;
+  pgTab: 'letters' | 'activity' | 'awards';
   lastFocus: Element | null;
   drillSel: Set<string>;
   drillMode: DrillMode;

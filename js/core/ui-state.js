@@ -17,6 +17,7 @@ export const ui = {
   lessonWrite: false,
   meetI: 0,
   chartView: 'basic',
+  pgTab: 'letters',
   lastFocus: null,
   drillSel: new Set(['today']),
   drillMode: 'read',

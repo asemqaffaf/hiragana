@@ -57,12 +57,21 @@ async def main():
         # profile page
         await pg.click('#whoBtn'); await pg.wait_for_timeout(250)
         R['hash'] = await pg.evaluate('location.hash')
-        R['level'] = [await pg.text_content('.lvname'), await pg.text_content('.phero .small')]
+        # Profile is identity and settings only: no level, minutes, achievements or stats
+        R['profile_stats'] = [await pg.locator('#tab-profile ' + sel).count() for sel in ('.lvname', '#todayMin', '.badge', '.missed', '.racc', '.mixl')]
+        assert R['profile_stats'] == [0] * 6, R['profile_stats']
+        # they live on the Progress page, one panel at a time
+        await go(pg, "progress"); await pg.wait_for_timeout(250)
+        R['level'] = await pg.text_content('#tab-progress .pghero p.small')
+        R['tabs'] = await pg.eval_on_selector_all('[data-pgtab]', 'e=>e.map(x=>x.dataset.pgtab + ":" + x.getAttribute("aria-selected"))')
         R['today'] = await pg.text_content('#todayMin')
-        R['badges'] = await pg.eval_on_selector_all('.badge.got b', 'e=>e.map(x=>x.textContent)')
-        R['weak'] = await pg.eval_on_selector_all('#tab-profile .missed [data-open]', 'e=>e.map(x=>x.dataset.open)')
-        R['rows'] = await pg.eval_on_selector_all('.rr', 'e=>e.slice(0,3).map(x=>x.innerText.replace(/\\n/g," "))')
+        R['weak'] = await pg.eval_on_selector_all('#tab-progress .missed [data-open]', 'e=>e.map(x=>x.dataset.open)')
         R['mix'] = await pg.eval_on_selector_all('.mixl li', 'e=>e.map(x=>x.innerText)')
+        await pg.click('[data-pgtab=awards]'); await pg.wait_for_timeout(150)
+        R['badges'] = await pg.eval_on_selector_all('.badge.got b', 'e=>e.map(x=>x.textContent)')
+        R['panels_shown'] = await pg.eval_on_selector_all('.pgpanel', 'e=>e.filter(x=>!x.hidden).map(x=>x.dataset.panel)')
+        assert R['panels_shown'] == ['awards'], R['panels_shown']
+        await pg.click('#whoBtn'); await pg.wait_for_timeout(250)
         R['roadmap_goal'] = await pg.evaluate("(()=>{ return null })()")
         await pg.screenshot(path='shots/pf_top.png')
         # change settings: pace 21, adult, Arabic, kana avatar, then photo
@@ -79,7 +88,7 @@ async def main():
         await go(pg, "progress"); await pg.wait_for_timeout(150)
         R['road'] = await pg.eval_on_selector_all('.road li', 'e=>e.map(x=>x.querySelector("b").textContent + " | " + (x.querySelector(".rhead .muted")||{}).textContent)')
         # drill these from weakest
-        await pg.click('#whoBtn'); await pg.wait_for_timeout(200)
+        await pg.click('[data-pgtab=letters]'); await pg.wait_for_timeout(150)
         if await pg.locator('#pfDrillWeak').count():
             await pg.click('#pfDrillWeak'); await pg.wait_for_timeout(200); R['drill_these'] = [await pg.evaluate('location.hash'), await pg.locator('#qtopWrap, .prompt, #qk').count()]
         await pg.reload(); await unlock_student(pg); await pg.wait_for_timeout(400)
