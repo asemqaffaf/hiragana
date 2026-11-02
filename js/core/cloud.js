@@ -166,7 +166,7 @@ export function flushCloud() {
         // A failed old request must not hide a newer save or deletion.
         if (pending.get(id) !== job) continue;
         status(id, 'error', message);
-        if (message === 'network' || message === 'storage') retry = true;
+        if (message === 'network' || message === 'storage' || message === 'busy' || message === 'rate limited') retry = true;
       }
     }
     return retry;

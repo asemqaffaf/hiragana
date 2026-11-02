@@ -38,14 +38,17 @@ test('Apps Script supports authenticated CRUD, legacy upsert and teacher export 
   assert.equal(api.post({ ...record, base: created.savedAt }).error, 'conflict');
   assert.equal(api.post({ ...record, base: updated.savedAt }).ok, true);
   assert.equal(api.get('wrong').error, 'denied');
-  assert.equal(api.get('teacher-test-key').length, 1);
-  assert.equal(JSON.stringify(api.get('teacher-test-key')).includes('hash'), false);
+  assert.equal(api.get('teacher-test-key').error, 'denied');
+  assert.equal(api.post({ action: 'export', teacherKey: 'wrong' }).error, 'denied');
+  const exported = api.post({ action: 'export', teacherKey: 'teacher-test-key' });
+  assert.equal(exported.length, 1);
+  assert.equal(JSON.stringify(exported).includes('hash'), false);
   assert.equal(api.post({ ...record, action: 'delete' }).ok, true);
   assert.equal(api.post({ ...record, action: 'delete' }).ok, true);
   assert.equal(api.post(record).error, 'deleted', 'late writes cannot recreate personal data');
   assert.equal(api.post({ ...record, action: 'read' }).error, 'deleted');
   assert.deepEqual(Object.keys(api.db().learner).sort(), ['deleted', 'hash']);
-  assert.equal(api.get('teacher-test-key').length, 0);
+  assert.equal(api.post({ action: 'export', teacherKey: 'teacher-test-key' }).length, 0);
   assert.equal(api.locked(), false);
 });
 
@@ -186,7 +189,7 @@ test('A teacher reset code lets a student set a new password, once, and only bef
   const guessed = api.reset('forgot');
   for (let i = 0; i < 5; i++) api.post({ id: 'forgot', secret: 'd'.repeat(64), action: 'recover', code: 'guess-' + i + '-xx' });
   assert.equal(api.post({ id: 'forgot', secret: 'd'.repeat(64), action: 'recover', code: guessed }).error, 'bad code', 'five wrong guesses cancel the reset');
-  assert.equal(JSON.stringify(api.get('teacher-test-key')).includes('reset'), false, 'export hides reset data');
+  assert.equal(JSON.stringify(api.post({ action: 'export', teacherKey: 'teacher-test-key' })).includes('reset'), false, 'export hides reset data');
 });
 
 test('Apps Script locks an id after repeated wrong passwords and keeps the right one working afterwards', () => {
@@ -218,4 +221,80 @@ test('Apps Script caps new students per hour and refuses to grow past its limits
   assert.equal(accepted, 60);
   assert.equal(busy, 10);
   assert.equal(api.post({ ...payload('kid0', 'a'.repeat(64)), action: 'update' }).ok, true, 'existing students keep saving');
+});
+
+test('Per-student and global rate limiting in CacheService reject floods before lock acquisition', () => {
+  const api = appsScriptFixture();
+  const record = payload('rate-limit-target', 'b'.repeat(64));
+  assert.equal(api.post({ ...record, action: 'create' }).ok, true);
+
+  // Send requests up to the MAX_CLIENT_PER_MINUTE (30)
+  for (let i = 0; i < 29; i++) {
+    const res = api.post({ id: 'rate-limit-target', secret: record.secret, action: 'read' });
+    assert.equal(res.ok, true, 'request ' + i + ' should succeed');
+  }
+
+  // 31st request for this student ID is rate limited
+  const writesBeforeRateLimit = api.writes();
+  const floodAttempt = api.post({ id: 'rate-limit-target', secret: record.secret, action: 'read' });
+  assert.equal(floodAttempt.ok, false);
+  assert.equal(floodAttempt.error, 'rate limited');
+  assert.equal(api.writes(), writesBeforeRateLimit, 'rate limited request must not write to storage');
+  assert.equal(api.locked(), false, 'rate limited request must not hold the lock');
+
+  // Other student IDs can still proceed under their own limits
+  const otherRecord = payload('other-student', 'c'.repeat(64));
+  assert.equal(api.post({ ...otherRecord, action: 'create' }).ok, true);
+});
+
+test('Automated versioned backups create timestamped copies and restore safely', () => {
+  const api = appsScriptFixture();
+  const s1 = payload('student-one', '1'.repeat(64));
+  assert.equal(api.post({ ...s1, action: 'create' }).ok, true);
+
+  // Create an automated backup
+  const backup1 = api.createBackup();
+  assert.equal(backup1.ok, true);
+  assert.ok(backup1.name.startsWith('students-backup-'));
+  assert.ok(backup1.id.startsWith('file-'));
+
+  // Backup via authenticated POST action
+  const postBackup = api.post({ action: 'backup', teacherKey: 'teacher-test-key' });
+  assert.equal(postBackup.ok, true);
+  assert.ok(postBackup.name.startsWith('students-backup-'));
+
+  // Unauthenticated backup POST is denied
+  assert.equal(api.post({ action: 'backup', teacherKey: 'wrong-key' }).error, 'denied');
+
+  // Make changes to DB after backup
+  const s2 = payload('student-two', '2'.repeat(64));
+  assert.equal(api.post({ ...s2, action: 'create' }).ok, true);
+  assert.ok(api.db()['student-two']);
+
+  // Restore from the first backup
+  const restoreRes = api.restoreBackup(backup1.id);
+  assert.equal(restoreRes.ok, true);
+  assert.equal(restoreRes.restoredFrom, backup1.name);
+
+  // student-one is restored, student-two is gone
+  assert.ok(api.db()['student-one']);
+  assert.equal(api.db()['student-two'], undefined);
+});
+
+test('Teacher stats endpoint tracks database size, student counts, and traffic metrics', () => {
+  const api = appsScriptFixture();
+  assert.equal(api.post({ ...payload('stats-student', 's'.repeat(64)), action: 'create' }).ok, true);
+
+  // Unauthenticated stats call is denied
+  assert.equal(api.post({ action: 'stats', teacherKey: 'bad' }).error, 'denied');
+
+  // Authenticated stats call returns monitoring data
+  const stats = api.post({ action: 'stats', teacherKey: 'teacher-test-key' });
+  assert.equal(stats.ok, true);
+  assert.equal(stats.activeStudents, 1);
+  assert.equal(stats.deletedStudents, 0);
+  assert.ok(typeof stats.databaseBytes === 'number');
+  assert.equal(stats.maxStudents, 500);
+  assert.ok(typeof stats.metrics === 'object');
+  assert.ok(stats.metrics.writes >= 1);
 });

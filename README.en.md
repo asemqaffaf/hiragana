@@ -91,6 +91,8 @@ For local sync testing, set `SYNC_URL` in [`js/core/cloud-config.js`](js/core/cl
 
 Changes save locally first and queue for sync when online. Apps Script uses `LockService` to serialise writes and checks record versions to detect conflicting saves. Passwords derive a credential in the browser using PBKDF2-SHA-256 (310,000 iterations); Drive stores a SHA-256 hash of that credential, never the original password. The published client receives the sync endpoint; `TEACHER_KEY` belongs only in Apps Script properties.
 
+To protect against Google quota exhaustion and lock contention, Apps Script rate-limits requests in memory via `CacheService` and rejects locked IDs before taking locks or touching Google Drive. Student records, quota metrics, and manual backups can be retrieved using `node scripts/export-students.mjs <SYNC_URL> --key <TEACHER_KEY>` (`GET ?key=...` is disabled so credentials never appear in URLs). Automatic versioned backups rotate in Google Drive. For Google account isolation, incident runbooks, and a Firebase/Firestore scalability evaluation, see [`docs/cloud-security.md`](docs/cloud-security.md).
+
 ## Development checks
 
 Install the development tools and run the core checks:

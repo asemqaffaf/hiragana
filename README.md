@@ -91,6 +91,8 @@ python3 -m http.server 8000
 
 変更はまず端末に保存され、オンライン時の同期キューに入ります。Apps Script は `LockService` で書き込みを直列化し、レコードのバージョンで保存の競合を検出します。パスワードからブラウザ内で PBKDF2-SHA-256（310,000回反復）により認証情報を導出し、Drive にはその SHA-256 ハッシュを保存します。元のパスワードは保存しません。同期先 URL は公開クライアントに含まれますが、`TEACHER_KEY` は Apps Script のプロパティだけに設定します。
 
+Google のクォータ枯渇やロック競合を防ぐため、Apps Script は `CacheService` によりメモリ内でリクエスト制限を行い、ロックされた ID をストレージアクセス前に拒否します。生徒記録のエクスポート、サーバー統計の確認、バックアップ作成には `node scripts/export-students.mjs <SYNC_URL> --key <TEACHER_KEY>` を使用します（URL に認証情報が含まれないよう `GET ?key=...` は無効化されています）。Google Drive にはバージョン管理された自動バックアップが保持されます。Google アカウントの分離、障害対応手順、Firebase/Firestore との拡張性比較については [`docs/cloud-security.md`](docs/cloud-security.md) を参照してください。
+
 ## 開発用チェック
 
 開発ツールをインストールし、基本的なチェックを実行します。
