@@ -1,0 +1,55 @@
+# Publishes the site to GitHub Pages and fills in the cloud sync URL from the SYNC_URL secret,
+# so the Apps Script address is not stored in the repository.
+# One-time setup: Settings > Secrets and variables > Actions > New repository secret SYNC_URL,
+# and Settings > Pages > Source: GitHub Actions.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble the site
+        env:
+          SYNC_URL: ${{ secrets.SYNC_URL }}
+        run: |
+          mkdir _site
+          rsync -a ./ _site/ \
+            --exclude '.git' --exclude '.github' --exclude '.venv' --exclude '.claude' --exclude '_site' --exclude 'node_modules' \
+            --exclude 'tests' --exclude 'scripts' --exclude 'docs' --exclude 'types' --exclude 'shots' \
+            --exclude 'package.json' --exclude 'package-lock.json' --exclude 'jsconfig.json' \
+            --exclude '.prettierrc.json' --exclude '.gitignore'
+          if [ -n "$SYNC_URL" ]; then
+            case "$SYNC_URL" in
+              https://script.google.com/macros/s/*/exec) ;;
+              *) echo "SYNC_URL must be an Apps Script web app address ending in /exec" >&2; exit 1 ;;
+            esac
+            printf "export const SYNC_URL = '%s';\n" "$SYNC_URL" > _site/js/core/cloud-config.js
+          else
+            echo "SYNC_URL is not set: the site is published with cloud sync switched off." >&2
+          fi
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

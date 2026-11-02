@@ -1,4 +1,3 @@
-// Paste the web app URL from the Google Apps Script deployment (scripts/google-apps-script.gs) to switch syncing on.
-// Leave it empty to keep everything on the device. Student reads and writes require a device secret.
-export const SYNC_URL =
-  'https://script.google.com/macros/s/AKfycbyv_fOHrT70GpiROV4wFnyZD9zLBnh8hlVNTA8k-5SuTdVUtfsp4SasXm_OmeR4vl62/exec';
+// The cloud sync address is filled in when the site is deployed (see .github/workflows/pages.yml), from the SYNC_URL secret.
+// For local testing, put the Apps Script web app URL here and do not commit it.
+export const SYNC_URL = '';
