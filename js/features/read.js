@@ -87,11 +87,11 @@ function allWordsHtml(n) {
       '</button></div>';
   h += '<p class="muted">' + t('read.intro') + '</p>';
   h +=
-    '<div class="toggles" style="justify-content:flex-start"><label><input type="checkbox" id="rRo"' +
+    '<div class="toggles"><label><input type="checkbox" id="rRo" role="switch"' +
     (ui.showRo ? ' checked' : '') +
     '> ' +
     t('read.showRo') +
-    '</label><label><input type="checkbox" id="rMean"' +
+    '</label><label><input type="checkbox" role="switch" id="rMean"' +
     (ui.showMean ? ' checked' : '') +
     '> ' +
     t('read.showMean') +

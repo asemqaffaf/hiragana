@@ -321,15 +321,15 @@ export function renderWrite(play) {
   h += '<button class="btn red" id="wCompleteBtn" hidden></button>';
   if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
   h +=
-    '<div class="toggles opts"><label><input type="checkbox" id="wGuide"' +
+    '<div class="toggles opts"><label><input type="checkbox" role="switch" id="wGuide"' +
     (ui.writeGuide ? ' checked' : '') +
     '> ' +
     t('write.guide') +
-    '</label><label><input type="checkbox" id="wNums"' +
+    '</label><label><input type="checkbox" role="switch" id="wNums"' +
     (ui.writeNums ? ' checked' : '') +
     '> ' +
     t('write.nums') +
-    '</label><label><input type="checkbox" id="wCheck"' +
+    '</label><label><input type="checkbox" role="switch" id="wCheck"' +
     (ui.writeCheck ? ' checked' : '') +
     '> ' +
     t('write.check') +

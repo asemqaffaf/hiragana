@@ -203,3 +203,17 @@ html.navmin nav.tabs button svg,html.navmin nav.tabs button .g{translate:0 9px}
   .btn:active,.tool:active,.chip:active,nav.tabs button:active svg{scale:1}
 }
 @media (prefers-reduced-transparency:reduce){.back{background:var(--surface)}}
+
+/* on/off options: an iOS settings list, label on the start side and a switch on the end side */
+.toggles{display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:flex-start;gap:0;margin-top:14px;padding:0 16px;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--glass-edge);font-size:16px}
+.toggles label{flex-direction:row-reverse;justify-content:space-between;gap:12px;min-height:48px;cursor:pointer}
+.toggles label + label{border-top:.5px solid var(--glass-edge)}
+.toggles input[type="checkbox"]{appearance:none;-webkit-appearance:none;flex:none;position:relative;width:51px;height:31px;margin:0;border-radius:999px;background:var(--gray-fill);transition:background .2s;cursor:pointer}
+.toggles input[type="checkbox"]::after{content:"";position:absolute;top:2px;inset-inline-start:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25),0 0 0 .5px rgba(0,0,0,.08);transition:transform .2s}
+.toggles input[type="checkbox"]:checked{background:var(--jade)}
+.toggles input[type="checkbox"]:checked::after{transform:translateX(20px)}
+html[dir="rtl"] .toggles input[type="checkbox"]:checked::after{transform:translateX(-20px)}
+.toggles input[type="checkbox"]:focus-visible{outline:2px solid var(--jade);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.toggles input[type="checkbox"],.toggles input[type="checkbox"]::after{transition:none}}
+.toggles.opts{font-size:16px}
+.toggles.opts label{min-height:48px}
