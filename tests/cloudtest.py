@@ -56,7 +56,13 @@ async def main():
             c1, first = await page_for(browser)
             await first.click('#login [data-mode="new"]')
             await first.fill('#nsName', 'Cloud learner')
-            await first.fill('#nsId', 'cloud-learner')
+            assert await first.locator('#nsId').get_attribute('readonly') is not None
+            student_id = await first.input_value('#nsId')
+            assert len(student_id) >= 8
+            await first.locator('#nsId').evaluate("el => { el.value = 'tampered'; el.setAttribute('value', 'tampered'); el.removeAttribute('readonly'); }")
+            assert await first.input_value('#nsId') == student_id
+            assert await first.locator('#nsId').get_attribute('value') == student_id
+            assert await first.locator('#nsId').get_attribute('readonly') is not None
             await first.fill('#nsPassword', 'short')
             await first.fill('#nsConfirm', 'short')
             await first.click('#newStudent button[type=submit]')
@@ -73,7 +79,7 @@ async def main():
             assert await first.locator('[data-cloud-status]').last.inner_text() == 'Saved to cloud.'
             await first.evaluate("import('./js/core/store.js').then(s => s.updateProgress(p => p.stats['あ'] = {b:2,c:4,w:1,t:600}))")
             await save(first)
-            assert db()['cloud-learner']['progress']['stats']['あ']['c'] == 4
+            assert db()[student_id]['progress']['stats']['あ']['c'] == 4
             assert PASSWORD not in await first.evaluate('JSON.stringify(localStorage)')
 
             # Reload prompts for the password; a wrong one cannot open the profile.
@@ -107,7 +113,7 @@ async def main():
             await second.click('[data-lang="en"]')
 
             # A fresh browser can read the same record using only ID and password.
-            await second.fill('#csId', 'cloud-learner')
+            await second.fill('#csId', student_id)
             await second.fill('#csPassword', 'incorrect-password')
             await second.click('#cloudSignIn button[type=submit]')
             await second.wait_for_function("document.querySelector('#csMsg').textContent.length > 0")
@@ -120,14 +126,14 @@ async def main():
             await second.fill('#pfName', 'Newer cloud name')
             await second.click('#pfForm button[type=submit]')
             await save(second)
-            assert db()['cloud-learner']['student']['name'] == 'Newer cloud name'
+            assert db()[student_id]['student']['name'] == 'Newer cloud name'
 
             # The older device cannot overwrite the newer device's saved data.
             await first.fill('#pfName', 'Stale local name')
             await first.click('#pfForm button[type=submit]')
             await save(first)
             assert 'newer data' in await first.locator('[data-cloud-status]').last.inner_text()
-            assert db()['cloud-learner']['student']['name'] == 'Newer cloud name'
+            assert db()[student_id]['student']['name'] == 'Newer cloud name'
             await first.click('#cloudRestore')
             await first.click('#cloudRestore')
             await first.wait_for_function("document.querySelector('#pfName').value === 'Newer cloud name'")
@@ -136,10 +142,10 @@ async def main():
 
             # Teacher reset-code flow in the browser: wrong code fails, short new password fails, valid code resets and signs in.
             await first.click('#pSwitch')
-            code = reset_code('cloud-learner')
+            code = reset_code(student_id)
             await first.locator('#cloudSignIn').evaluate("el => el.closest('details').open = true")
             await first.locator('#csCode').evaluate("el => el.closest('details').open = true")
-            await first.fill('#csId', 'cloud-learner')
+            await first.fill('#csId', student_id)
             await first.fill('#csPassword', RESET_PASSWORD)
             await first.fill('#csCode', 'wrong-code')
             await first.click('#cloudSignIn button[type=submit]')
@@ -159,7 +165,7 @@ async def main():
             # The other device can sign in with the newly reset password too.
             await second.click('#pSwitch')
             await second.locator('#cloudSignIn').evaluate("el => el.closest('details').open = true")
-            await second.fill('#csId', 'cloud-learner')
+            await second.fill('#csId', student_id)
             await second.fill('#csPassword', RESET_PASSWORD)
             await second.click('#cloudSignIn button[type=submit]')
             await second.locator('#whoBtn').wait_for(state='visible')
@@ -180,15 +186,15 @@ async def main():
             assert await second.locator('[data-cloud-deletes]').is_visible()
             jobs = await second.evaluate("JSON.parse(localStorage.getItem('hiragana14-sync-queue-v1'))")
             assert jobs[0]['action'] == 'delete'
-            assert 'student' in db()['cloud-learner']
+            assert 'student' in db()[student_id]
             await c2.set_offline(False)
             await second.wait_for_function("JSON.parse(localStorage.getItem('hiragana14-sync-queue-v1')).length === 0")
-            assert sorted(db()['cloud-learner']) == ['deleted', 'hash']
+            assert sorted(db()[student_id]) == ['deleted', 'hash']
             await first.fill('#pfName', 'Too late')
             await first.click('#pfForm button[type=submit]')
             await save(first)
             assert 'No cloud copy' in await first.locator('[data-cloud-status]').last.inner_text()
-            assert sorted(db()['cloud-learner']) == ['deleted', 'hash']
+            assert sorted(db()[student_id]) == ['deleted', 'hash']
             assert not errors, errors
             print(json.dumps({'passwords': True, 'cross_device_login': True, 'crud': True, 'conflicts': True,
                               'offline_delete': True, 'requests': len(requests), 'errors': errors}))

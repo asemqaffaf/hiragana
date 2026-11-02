@@ -407,7 +407,7 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   'pf.mixRow': (v) => v.a + ' answered as ' + v.b + ': ' + enN(v.n, 'time'),
   'pf.mixNone': 'No mix-ups recorded yet.',
   "auth.id": "Student ID",
-  "auth.idHint": "Keep this ID to sign in on another device. Letters, numbers, _ and - only.",
+  "auth.idHint": "Keep this ID to sign in on another device.",
   "auth.password": "Password",
   "auth.newPassword": "New password (at least 10 characters)",
   "auth.confirm": "Confirm password",

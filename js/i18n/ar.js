@@ -428,7 +428,7 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   'pf.mixRow': (v) => v.a + ' أُجيب عنه بـ ' + v.b + ': ' + arN(v.n, 'time'),
   'pf.mixNone': 'لا يوجد خلط مسجّل بعد.',
   "auth.id": "معرّف الطالب",
-  "auth.idHint": "احتفظ بهذا المعرّف للدخول من جهاز آخر. استخدم الحروف الإنجليزية والأرقام و _ و - فقط.",
+  "auth.idHint": "احتفظ بهذا المعرّف للدخول من جهاز آخر.",
   "auth.password": "كلمة المرور",
   "auth.newPassword": "كلمة مرور جديدة (10 أحرف على الأقل)",
   "auth.confirm": "تأكيد كلمة المرور",

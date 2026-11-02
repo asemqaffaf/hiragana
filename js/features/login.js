@@ -57,11 +57,15 @@ function newPassword(prefix, root) {
 }
 /** @returns {string} */
 function newId() {
-  try {
-    if (window.crypto && crypto.randomUUID)
-      return crypto.randomUUID().replace(/-/g, '').slice(0, 16);
-  } catch (e) {}
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  for (;;) {
+    let id = '';
+    try {
+      if (window.crypto && crypto.randomUUID)
+        id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+    } catch (e) {}
+    if (!id) id = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    if (!students.list.some((p) => p.id === id)) return id;
+  }
 }
 /**
  * Checks that a parsed file is a student export from this app.
@@ -156,6 +160,7 @@ export function showLogin() {
     '<p class="fmsg" id="csMsg" role="alert"></p><div class="btnrow">' +
     '<button class="btn primary" type="submit">' + t('auth.signIn') + '</button></div></form></details>';
   h += (mode === 'in' ? '<p class="swap"><button type="button" class="link" data-mode="new">' + t('login.toNew') + '</button></p>' : '') + '</div><div id="modeNew"' + (mode === 'new' ? '' : ' hidden') + '>';
+  const nextId = newId();
   h +=
     '<form id="newStudent" class="sform" novalidate autocomplete="off">';
   h +=
@@ -163,7 +168,7 @@ export function showLogin() {
     t('f.name') +
     '</span><input id="nsName" maxlength="24" dir="auto" autocapitalize="words" spellcheck="false"></label>';
   h += '<label class="field"><span class="small muted">' + t('auth.id') +
-    '</span><input id="nsId" dir="ltr" maxlength="64" autocomplete="username" autocapitalize="none" spellcheck="false" value="' + newId() +
+    '</span><input id="nsId" dir="ltr" maxlength="64" autocomplete="username" autocapitalize="none" spellcheck="false" readonly value="' + nextId +
     '"><span class="small muted">' + t('auth.idHint') + '</span></label>' + passwordFields('ns', true);
   h += swatches('nsColor', COLORS[list.length % COLORS.length]);
   h +=
@@ -218,6 +223,12 @@ export function showLogin() {
       }),
   );
   const nameInput = must('#nsName', root, HTMLInputElement);
+  const idInput = must('#nsId', root, HTMLInputElement);
+  Object.defineProperty(idInput, 'value', { get: () => nextId, set: () => {} });
+  new MutationObserver(() => {
+    if (idInput.getAttribute('value') !== nextId) idInput.setAttribute('value', nextId);
+    if (!idInput.hasAttribute('readonly')) idInput.setAttribute('readonly', '');
+  }).observe(idInput, { attributes: true, attributeFilter: ['value', 'readonly'] });
   const levelSelect = must('#nsJl', root, HTMLSelectElement);
   const paceSelect = must('#nsPace', root, HTMLSelectElement);
   const signIn = $('#studentSignIn', root, HTMLFormElement);
@@ -280,15 +291,7 @@ export function showLogin() {
       nameInput.focus();
       return;
     }
-    const id = must('#nsId', root, HTMLInputElement).value.trim();
-    if (!/^[A-Za-z0-9_-]{1,64}$/.test(id) || ['__proto__', 'constructor', 'prototype'].includes(id)) {
-      msg.textContent = t('auth.badId');
-      return;
-    }
-    if (students.list.some((p) => p.id === id)) {
-      msg.textContent = t('auth.idTaken');
-      return;
-    }
+    const id = students.list.some((p) => p.id === nextId) ? newId() : nextId;
     const age = must('#nsAge', root, HTMLSelectElement).value;
     const p = {
       id,
