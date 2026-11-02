@@ -70,12 +70,21 @@ html{scroll-padding-bottom:calc(var(--dock) + 24px)}
 /* content cards: softer corners */
 .dcard,.mx,.word,.phfilter{border-radius:18px}
 
-/* Back: a Liquid Glass capsule floating over a soft fade at the top edge of the page, as in iOS 26 */
+/* Header: a compact iOS 26 navigation bar once signed in (small title, no subtitle, glass profile button) */
+body:not(.signed-out) header.top{padding:10px 16px 0;align-items:center}
+body:not(.signed-out) header.top .ttl{flex-wrap:nowrap;align-items:center}
+body:not(.signed-out) header.top h1{font-size:22px;font-weight:700;line-height:1.2;letter-spacing:0}
+body:not(.signed-out) header.top p{display:none}
+body:not(.signed-out) .who{margin-top:0;gap:6px;padding-inline:4px 12px}
+body:not(.signed-out) .who .av{width:30px;height:30px;font-size:14px}
+body:not(.signed-out) .who .nm{font-size:14px;font-weight:600}
+/* Back: a round Liquid Glass button floating over a soft fade at the top edge of the page, as in iOS 26 */
 .backbar{pointer-events:none;background:none;margin:-10px -16px 6px;padding:4px 16px}
 .backbar::before{content:"";position:absolute;inset:0 0 -14px;z-index:-1;pointer-events:none;background:linear-gradient(var(--paper) 38%,transparent)}
-.back{pointer-events:auto;position:relative;gap:1px;min-height:44px;padding:0 16px 0 7px;border-radius:999px;border:0;background:var(--glass);color:var(--jade);font-weight:600;font-size:16px;
+.back{pointer-events:auto;position:relative;gap:0;justify-content:center;width:44px;min-height:44px;padding:0;border-radius:50%;border:0;background:var(--glass);color:var(--jade);font-weight:600;font-size:16px;
   box-shadow:var(--glass-shadow),inset 0 0 0 1px var(--glass-edge),inset 0 1px 0 var(--glass-hi);transition:scale .5s var(--spring),filter .2s}
-[dir="rtl"] .back{padding:0 7px 0 16px}
+/* iOS 26 shows only the chevron in a round glass button; the destination stays in the accessible name and in this label */
+#backLabel{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .back svg{width:22px;height:22px;transition:transform .5s var(--spring)}
 .back:active{scale:.93;filter:brightness(.94);transition-duration:.12s}
 .back:active svg{transform:translateX(-3px)}

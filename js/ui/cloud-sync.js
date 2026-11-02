@@ -27,11 +27,16 @@ export function cloudDeleteNote() {
   return '<p class="small note" role="status" data-cloud-deletes' + (pendingCloudDeletes() ? '' : ' hidden') + '>' +
     t('cloud.deletes') + '</p>';
 }
+/* The line under the header only appears when saving fails; a normal save is shown in Profile, not at the top of every page */
+/** @param {Element} element @param {string | null} id */
+function showSummary(element, id) {
+  if (element instanceof HTMLElement) element.hidden = !syncOn || !id || cloudStatus(id).state !== 'error';
+}
 /** @param {string | null} id */
 export function renderCloudSummary(id) {
   const element = document.getElementById('cloudSummary');
   if (!element) return;
-  element.hidden = !syncOn || !id;
+  showSummary(element, id);
   if (id) {
     element.setAttribute('data-cloud-status', id);
     element.textContent = statusText(id);
@@ -40,6 +45,7 @@ export function renderCloudSummary(id) {
 subscribeCloud(() => {
   for (const element of document.querySelectorAll('[data-cloud-status]')) {
     element.textContent = statusText(element.getAttribute('data-cloud-status') || '');
+    if (element.id === 'cloudSummary') showSummary(element, element.getAttribute('data-cloud-status'));
   }
   for (const element of document.querySelectorAll('[data-cloud-deletes]')) {
     if (element instanceof HTMLElement) element.hidden = pendingCloudDeletes() === 0;

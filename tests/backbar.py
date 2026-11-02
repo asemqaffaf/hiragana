@@ -1,5 +1,5 @@
 from student_auth import disable_cloud, submit_student
-"""The Back capsule keeps its shape after the label changes, and the old-page copy never outlives the slide."""
+"""The Back button stays a round 44px glass button with the chevron centred after the label changes, and the old-page copy never outlives the slide."""
 import asyncio
 import json
 import os
@@ -32,12 +32,12 @@ async def main():
             await pg.wait_for_timeout(2200)
             R[tab] = await pg.evaluate("""(() => {
               const b = document.querySelector('#backBtn').getBoundingClientRect(), l = document.querySelector('#backLabel').getBoundingClientRect(), s = document.querySelector('#backBtn svg').getBoundingClientRect();
-              return {h: Math.round(b.height), labelTop: Math.round(l.top - b.top), sameRow: Math.abs((l.top + l.height / 2) - (s.top + s.height / 2)) < 6,
+              return {h: Math.round(b.height), w: Math.round(b.width), labelTop: Math.round(l.top - b.top), sameRow: Math.abs((b.left + b.width / 2) - (s.left + s.width / 2)) < 2 && Math.abs((b.top + b.height / 2) - (s.top + s.height / 2)) < 2 && l.width <= 1,
                       snaps: document.querySelectorAll('.pagesnap').length, sliding: document.querySelectorAll('.tab.slide').length}
             })()""")
             await pg.go_back()
             await pg.wait_for_timeout(900)
-        bad = {k: v for k, v in R.items() if v['h'] > 48 or not v['sameRow'] or v['snaps'] or v['sliding']}
+        bad = {k: v for k, v in R.items() if v['h'] != 44 or v['w'] != 44 or not v['sameRow'] or v['snaps'] or v['sliding']}
         print(json.dumps({'R': R, 'bad': bad, 'errors': errs}))
         await b.close()
         raise SystemExit(1 if bad or errs else 0)
