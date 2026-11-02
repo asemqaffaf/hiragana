@@ -23,7 +23,13 @@ async def unlock_student(page, name=None):
     if await page.locator('#siConfirm').count():
         await page.fill('#siConfirm', PASSWORD)
     await page.click('#studentSignIn button[type=submit]')
-    await page.locator('#whoBtn').wait_for(state='visible')
+    await page.locator('body:not(.signed-out)').wait_for()
+
+
+async def open_profile(page):
+    if await page.locator('#tab-profile').is_hidden():
+        await page.click('#whoBtn')
+    await page.locator('#tab-profile').wait_for(state='visible')
 
 
 async def prepare_import(page):

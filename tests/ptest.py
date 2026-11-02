@@ -1,4 +1,4 @@
-from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
+from student_auth import open_profile, disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -7,7 +7,7 @@ from playwright.async_api import async_playwright
 
 async def go(pg, tab):
     grp = {'plan':'home','chart':'letters','drill':'practice','write':'practice','read':'practice','progress':'progress','profile':'profile','phrases':'practice'}[tab]
-    if grp == 'profile': await pg.click('#whoBtn'); await pg.wait_for_timeout(60); return
+    if grp == 'profile': await open_profile(pg); await pg.wait_for_timeout(60); return
     await pg.click(f'nav [data-nav="{grp}"]')
     if grp == 'practice':
         sel = f'#subnav [data-sub="{tab}"]'
@@ -52,7 +52,7 @@ async def main():
             await pg.mouse.up()
         R['3_aya_write'] = await pg.text_content('#wStat')
         # profile sheet
-        await pg.click('#whoBtn'); await pg.wait_for_timeout(150)
+        await open_profile(pg); await pg.wait_for_timeout(150)
         R['4_profile'] = [await pg.evaluate('location.hash'), (await pg.inner_text('#tab-profile .phero')).replace('\n', ' | ')]
         await pg.screenshot(path='/tmp/hira-tests/profile.png')
         # switch, add second student, duplicate check
@@ -63,14 +63,14 @@ async def main():
         await pg.fill('#nsName', 'Ken'); await pg.click('.sw:nth-child(4) input', force=True); await submit_student(pg); await pg.wait_for_timeout(150)
         await go(pg, "plan")
         R['5_ken_progress_line'] = await pg.text_content('#tab-plan h2')
-        await pg.click('#whoBtn'); R['5_ken_answers'] = await pg.evaluate("(()=>{const l=JSON.parse(localStorage.getItem('hiragana14-students-v1'));const p=JSON.parse(localStorage.getItem('hiragana14-progress-'+l.current)||'{}');let n=0;Object.values(p.stats||{}).forEach(x=>n+=x.c+x.w);return n})()")
+        await open_profile(pg); R['5_ken_answers'] = await pg.evaluate("(()=>{const l=JSON.parse(localStorage.getItem('hiragana14-students-v1'));const p=JSON.parse(localStorage.getItem('hiragana14-progress-'+l.current)||'{}');let n=0;Object.values(p.stats||{}).forEach(x=>n+=x.c+x.w);return n})()")
         await pg.click('#pSwitch'); await pg.wait_for_timeout(150)
         await pg.screenshot(path='/tmp/hira-tests/login_two.png')
         # back to Aya: progress intact; reload keeps her logged in
         await unlock_student(pg, 'Aya'); await pg.wait_for_timeout(150)
         await pg.reload(); await unlock_student(pg); await pg.wait_for_timeout(400)
         R['6_after_reload_who'] = await pg.text_content('#whoBtn .nm')
-        await pg.click('#whoBtn'); R['6_aya_answers'] = await pg.evaluate("(()=>{const l=JSON.parse(localStorage.getItem('hiragana14-students-v1'));const p=JSON.parse(localStorage.getItem('hiragana14-progress-'+l.current)||'{}');let n=0;Object.values(p.stats||{}).forEach(x=>n+=x.c+x.w);return n})()")
+        await open_profile(pg); R['6_aya_answers'] = await pg.evaluate("(()=>{const l=JSON.parse(localStorage.getItem('hiragana14-students-v1'));const p=JSON.parse(localStorage.getItem('hiragana14-progress-'+l.current)||'{}');let n=0;Object.values(p.stats||{}).forEach(x=>n+=x.c+x.w);return n})()")
         # rename with duplicate + success
         await pg.fill('#pfName', 'KEN'); await pg.click('#pfForm button[type=submit]'); R['7_rename_dup'] = await pg.text_content('#pfMsg')
         await pg.fill('#pfName', 'Aya S.'); await pg.click('#pfForm button[type=submit]'); await pg.wait_for_timeout(100)
@@ -81,7 +81,7 @@ async def main():
         ex = json.load(open(path)); R['8_export'] = {'file': d.suggested_filename, 'app': ex['app'], 'name': ex['student']['name'], 'stats_keys': len(ex['progress']['stats']), 'ws': ex['progress']['ws'], 'act_days': len(ex['progress']['act'])}
         # delete Ken (two taps)
         await pg.click('#pSwitch')
-        await unlock_student(pg, 'Ken'); await pg.click('#whoBtn')
+        await unlock_student(pg, 'Ken'); await open_profile(pg)
         await pg.click('#pDelete'); R['9_delete_armed'] = await pg.text_content('#pDelete')
         await pg.click('#pDelete'); await pg.wait_for_timeout(150)
         R['9_after_delete_list'] = await pg.eval_on_selector_all('.student b', 'e=>e.map(x=>x.textContent)')
@@ -89,7 +89,7 @@ async def main():
         # import good file -> Aya S. (2) with same stats
         await prepare_import(pg); await pg.set_input_files('#importFile', path); await pg.wait_for_timeout(300)
         R['10_import'] = [await pg.text_content('#whoBtn .nm')]
-        await pg.click('#whoBtn'); R['10_import'].append(await pg.evaluate("(()=>{const l=JSON.parse(localStorage.getItem('hiragana14-students-v1'));const p=JSON.parse(localStorage.getItem('hiragana14-progress-'+l.current)||'{}');let n=0;Object.values(p.stats||{}).forEach(x=>n+=x.c+x.w);return n})()"))
+        await open_profile(pg); R['10_import'].append(await pg.evaluate("(()=>{const l=JSON.parse(localStorage.getItem('hiragana14-students-v1'));const p=JSON.parse(localStorage.getItem('hiragana14-progress-'+l.current)||'{}');let n=0;Object.values(p.stats||{}).forEach(x=>n+=x.c+x.w);return n})()"))
         await pg.click('#pSwitch')
         # import bad file
         open('/tmp/hira-tests/bad.json', 'w').write('{"hello": 1}')
@@ -98,7 +98,7 @@ async def main():
         # html in a name is shown as text
         await pg.fill('#nsName', '<img src=x onerror=alert(1)>'); await submit_student(pg); await pg.wait_for_timeout(200)
         R['12_xss'] = {'chip_text': await pg.text_content('#whoBtn .nm'), 'img_tags': await pg.evaluate("document.querySelectorAll('img').length"), 'dialogs': dialogs}
-        await pg.click('#whoBtn'); await pg.click('#pSwitch'); await pg.wait_for_timeout(100)
+        await open_profile(pg); await pg.click('#pSwitch'); await pg.wait_for_timeout(100)
         R['12_list'] = await pg.eval_on_selector_all('.student b', 'e=>e.map(x=>x.textContent)')
         R['errors'] = errs
         await pg.close()
