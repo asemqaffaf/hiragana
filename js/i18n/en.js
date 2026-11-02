@@ -278,6 +278,7 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   'pg.lessonAll': 'All {total} lessons',
   'pg.letters': 'Letters',
   'pg.groupSolid': '{v} of {m} solid',
+  'pg.more': 'More details',
   'pg.road': 'Roadmap',
   'pg.roadIntro': 'A step is complete when its bar is full. The steps follow your plan.',
   'rm.days': 'Days {d}',

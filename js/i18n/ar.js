@@ -299,6 +299,7 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   'pg.lessonAll': 'كل الدروس ({total})',
   'pg.letters': 'الأحرف',
   'pg.groupSolid': '{v} من {m} متقنة',
+  'pg.more': 'المزيد من التفاصيل',
   'pg.road': 'خريطة الطريق',
   'pg.roadIntro': 'تكتمل المرحلة عندما يمتلئ شريطها. المراحل تتبع خطتك.',
   'rm.days': 'الأيام {d}',

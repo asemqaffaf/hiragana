@@ -1,4 +1,4 @@
-import { PL, PLEN, dayNumber, focusKana, goalOf, planDaysFor } from '../core/plan.js';
+import { PL, PLEN, dayNumber, goalOf, planDaysFor } from '../core/plan.js';
 import { showTab } from '../core/nav.js';
 import { level, streakOf } from '../core/stats.js';
 import { me, state } from '../core/store.js';
@@ -56,22 +56,12 @@ export function renderProgress() {
         '</button></div>'
       : '') +
     '</section>';
-  /* two numbers that matter */
-  const tiles = [
-    [streak, t('pg.streak', { n: streak })],
-    [lv.solid, t('pg.solid')],
-  ];
-  h +=
-    '<div class="pstat">' +
-    tiles.map((x) => '<div><b>' + x[0] + '</b><span>' + x[1] + '</span></div>').join('') +
-    '</div>';
   /* the lessons: finished ones, today's, and what comes next */
   /** @param {number} dn */
   const lessonRow = (dn) => {
     const pl = PL()[dn - 1],
       doneOn = state.done[dn],
-      st = doneOn ? 'done' : dn === today ? 'now' : dn < today ? 'open' : 'up',
-      fk = focusKana(dn);
+      st = doneOn ? 'done' : dn === today ? 'now' : dn < today ? 'open' : 'up';
     return (
       '<li class="lrow ' +
       st +
@@ -87,9 +77,7 @@ export function renderProgress() {
           : st === 'open'
             ? t('plan.prevOpen')
             : fmt(addDays(state.start, dn - 1))) +
-      '</span></span><span class="kp">' +
-      fk.slice(0, 6).join('') +
-      '</span></li>'
+      '</span></span></li>'
     );
   };
   const finished = Array.from({ length: total }, (_, i) => i + 1).filter((dn) => state.done[dn]);
@@ -99,15 +87,16 @@ export function renderProgress() {
   const rest = Array.from({ length: total }, (_, i) => i + 1).filter((dn) => !near.includes(dn));
   h +=
     '<h3>' + t('pg.lessons') + '</h3><ol class="lessons">' + near.map(lessonRow).join('') + '</ol>';
+  h += '<details class="more fold"><summary>' + t('pg.more') + '</summary>';
   if (rest.length)
     h +=
-      '<details class="more fold"><summary>' +
+      '<section class="pgsub"><h4>' +
       t('pg.lessonAll', { total }) +
-      '</summary><ol class="lessons">' +
+      '</h4><ol class="lessons">' +
       Array.from({ length: total }, (_, i) => i + 1)
         .map(lessonRow)
         .join('') +
-      '</ol></details>';
+      '</ol></section>';
   /* letters, grouped */
   const nCl = Object.keys(state.cl || {}).length;
   /** @type {[string, string[]][]} */
@@ -116,7 +105,7 @@ export function renderProgress() {
     [t('chart.dak'), DAK25],
     [t('chart.yoon'), YOON33],
   ];
-  h += '<details class="more fold"><summary>' + t('pg.letters') + '</summary><div class="groups">';
+  h += '<section class="pgsub"><h4>' + t('pg.letters') + '</h4><div class="groups">';
   groups.forEach(([title, list]) => {
     const so = solidIn(list),
       le = list.filter((k) => level(k) === 'learning').length;
@@ -182,7 +171,7 @@ export function renderProgress() {
         .join('') +
       '</div>';
   });
-  h += '</details>';
+  h += '</section>';
   /* last 28 days */
   const start = addDays(todayISO(), -27);
   /** @type {{d: string, n: number}[]} */
@@ -195,9 +184,9 @@ export function renderProgress() {
   /** @param {number} n */
   const lvl = (n) => (n === 0 ? 0 : n < 10 ? 1 : n < 30 ? 2 : n < 60 ? 3 : 4);
   h +=
-    '<details class="more fold"><summary>' +
+    '<section class="pgsub"><h4>' +
     t('pg.activity') +
-    '</summary><div class="cal" role="img" aria-label="' +
+    '</h4><div class="cal" role="img" aria-label="' +
     t('pg.activity') +
     ': ' +
     t('pg.calSum', { n: cells.filter((c) => c.n).length }) +
@@ -223,10 +212,10 @@ export function renderProgress() {
     fmt(todayISO()) +
     '</span></div><p class="small muted">' +
     t('pg.actLegend') +
-    '</p></details>';
+    '</p></section>';
   /* recent drill rounds */
   const rd = (state.rounds || []).slice(-14);
-  h += '<details class="more fold"><summary>' + t('pg.rounds') + '</summary>';
+  h += '<section class="pgsub"><h4>' + t('pg.rounds') + '</h4>';
   if (!rd.length) h += '<p class="small muted">' + t('pg.noRounds') + '</p>';
   else {
     h +=
@@ -248,7 +237,7 @@ export function renderProgress() {
       '</div>';
     h += '<p class="small muted">' + t('pg.roundsNote') + '</p>';
   }
-  h += '</details>';
+  h += '</section>';
   /* roadmap */
   /** Milestones measured in letters carry their own count; the others count plan days done. */
   /** @type {{k: 'm1' | 'm2' | 'm3' | 'm4' | 'm5' | 'm6', b: number[], v?: number, m?: number, sub?: import('../../types/app').TextKey}[]} */
@@ -275,9 +264,9 @@ export function renderProgress() {
   });
   let cur = ms.findIndex((x) => x.v < x.m);
   h +=
-    '<details class="more fold"><summary>' +
+    '<section class="pgsub"><h4>' +
     t('pg.road') +
-    '</summary><p class="small muted">' +
+    '</h4><p class="small muted">' +
     t('pg.roadIntro') +
     '</p><ol class="road">';
   ms.forEach((x, i) => {
@@ -330,7 +319,8 @@ export function renderProgress() {
       '</span></div><p class="small muted">' +
       t(rs === 'jlpt' ? 'rm.n5D' : `rm.goalD.${rs}`) +
       '</p></div></li>';
-  h += '</ol></details>';
+  h += '</ol></section>';
+  h += '</details>';
   const root = must('#tab-progress');
   const wasOpen = $$('details', root, HTMLDetailsElement).map((d) => d.open),
     same = root.dataset.rendered === '1';

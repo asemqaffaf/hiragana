@@ -60,7 +60,7 @@ nav.tabs button{font-size:12px}
 /* lessons: finished ones first, then today and what comes next */
 .lessons{list-style:none;margin:8px 0 0;padding:0;border-radius:18px;background:var(--surface);overflow:hidden}
 .fold .lessons{margin-top:10px}
-.lrow{display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:12px;padding:12px 14px;min-height:56px}
+.lrow{display:grid;grid-template-columns:32px 1fr;align-items:center;gap:12px;padding:12px 14px;min-height:56px}
 .lrow + .lrow{border-top:.5px solid var(--grid)}
 .ldot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:14px;font-weight:700;border:2px solid var(--grid);color:var(--pencil)}
 .ldot svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
@@ -80,3 +80,6 @@ nav.tabs button{font-size:12px}
 .fold .groups{margin-top:12px}
 .fold .mapt{margin:18px 0 2px;font-size:15px}
 .fold .cal,.fold .rounds{margin-top:12px}
+.pgsub{margin-top:22px}
+.pgsub:first-of-type{margin-top:12px}
+.pgsub > h4{margin:0 0 6px;font-size:17px}
