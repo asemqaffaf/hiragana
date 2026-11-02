@@ -1,6 +1,18 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { cpSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { appsScriptFixture } from './apps-script-fixture.mjs';
+
+// The deployed site gets its sync address from a secret, so the repo's cloud-config.js is empty.
+// The client tests run against a copy of the app that has a test address.
+const copy = mkdtempSync(join(tmpdir(), 'hiragana-'));
+cpSync(new URL('../js', import.meta.url), join(copy, 'js'), { recursive: true });
+writeFileSync(join(copy, 'package.json'), '{"type":"module"}');
+writeFileSync(join(copy, 'js/core/cloud-config.js'), "export const SYNC_URL = 'https://script.google.test/macros/s/TEST/exec';\n");
+const load = (path) => import(pathToFileURL(join(copy, 'js', path)).href);
 
 const payload = (id = 'learner', secret = 'a-secure-test-credential') => ({
   id, secret, student: { id, name: 'Learner', av: { t: 'photo', img: 'private-photo' } }, progress: { v: 1, stats: {} },
@@ -76,9 +88,9 @@ globalThis.localStorage = {
   removeItem: (key) => values.delete(key),
 };
 Object.defineProperty(globalThis, 'navigator', { value: { onLine: true }, configurable: true });
-const store = await import('../js/core/store.js');
-const cloud = await import('../js/core/cloud.js');
-const passwords = await import('../js/core/passwords.js');
+const store = await load('core/store.js');
+const cloud = await load('core/cloud.js');
+const passwords = await load('core/passwords.js');
 const api = appsScriptFixture();
 let intercept;
 const requests = [];
