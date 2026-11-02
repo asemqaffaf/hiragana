@@ -1,4 +1,4 @@
-| [**English**](README.en.md) | **日本語** | [**العربية**](README.ar.md) |
+| 🇯🇵 **日本語** | [🇬🇧 **English**](README.en.md) | [🇸🇦 **العربية**](README.ar.md) |
 | :---: | :---: | :---: |
 
 # ひらがな Hiragana in 14 days
