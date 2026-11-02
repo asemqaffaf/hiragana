@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 """Screen rendering must not award progress or save a quiz round."""
 import asyncio
 import json
@@ -16,10 +17,10 @@ async def main():
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         await page.emulate_media(reduced_motion='reduce')
-        await page.goto(BASE + '#test')
+        await disable_cloud(page); await page.goto(BASE + '#test')
         await page.click('[data-lang="en"]')
         await page.fill('#nsName', 'Learner')
-        await page.click('#newStudent button[type=submit]')
+        await submit_student(page)
         result = await page.evaluate('''async () => {
           const {state, restoreProgress} = await import('./js/core/store.js');
           const {ui} = await import('./js/core/ui-state.js');

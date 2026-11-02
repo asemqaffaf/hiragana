@@ -4,13 +4,14 @@ import './ui/home-button.js';
 import './ui/drag-select.js';
 import { actx, htmlAudio, htmlFails, htmlOK, playTok } from './core/audio.js';
 import { showTab } from './core/nav.js';
-import { me, state, students, subscribeProgress } from './core/store.js';
+import { clearCurrentStudent, state, students, subscribeProgress } from './core/store.js';
 import { registerPages } from './core/pages.js';
+import { startCloudSync } from './core/cloud.js';
 import { recordLessonReading } from './core/lesson.js';
 import { ui } from './core/ui-state.js';
 import { KVG } from './data/kvg.js';
 import { checkBadges, initTracking } from './features/gamify.js';
-import { login, showLogin } from './features/login.js';
+import { showLogin } from './features/login.js';
 import { renderChart } from './features/chart.js';
 import { renderDaily, renderPhrases } from './features/daily.js';
 import { renderDrill } from './features/drill.js';
@@ -42,9 +43,9 @@ function boot() {
   });
   subscribeProgress(() => checkBadges(false));
   initTracking();
-  const p = me();
-  if (p) login(p.id);
-  else showLogin();
+  startCloudSync();
+  clearCurrentStudent();
+  showLogin();
 }
 boot();
 if (/[#&]test\b/.test(location.hash))

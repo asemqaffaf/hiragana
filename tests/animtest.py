@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -9,9 +10,9 @@ async def main():
         R = {}; errs = []
         for lang, dev in [('en','iPhone 13'),('ar','iPhone SE')]:
             ctx = await b.new_context(**p.devices[dev], reduced_motion='no-preference'); pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
-            await pg.goto(BASE + '#test'); await pg.wait_for_timeout(400)
+            await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(400)
             # signed out: tapping the title must do nothing
-            await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName','M'); await pg.tap('#newStudent button[type=submit]'); await pg.wait_for_timeout(1200)
+            await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName','M'); await submit_student(pg); await pg.wait_for_timeout(1200)
             # mark a few letters done so progress has numbers
             await pg.evaluate("window.__hira && 0")
             await pg.tap('nav [data-nav="progress"]'); await pg.wait_for_timeout(120)
@@ -41,14 +42,14 @@ async def main():
             # reduced motion: no animation classes
             await ctx.close()
             ctx = await b.new_context(**p.devices[dev], reduced_motion='reduce'); pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
-            await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
-            await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName','R'); await pg.tap('#newStudent button[type=submit]'); await pg.wait_for_timeout(300)
+            await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+            await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName','R'); await submit_student(pg); await pg.wait_for_timeout(300)
             await pg.tap('nav [data-nav="progress"]'); await pg.wait_for_timeout(100)
             R[lang+'_reduced_enter'] = await pg.evaluate("document.querySelector('#tab-progress').className")
             R[lang+'_reduced_anim'] = await pg.evaluate("getComputedStyle(document.querySelector('.steps li.now .snum')||document.body).animationName")
             await ctx.close()
         # signed-out title tap
-        ctx = await b.new_context(**p.devices['iPhone 13']); pg = await ctx.new_page(); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+        ctx = await b.new_context(**p.devices['iPhone 13']); pg = await ctx.new_page(); await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
         R['signedout_home_pe'] = await pg.evaluate("getComputedStyle(document.querySelector('#homeBtn')).pointerEvents")
         R['errors'] = errs
         print(json.dumps(R, ensure_ascii=False, indent=1)); await b.close()

@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 """Prove that new locales work without modifying screen code."""
 import asyncio
 import json
@@ -37,7 +38,7 @@ async def main():
         source = re.sub(r'export const LOCALES = \[[^\]]*\];', lambda _: definitions + 'export const LOCALES = [english, arabic, french, rtl];', source)
         await page.route('**/js/i18n/locales.js', lambda route: route.fulfill(body=source, content_type='text/javascript'))
 
-        await page.goto(BASE + '#test')
+        await disable_cloud(page); await page.goto(BASE + '#test')
         await page.locator('.langstep').wait_for()
         assert await page.locator('[data-lang]').count() == 4
         assert await page.locator('html').get_attribute('lang') == 'fr'
@@ -45,7 +46,7 @@ async def main():
         await page.locator('#nsName').wait_for()
         assert await page.locator('#login h2').inner_text() == 'Créer un profil'
         await page.fill('#nsName', 'Camille')
-        await page.click('#newStudent button[type=submit]')
+        await submit_student(page)
         assert await page.locator('#tab-plan .dtitle').inner_text() == 'Première leçon'
         assert await page.locator('nav [data-nav="home"] .tl').inner_text() == 'Aujourd’hui'
         await page.click('[data-step="words"]')
@@ -58,6 +59,7 @@ async def main():
         await page.click('#pfForm button[type=submit]')
         assert await page.locator('html').get_attribute('dir') == 'rtl'
         await page.reload()
+        await unlock_student(page)
         await page.locator('#whoBtn').wait_for()
         assert await page.locator('html').get_attribute('lang') == 'he'
         assert await page.locator('html').get_attribute('dir') == 'rtl'
@@ -68,7 +70,7 @@ async def main():
         exported = json.loads(Path(await (await pending.value).path()).read_text())
         assert exported['student']['lang'] == 'he'
         await page.click('#pSwitch')
-        await page.set_input_files('#importFile', {'name': 'student.json', 'mimeType': 'application/json', 'buffer': json.dumps(exported).encode()})
+        await prepare_import(page); await page.set_input_files('#importFile', {'name': 'student.json', 'mimeType': 'application/json', 'buffer': json.dumps(exported).encode()})
         await page.locator('#whoBtn').wait_for()
         assert await page.locator('html').get_attribute('lang') == 'he'
         assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth')

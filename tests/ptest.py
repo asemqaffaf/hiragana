@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -23,14 +24,14 @@ async def main():
         pg.on('dialog', lambda d: (dialogs.append(d.message), asyncio.ensure_future(d.dismiss())))
         await pg.emulate_media(reduced_motion='reduce')
         R = {}
-        await pg.goto(URL); await pg.wait_for_timeout(400)
+        await disable_cloud(pg); await pg.goto(URL); await pg.wait_for_timeout(400)
         R['0_language_step'] = [await pg.text_content('#login h2'), await pg.locator('[data-lang]').count()]
         await pg.click('[data-lang="en"]')
         R['1_first_screen'] = await pg.text_content('#login h2')
         R['1_nav_visible'] = await pg.is_visible('nav.tabs'); R['1_chip_visible'] = await pg.is_visible('#whoBtn')
         await pg.screenshot(path='/tmp/hira-tests/login_empty.png')
-        await pg.click('#newStudent button[type=submit]'); R['2_empty_name'] = await pg.text_content('#nsMsg')
-        await pg.fill('#nsName', '  Aya  '); await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(200)
+        await submit_student(pg); R['2_empty_name'] = await pg.text_content('#nsMsg')
+        await pg.fill('#nsName', '  Aya  '); await submit_student(pg); await pg.wait_for_timeout(200)
         R['2_after_create'] = [await pg.text_content('#tab-plan h2'), await pg.text_content('#whoBtn .nm'), await pg.is_visible('nav.tabs')]
         # drill 10 in read mode
         await go(pg, "drill"); await pg.click('[data-len="10"]'); await pg.click('#startDrill')
@@ -57,16 +58,17 @@ async def main():
         # switch, add second student, duplicate check
         await pg.click('#pSwitch'); await pg.wait_for_timeout(150)
         R['5_login_list'] = await pg.eval_on_selector_all('.student', 'e=>e.map(x=>x.innerText.replace(/\\n/g," | "))')
-        await pg.fill('#nsName', 'aya'); await pg.click('#newStudent button[type=submit]'); R['5_duplicate'] = await pg.text_content('#nsMsg')
-        await pg.fill('#nsName', 'Ken'); await pg.click('.sw:nth-child(4) input', force=True); await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(150)
+        await pg.click('#login [data-mode="new"]')
+        await pg.fill('#nsName', 'aya'); await submit_student(pg); R['5_duplicate'] = await pg.text_content('#nsMsg')
+        await pg.fill('#nsName', 'Ken'); await pg.click('.sw:nth-child(4) input', force=True); await submit_student(pg); await pg.wait_for_timeout(150)
         await go(pg, "plan")
         R['5_ken_progress_line'] = await pg.text_content('#tab-plan h2')
         await pg.click('#whoBtn'); R['5_ken_answers'] = await pg.evaluate("(()=>{const l=JSON.parse(localStorage.getItem('hiragana14-students-v1'));const p=JSON.parse(localStorage.getItem('hiragana14-progress-'+l.current)||'{}');let n=0;Object.values(p.stats||{}).forEach(x=>n+=x.c+x.w);return n})()")
         await pg.click('#pSwitch'); await pg.wait_for_timeout(150)
         await pg.screenshot(path='/tmp/hira-tests/login_two.png')
         # back to Aya: progress intact; reload keeps her logged in
-        await pg.click('.student:has-text("Aya")'); await pg.wait_for_timeout(150)
-        await pg.reload(); await pg.wait_for_timeout(400)
+        await unlock_student(pg, 'Aya'); await pg.wait_for_timeout(150)
+        await pg.reload(); await unlock_student(pg); await pg.wait_for_timeout(400)
         R['6_after_reload_who'] = await pg.text_content('#whoBtn .nm')
         await pg.click('#whoBtn'); R['6_aya_answers'] = await pg.evaluate("(()=>{const l=JSON.parse(localStorage.getItem('hiragana14-students-v1'));const p=JSON.parse(localStorage.getItem('hiragana14-progress-'+l.current)||'{}');let n=0;Object.values(p.stats||{}).forEach(x=>n+=x.c+x.w);return n})()")
         # rename with duplicate + success
@@ -79,22 +81,22 @@ async def main():
         ex = json.load(open(path)); R['8_export'] = {'file': d.suggested_filename, 'app': ex['app'], 'name': ex['student']['name'], 'stats_keys': len(ex['progress']['stats']), 'ws': ex['progress']['ws'], 'act_days': len(ex['progress']['act'])}
         # delete Ken (two taps)
         await pg.click('#pSwitch')
-        await pg.click('.student:has-text("Ken")'); await pg.click('#whoBtn')
+        await unlock_student(pg, 'Ken'); await pg.click('#whoBtn')
         await pg.click('#pDelete'); R['9_delete_armed'] = await pg.text_content('#pDelete')
         await pg.click('#pDelete'); await pg.wait_for_timeout(150)
         R['9_after_delete_list'] = await pg.eval_on_selector_all('.student b', 'e=>e.map(x=>x.textContent)')
         R['9_ls_keys'] = await pg.evaluate("Object.keys(localStorage).sort()")
         # import good file -> Aya S. (2) with same stats
-        await pg.set_input_files('#importFile', path); await pg.wait_for_timeout(300)
+        await prepare_import(pg); await pg.set_input_files('#importFile', path); await pg.wait_for_timeout(300)
         R['10_import'] = [await pg.text_content('#whoBtn .nm')]
         await pg.click('#whoBtn'); R['10_import'].append(await pg.evaluate("(()=>{const l=JSON.parse(localStorage.getItem('hiragana14-students-v1'));const p=JSON.parse(localStorage.getItem('hiragana14-progress-'+l.current)||'{}');let n=0;Object.values(p.stats||{}).forEach(x=>n+=x.c+x.w);return n})()"))
         await pg.click('#pSwitch')
         # import bad file
         open('/tmp/hira-tests/bad.json', 'w').write('{"hello": 1}')
-        await pg.set_input_files('#importFile', '/tmp/hira-tests/bad.json'); await pg.wait_for_timeout(300)
+        await prepare_import(pg); await pg.set_input_files('#importFile', '/tmp/hira-tests/bad.json'); await pg.wait_for_timeout(300)
         R['11_bad_import'] = await pg.text_content('#login .fmsg')
         # html in a name is shown as text
-        await pg.fill('#nsName', '<img src=x onerror=alert(1)>'); await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(200)
+        await pg.fill('#nsName', '<img src=x onerror=alert(1)>'); await submit_student(pg); await pg.wait_for_timeout(200)
         R['12_xss'] = {'chip_text': await pg.text_content('#whoBtn .nm'), 'img_tags': await pg.evaluate("document.querySelectorAll('img').length"), 'dialogs': dialogs}
         await pg.click('#whoBtn'); await pg.click('#pSwitch'); await pg.wait_for_timeout(100)
         R['12_list'] = await pg.eval_on_selector_all('.student b', 'e=>e.map(x=>x.textContent)')
@@ -104,10 +106,10 @@ async def main():
         pg2 = await ctx.new_page(); e2 = []
         pg2.on('pageerror', lambda e: e2.append(str(e)))
         await pg2.add_init_script("Object.defineProperty(window, 'localStorage', {get(){ throw new DOMException('blocked', 'SecurityError'); }});")
-        await pg2.goto(URL); await pg2.wait_for_timeout(300)
+        await disable_cloud(pg2); await pg2.goto(URL); await pg2.wait_for_timeout(300)
         await pg2.click('[data-lang="en"]')
         R['13_blocked_warning'] = await pg2.text_content('#login .note.warn')
-        await pg2.fill('#nsName', 'Guest'); await pg2.click('#newStudent button[type=submit]'); await pg2.wait_for_timeout(200)
+        await pg2.fill('#nsName', 'Guest'); await submit_student(pg2); await pg2.wait_for_timeout(200)
         R['13_blocked_can_study'] = await pg2.text_content('#tab-plan h2'); R['13_errors'] = e2
         print(json.dumps(R, ensure_ascii=False, indent=1))
         await b.close()

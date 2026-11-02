@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -27,13 +28,13 @@ async def main():
         await pg.add_init_script("window.__plays=[];const op=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){const el=this;const r=op.call(this);const i=window.__plays.push('pending')-1;r.then(()=>setTimeout(()=>window.__plays[i]='ok '+el.src.split('/').slice(-2).join('/')+' dur='+(el.duration||0).toFixed(2),400)).catch(e=>window.__plays[i]='err:'+e.name);return r;};")
         await pg.emulate_media(reduced_motion='reduce')
         R = {}
-        await pg.goto(URL + '#test'); await pg.wait_for_timeout(400)
+        await disable_cloud(pg); await pg.goto(URL + '#test'); await pg.wait_for_timeout(400)
         R['en_title'] = await pg.text_content('#login h2')
         await pg.click('[data-lang="ar"]'); await pg.wait_for_timeout(150)
         R['ar_dir'] = await pg.evaluate("[document.documentElement.lang, document.documentElement.dir, document.title]")
         R['ar_login_h2'] = await pg.text_content('#login h2')
         await pg.screenshot(path='shots/ar_login.png')
-        await pg.fill('#nsName', 'عاصم'); await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(250)
+        await pg.fill('#nsName', 'عاصم'); await submit_student(pg); await pg.wait_for_timeout(250)
         R['ar_plan'] = [await pg.text_content('#tab-plan h2'), await pg.text_content('#tab-plan .date'), await pg.text_content('#tab-plan .dtitle')]
         R['ar_nav'] = await pg.eval_on_selector_all('nav.tabs .tl', 'e=>e.map(x=>x.textContent)')
         R['ar_latin_plan'] = await visible_latin(pg)

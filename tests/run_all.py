@@ -15,6 +15,7 @@ from architecture import check_architecture
 
 ROOT = Path(__file__).resolve().parent.parent
 SUITES = (
+    'cloudtest',
     'localetest', 'refactortest', 'swipetest', 'tallsheet', 'locktest', 'taptest',
     'phrasetap', 'phfilter', 'wordsfilter', 'goals', 'dragselect', 'barscroll',
     'animtest', 'lessontest', 'ptest', 'pftest', 'artest', 'cltest', 'gregress',
@@ -85,7 +86,7 @@ def main():
     os.chdir(ROOT)
     check_architecture()
     check_types()
-    subprocess.run(['node', '--test', 'tests/core.test.mjs', 'tests/i18n.test.mjs'], check=True)
+    subprocess.run(['node', '--test', 'tests/core.test.mjs', 'tests/i18n.test.mjs', 'tests/cloud.test.mjs'], check=True)
     subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', 'tests', '-p', '*_test.py'], check=True)
     subprocess.run(['node', 'scripts/check-locales.mjs'], check=True)
     output = Path(os.environ.get('HIRA_TEST_OUTPUT', str(Path(tempfile.gettempdir()) / 'hira-tests')))

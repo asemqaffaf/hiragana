@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -14,8 +15,8 @@ async def main():
         for name in ['iPhone SE landscape', 'iPhone 13 landscape']:
             ctx = await b.new_context(**p.devices[name]); pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
             cdp = await ctx.new_cdp_session(pg)
-            await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
-            await pg.tap('[data-lang="en"]'); await pg.fill('#nsName','M'); await pg.tap('#newStudent button[type=submit]'); await pg.wait_for_timeout(500)
+            await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+            await pg.tap('[data-lang="en"]'); await pg.fill('#nsName','M'); await submit_student(pg); await pg.wait_for_timeout(500)
             await pg.tap('nav [data-nav="letters"]'); await pg.wait_for_timeout(1300)
             await pg.locator('#tab-chart [data-open]').nth(8).tap(); await pg.wait_for_timeout(700)
             m = lambda: pg.evaluate("(()=>{const s=document.querySelector('.sheet');return {scrollY:Math.round(scrollY),sheetTop:Math.round(s.scrollTop),canScroll:s.scrollHeight>s.clientHeight+1,open:true,vh:innerHeight}})()")

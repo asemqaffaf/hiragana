@@ -60,7 +60,7 @@ fieldset{min-inline-size:0;min-width:0;max-width:100%;box-sizing:border-box}
 :root[data-theme="dark"] .tint .tp{--c:var(--cd)!important;--s:var(--sd)!important;--g:var(--gd)!important}
 .tint:has(input:checked){border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft);font-weight:700}
 .tint:has(input:focus-visible){outline:3px solid var(--jade);outline-offset:2px}
-*,*::before,*::after{box-sizing:inherit}
+*,*::before,*::after{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));background:var(--paper)}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -97,6 +97,13 @@ html,body{overscroll-behavior-x:none}
 .student .av{width:44px;height:44px;font-size:20px}
 .student .sn{display:flex;flex-direction:column;min-width:0}
 .student b{font-size:18px;overflow-wrap:anywhere}
+.paths{display:flex;flex-direction:column;gap:12px;max-width:420px;margin:16px 0}
+.pathcard{display:flex;flex-direction:column;gap:4px;padding:18px 20px;border:2px solid var(--line);border-radius:16px;background:var(--surface);color:var(--ink);font:inherit;text-align:start;cursor:pointer}
+.pathcard b{font-size:1.15rem}
+.pathcard span{color:var(--pencil)}
+.pathcard:active{transform:translateY(1px)}
+.pathcard:hover,.pathcard:focus-visible{border-color:var(--jade)}
+.swap{margin-top:20px}
 .sform{max-width:420px}
 .sform .field input{max-width:none;width:100%}
 .swatches{border:0;padding:0;margin:14px 0 0;display:flex;gap:10px;flex-wrap:wrap}

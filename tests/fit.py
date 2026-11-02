@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -19,8 +20,8 @@ async def main():
         for lang in ['en', 'ar']:
             for vw, vh in [(390, 844), (375, 667), (1280, 800)]:
                 pg = await b.new_page(viewport={'width': vw, 'height': vh}); await pg.emulate_media(reduced_motion='reduce')
-                await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
-                await pg.click(f'[data-lang="{lang}"]'); await pg.fill('#nsName', 'X'); await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(200)
+                await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+                await pg.click(f'[data-lang="{lang}"]'); await pg.fill('#nsName', 'X'); await submit_student(pg); await pg.wait_for_timeout(200)
                 await go(pg, "write"); await pg.wait_for_timeout(300)
                 t = await pg.evaluate("window.__hira.strokeTemplates('あ').pts"); bb = await pg.locator('#wpad').bounding_box()
                 for s in t:

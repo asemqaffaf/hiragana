@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -8,8 +9,8 @@ async def main():
         b = await p.chromium.launch(); R = {}
         for lang, dev in [('en','iPhone 13'),('ar','iPhone SE')]:
             ctx = await b.new_context(**p.devices[dev]); pg = await ctx.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append('console:'+m.text) if m.type in ('error','warning') else None)
-            await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
-            await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName','A'); await pg.tap('#newStudent button[type=submit]'); await pg.wait_for_timeout(600)
+            await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+            await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName','A'); await submit_student(pg); await pg.wait_for_timeout(600)
             aud = await pg.evaluate("import('./js/data/audio-manifest.js').then(m => m.AUD)")
             await pg.tap('nav [data-nav="progress"]'); await pg.wait_for_timeout(1500)
             letters = await pg.evaluate("[...document.querySelectorAll('#tab-progress .cmap [data-open]')].map(e=>e.dataset.open)")

@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -10,8 +11,8 @@ async def main():
         for lang in ['en', 'ar']:
             pg = await b.new_page(viewport={'width': 390, 'height': 844}); pg.on('pageerror', lambda e: errs.append(str(e)))
             pg.on('response', lambda r: bad.append(r.url) if '/audio/' in r.url and r.status != 200 else None)
-            await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
-            await pg.click(f'[data-lang="{lang}"]'); await pg.fill('#nsName', 'P'); await pg.click('#newStudent button[type=submit]'); await pg.wait_for_timeout(250)
+            await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
+            await pg.click(f'[data-lang="{lang}"]'); await pg.fill('#nsName', 'P'); await submit_student(pg); await pg.wait_for_timeout(250)
             await pg.click('nav [data-nav="practice"]'); await pg.wait_for_timeout(100)
             R[lang + '_subnav'] = await pg.eval_on_selector_all('#subnav [data-sub]', 'e=>e.map(x=>x.textContent)')
             await pg.click('#subnav [data-sub="phrases"]'); await pg.wait_for_timeout(150)

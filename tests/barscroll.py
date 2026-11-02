@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 """A finger on the tab bar never scrolls the page; a vertical swipe on the page itself still does."""
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
@@ -7,9 +8,9 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
         ctx = await b.new_context(**p.devices['iPhone 13']); pg = await ctx.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
-        await pg.goto(BASE + '#test'); await pg.wait_for_timeout(400)
+        await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(400)
         await pg.tap('[data-lang="en"]')
-        await pg.fill('#nsName','A'); await pg.tap('#newStudent button[type=submit]'); await pg.wait_for_timeout(700)
+        await pg.fill('#nsName','A'); await submit_student(pg); await pg.wait_for_timeout(700)
         await pg.tap('nav [data-nav="progress"]'); await pg.wait_for_timeout(1200)
         cdp = await ctx.new_cdp_session(pg)
         async def t(k,x,y): await cdp.send('Input.dispatchTouchEvent',{'type':k,'touchPoints':([] if k=='touchEnd' else [{'x':x,'y':y,'id':1}])})

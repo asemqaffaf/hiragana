@@ -1,3 +1,4 @@
+from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
 """Press and drag on the tab bar (the glass lens) and the segmented controls: the item under the finger is chosen on release; while the finger is down nothing is chosen yet."""
 import os, asyncio, json
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
@@ -19,8 +20,8 @@ async def main():
         b = await p.chromium.launch(); R = {}; errs = []
         for lang, dev in (('en', 'iPhone 13'), ('ar', 'iPhone SE')):
             ctx = await b.new_context(**p.devices[dev]); pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
-            await pg.goto(BASE + '#test'); await pg.wait_for_timeout(400)
-            await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName', 'M'); await pg.tap('#newStudent button[type=submit]'); await pg.wait_for_timeout(700)
+            await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(400)
+            await pg.tap(f'[data-lang="{lang}"]'); await pg.fill('#nsName', 'M'); await submit_student(pg); await pg.wait_for_timeout(700)
             cdp = await ctx.new_cdp_session(pg)
             c = lambda n: pg.evaluate(f"(()=>{{const r=document.querySelector('nav.tabs [data-nav=\"{n}\"]').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]}})()")
             home, letters, practice, progress = [await c(n) for n in ('home', 'letters', 'practice', 'progress')]
