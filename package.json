@@ -4,8 +4,10 @@
   "type": "module",
   "description": "Development tooling only. The app itself has no build step and no runtime dependencies.",
   "scripts": {
-    "typecheck": "tsc -p jsconfig.json",
-    "test:core": "node --test tests/core.test.mjs tests/i18n.test.mjs tests/cloud.test.mjs"
+    "test": "npm run test:core && npm run test:arch",
+    "test:arch": "python3 tests/architecture.py",
+    "test:core": "node --test tests/core.test.mjs tests/i18n.test.mjs tests/cloud.test.mjs",
+    "typecheck": "tsc -p jsconfig.json"
   },
   "devDependencies": {
     "typescript": "^5.9.0"
