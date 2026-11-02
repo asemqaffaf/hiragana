@@ -42,10 +42,12 @@
 :root[data-theme="dark"] .seg button[aria-pressed="true"]{background:rgba(255,255,255,.18);box-shadow:none}
 
 /* tab bar: a floating glass capsule; the selected tab sits on a lighter pill */
-nav.tabs{--gap:max(10px,calc(env(safe-area-inset-bottom,0px) - 12px));left:max(12px,calc((100vw - 696px) / 2));right:max(12px,calc((100vw - 696px) / 2));bottom:var(--gap);padding:4px;border:0;border-radius:34px;background:var(--glass);box-shadow:var(--glass-shadow),inset 0 0 0 1px var(--glass-edge),inset 0 1px 0 var(--glass-hi)}
-nav.tabs button{min-height:54px;border-radius:30px}
+nav.tabs{--gap:max(10px,calc(env(safe-area-inset-bottom,0px) - 12px));left:max(21px,calc((100vw - 680px) / 2));right:max(21px,calc((100vw - 680px) / 2));bottom:var(--gap);padding:4px;border:0;border-radius:34px;background:var(--glass);box-shadow:var(--glass-shadow),inset 0 0 0 1px var(--glass-edge),inset 0 1px 0 var(--glass-hi)}
+/* iOS 26 tab bar: 10 to 11pt medium labels under 25pt symbols, the selected tab tinted inside a grey glass pill */
+nav.tabs button{min-height:54px;border-radius:30px;font-size:11px;font-weight:500;letter-spacing:.01em}
+nav.tabs button svg{width:25px;height:25px}
 nav.tabs button svg,nav.tabs button .g{color:var(--pencil)}
-nav.tabs button[aria-selected="true"]{background:var(--gray-fill);color:var(--jade);font-weight:700}
+nav.tabs button[aria-selected="true"]{background:var(--gray-fill);color:var(--jade);font-weight:600}
 nav.tabs button[aria-selected="true"] svg{color:var(--jade)}
 nav.tabs button[aria-selected="true"]::before{display:none}
 .wrap{padding-bottom:calc(var(--gap0) + 62px + 64px)}
