@@ -77,3 +77,6 @@ nav.tabs button{font-size:12px}
 .stk .lv-learning{background:var(--s2)}
 .stk .lv-solid{background:var(--s4)}
 
+.fold .groups{margin-top:12px}
+.fold .mapt{margin:18px 0 2px;font-size:15px}
+.fold .cal,.fold .rounds{margin-top:12px}

@@ -37,9 +37,7 @@ export function renderProgress() {
   let h = '<h2>' + t('tab.progress') + '</h2>';
   /* where you are: one card with the day, the lessons finished, and the way to the next step */
   h +=
-    '<section class="pghero"><p class="small muted">' +
-    t('pg.intro', { name: esc(p.name) }) +
-    '</p><p class="pbig">' +
+    '<section class="pghero"><p class="pbig">' +
     (today < 1
       ? t('plan.starts', { date: fmt(state.start) })
       : today > total
@@ -53,15 +51,15 @@ export function renderProgress() {
     t('pg.lessonsDone', { v: doneDays, m: total }) +
     '</p>' +
     (today >= 1 && today <= total
-      ? '<div class="btnrow"><button class="btn primary" id="pgToday">' + t('pg.goToday') + '</button></div>'
+      ? '<div class="btnrow"><button class="btn primary" id="pgToday">' +
+        t('pg.goToday') +
+        '</button></div>'
       : '') +
     '</section>';
-  /* four numbers that matter */
+  /* two numbers that matter */
   const tiles = [
     [streak, t('pg.streak', { n: streak })],
-    [days, t('pg.days', { n: days })],
     [lv.solid, t('pg.solid')],
-    [ans ? Math.round((right / ans) * 100) + '%' : '-', t('pg.accuracy')],
   ];
   h +=
     '<div class="pstat">' +
@@ -94,17 +92,21 @@ export function renderProgress() {
       '</span></li>'
     );
   };
+  const finished = Array.from({ length: total }, (_, i) => i + 1).filter((dn) => state.done[dn]);
   const near = Array.from({ length: total }, (_, i) => i + 1).filter(
-    (dn) => state.done[dn] || (dn >= today - 1 && dn <= today + 1),
+    (dn) => finished.slice(-2).includes(dn) || dn === today,
   );
   const rest = Array.from({ length: total }, (_, i) => i + 1).filter((dn) => !near.includes(dn));
-  h += '<h3>' + t('pg.lessons') + '</h3><ol class="lessons">' + near.map(lessonRow).join('') + '</ol>';
+  h +=
+    '<h3>' + t('pg.lessons') + '</h3><ol class="lessons">' + near.map(lessonRow).join('') + '</ol>';
   if (rest.length)
     h +=
       '<details class="more fold"><summary>' +
       t('pg.lessonAll', { total }) +
       '</summary><ol class="lessons">' +
-      Array.from({ length: total }, (_, i) => i + 1).map(lessonRow).join('') +
+      Array.from({ length: total }, (_, i) => i + 1)
+        .map(lessonRow)
+        .join('') +
       '</ol></details>';
   /* letters, grouped */
   const nCl = Object.keys(state.cl || {}).length;
@@ -114,7 +116,7 @@ export function renderProgress() {
     [t('chart.dak'), DAK25],
     [t('chart.yoon'), YOON33],
   ];
-  h += '<h3>' + t('pg.letters') + '</h3><div class="groups">';
+  h += '<details class="more fold"><summary>' + t('pg.letters') + '</summary><div class="groups">';
   groups.forEach(([title, list]) => {
     const so = solidIn(list),
       le = list.filter((k) => level(k) === 'learning').length;
@@ -139,9 +141,9 @@ export function renderProgress() {
     '</div>';
   /* every character, by mastery */
   h +=
-    '<details class="more fold"><summary>' +
+    '<h4 class="mapt">' +
     t('pg.map') +
-    '</summary><p class="small muted">' +
+    '</h4><p class="small muted">' +
     t('pg.mapIntro') +
     '</p><div class="legend"><span><i class="lv-cl"></i>' +
     t('cl.done') +
@@ -193,9 +195,9 @@ export function renderProgress() {
   /** @param {number} n */
   const lvl = (n) => (n === 0 ? 0 : n < 10 ? 1 : n < 30 ? 2 : n < 60 ? 3 : 4);
   h +=
-    '<h3>' +
+    '<details class="more fold"><summary>' +
     t('pg.activity') +
-    '</h3><div class="cal" role="img" aria-label="' +
+    '</summary><div class="cal" role="img" aria-label="' +
     t('pg.activity') +
     ': ' +
     t('pg.calSum', { n: cells.filter((c) => c.n).length }) +
@@ -221,10 +223,10 @@ export function renderProgress() {
     fmt(todayISO()) +
     '</span></div><p class="small muted">' +
     t('pg.actLegend') +
-    '</p>';
+    '</p></details>';
   /* recent drill rounds */
   const rd = (state.rounds || []).slice(-14);
-  h += '<h3>' + t('pg.rounds') + '</h3>';
+  h += '<details class="more fold"><summary>' + t('pg.rounds') + '</summary>';
   if (!rd.length) h += '<p class="small muted">' + t('pg.noRounds') + '</p>';
   else {
     h +=
@@ -246,6 +248,7 @@ export function renderProgress() {
       '</div>';
     h += '<p class="small muted">' + t('pg.roundsNote') + '</p>';
   }
+  h += '</details>';
   /* roadmap */
   /** Milestones measured in letters carry their own count; the others count plan days done. */
   /** @type {{k: 'm1' | 'm2' | 'm3' | 'm4' | 'm5' | 'm6', b: number[], v?: number, m?: number, sub?: import('../../types/app').TextKey}[]} */
@@ -262,7 +265,13 @@ export function renderProgress() {
     const d = pd.length > 1 ? pd[0] + '-' + pd[pd.length - 1] : String(pd[0]);
     if (x.v !== undefined && x.m !== undefined && x.sub)
       return { k: x.k, d, v: x.v, m: x.m, sub: x.sub };
-    return { k: x.k, d, v: pd.filter((dn) => state.done[dn]).length, m: pd.length, sub: /** @type {import('../../types/app').TextKey} */ ('rm.daysDone') };
+    return {
+      k: x.k,
+      d,
+      v: pd.filter((dn) => state.done[dn]).length,
+      m: pd.length,
+      sub: /** @type {import('../../types/app').TextKey} */ ('rm.daysDone'),
+    };
   });
   let cur = ms.findIndex((x) => x.v < x.m);
   h +=
