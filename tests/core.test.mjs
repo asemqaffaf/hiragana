@@ -167,3 +167,11 @@ test('sign-out, profile removal and local password changes forget remembered sig
   store.removeStudent(first.id);
   assert.equal(remembered.rememberedStudent(), null);
 });
+
+test('theme defaults to slate (Grey) and TINTS order switches Grey and Sage', () => {
+  assert.equal(store.TINTS[0], 'slate');
+  assert.equal(store.TINTS[5], 'sage');
+  assert.deepEqual(store.cleanTheme({}), { mode: 'system', tint: 'slate' });
+  assert.deepEqual(store.cleanTheme({ tint: 'sage' }), { mode: 'system', tint: 'sage' });
+  assert.deepEqual(store.cleanTheme({ tint: 'unknown' }), { mode: 'system', tint: 'slate' });
+});
