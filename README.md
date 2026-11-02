@@ -21,6 +21,12 @@ The app saves student progress across devices without a backend server or a data
 2. Paste the script into [script.google.com](https://script.google.com/), add `TEACHER_KEY` in **Script Properties**, and deploy as a **Web app** (*Execute as: Me*, *Access: Anyone*).
 3. Add the `/exec` URL as the `SYNC_URL` secret on GitHub and set **Pages** to deploy from **GitHub Actions**.
 
+## iOS 26 UI with wonderful UX
+
+- **Liquid Glass design:** Translucent glass bars, floating tab bar with a draggable magnifying lens, and swipe-to-close sheets.
+- **Smooth interactions:** Spring motion, responsive touch drawing on the writing canvas, and instant audio playback.
+- **Personalised & bilingual:** 7 light/dark themes, Child Mode, and full English and Arabic (RTL) support.
+
 ## Run locally
 
 ```sh
