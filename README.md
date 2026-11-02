@@ -1,8 +1,14 @@
 <table width="100%">
   <tr>
-    <td align="center" width="33%">🇯🇵 <b>日本語</b></td>
-    <td align="center" width="33%"><a href="README.en.md">🇬🇧 <b>English</b></a></td>
-    <td align="center" width="33%"><a href="README.ar.md">🇸🇦 <b>العربية</b></a></td>
+    <td align="center" width="33%">
+      🇯🇵 <b>日本語</b><br><img width="280" height="0" src="icon-192.png">
+    </td>
+    <td align="center" width="33%">
+      <a href="README.en.md">🇬🇧 <b>English</b></a><br><img width="280" height="0" src="icon-192.png">
+    </td>
+    <td align="center" width="33%">
+      <a href="README.ar.md">🇸🇦 <b>العربية</b></a><br><img width="280" height="0" src="icon-192.png">
+    </td>
   </tr>
 </table>
 
