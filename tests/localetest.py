@@ -60,7 +60,7 @@ async def main():
         assert await page.locator('html').get_attribute('dir') == 'rtl'
         await page.reload()
         await unlock_student(page)
-        await page.locator('#whoBtn').wait_for()
+        await page.locator('body:not(.signed-out)').wait_for()
         assert await page.locator('html').get_attribute('lang') == 'he'
         assert await page.locator('html').get_attribute('dir') == 'rtl'
         if await page.locator('#pfLang').count() == 0:
@@ -71,7 +71,7 @@ async def main():
         assert exported['student']['lang'] == 'he'
         await page.click('#pSwitch')
         await prepare_import(page); await page.set_input_files('#importFile', {'name': 'student.json', 'mimeType': 'application/json', 'buffer': json.dumps(exported).encode()})
-        await page.locator('#whoBtn').wait_for()
+        await page.locator('body:not(.signed-out)').wait_for()
         assert await page.locator('html').get_attribute('lang') == 'he'
         assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth')
         assert not errors, errors

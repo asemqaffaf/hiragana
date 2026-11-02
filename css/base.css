@@ -76,6 +76,7 @@ select,input:not([type]),input[type=text]{-webkit-appearance:none;appearance:non
 img,svg{max-width:100%}
 .wrap{max-width:720px;margin:0 auto;padding:18px 16px 110px}
 header.top{max-width:720px;margin:0 auto;padding:18px 16px 0;display:flex;align-items:flex-start;gap:12px}
+body:not(.signed-out):has(#tab-profile:not([hidden])) header.top{display:none}
 header.top .ttl{flex:1;min-width:0;display:flex;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
 .who[aria-current="page"]{border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft)}
 .who{flex:0 1 auto;max-width:48%;display:flex;align-items:center;gap:8px;min-height:44px;padding-block:4px;padding-inline:4px 14px;border-radius:999px;border:1.5px solid var(--grid);background:var(--surface);margin-top:2px}

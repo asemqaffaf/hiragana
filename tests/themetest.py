@@ -1,4 +1,4 @@
-from student_auth import disable_cloud, submit_student, unlock_student, prepare_import
+from student_auth import open_profile, disable_cloud, submit_student, unlock_student, prepare_import
 import os
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 os.makedirs('/tmp/hira-tests', exist_ok=True)
@@ -14,7 +14,7 @@ async def main():
             await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
             await pg.click(f'[data-lang="{lang}"]'); await pg.fill('#nsName', 'Aya'); await submit_student(pg); await pg.wait_for_timeout(250)
             R[lang + '_default_bg'] = await pg.evaluate(BG)
-            await pg.click('#whoBtn'); await pg.wait_for_timeout(200)
+            await open_profile(pg); await pg.wait_for_timeout(200)
             R[lang + '_ctl'] = [await pg.eval_on_selector_all('[data-mode]', 'e=>e.map(x=>x.textContent+(x.getAttribute("aria-pressed")==="true"?"*":""))'), await pg.eval_on_selector_all('.tint span:last-child', 'e=>e.map(x=>x.textContent)')]
             await pg.locator('.themebox').scroll_into_view_if_needed(); await pg.screenshot(path=f'shots/theme_{lang}_a.png')
             # tint sky
@@ -32,16 +32,16 @@ async def main():
             await pg.reload(); await unlock_student(pg); await pg.wait_for_timeout(400)
             R[lang + '_reload'] = [await pg.evaluate(BG), await pg.evaluate("document.documentElement.dataset.tint + '/' + document.documentElement.dataset.theme")]
             # second student has its own theme, switching restores
-            await pg.click('#whoBtn'); await pg.click('#pSwitch'); await pg.wait_for_timeout(150)
+            await open_profile(pg); await pg.click('#pSwitch'); await pg.wait_for_timeout(150)
             R[lang + '_login_bg'] = await pg.evaluate(BG)
             await pg.click('#login [data-mode="new"]')
             await pg.fill('#nsName', 'Ken'); await submit_student(pg); await pg.wait_for_timeout(250)
             R[lang + '_ken_inherits'] = await pg.evaluate("document.documentElement.dataset.tint + '/' + document.documentElement.dataset.theme")
-            await pg.click('#whoBtn'); await pg.click('.tint:has(input[value="sand"])'); await pg.click('[data-mode="light"]')
+            await open_profile(pg); await pg.click('.tint:has(input[value="sand"])'); await pg.click('[data-mode="light"]')
             await pg.click('#pSwitch'); await unlock_student(pg, 'Aya'); await pg.wait_for_timeout(250)
             R[lang + '_aya_back'] = await pg.evaluate("document.documentElement.dataset.tint + '/' + document.documentElement.dataset.theme")
             # export carries theme
-            await pg.click('#whoBtn'); await pg.wait_for_timeout(150)
+            await open_profile(pg); await pg.wait_for_timeout(150)
             async with pg.expect_download() as dl: await pg.click('#pExport')
             d = await dl.value; path = f'/tmp/th_{lang}.json'; await d.save_as(path)
             R[lang + '_export_theme'] = json.load(open(path))['student'].get('theme')

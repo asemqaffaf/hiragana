@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import urllib.request
 from playwright.async_api import async_playwright
+from student_auth import open_profile
 
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 ROOT = Path(__file__).resolve().parent.parent
@@ -73,8 +74,8 @@ async def main():
             await first.wait_for_function("document.querySelector('#nsMsg').textContent.includes('match')")
             await first.fill('#nsConfirm', PASSWORD)
             await first.click('#newStudent button[type=submit]')
-            await first.locator('#whoBtn').wait_for(state='visible')
-            await first.click('#whoBtn')
+            await first.locator('body:not(.signed-out)').wait_for()
+            await open_profile(first)
             await save(first)
             assert await first.locator('[data-cloud-status]').last.inner_text() == 'Saved to cloud.'
             assert await first.locator('#cloudSummary').count() == 0  # nothing about saving sits under the header on every page
@@ -93,8 +94,8 @@ async def main():
             assert await first.locator('#whoBtn').is_hidden()
             await first.fill('#siPassword', PASSWORD)
             await first.click('#studentSignIn button[type=submit]')
-            await first.locator('#whoBtn').wait_for(state='visible')
-            await first.click('#whoBtn')
+            await first.locator('body:not(.signed-out)').wait_for()
+            await open_profile(first)
             await save(first)
 
             # Check Arabic/RTL Welcome, New-student, Sign-in and Forgot-password screens on a fresh browser, then switch to English.
@@ -122,12 +123,12 @@ async def main():
             await second.fill('#csPassword', PASSWORD)
             await second.check('#csRemember')
             await second.click('#cloudSignIn button[type=submit]')
-            await second.locator('#whoBtn').wait_for(state='visible')
+            await second.locator('body:not(.signed-out)').wait_for()
             assert await second.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 4
             await second.reload()
-            await second.locator('#whoBtn').wait_for(state='visible')
+            await second.locator('body:not(.signed-out)').wait_for()
             assert await second.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 4
-            await second.click('#whoBtn')
+            await open_profile(second)
             await second.fill('#pfName', 'Newer cloud name')
             await second.click('#pfForm button[type=submit]')
             await save(second)
@@ -162,9 +163,9 @@ async def main():
             await first.fill('#csPassword', RESET_PASSWORD)
             await first.fill('#csCode', code)
             await first.click('#cloudSignIn button[type=submit]')
-            await first.locator('#whoBtn').wait_for(state='visible')
+            await first.locator('body:not(.signed-out)').wait_for()
             assert await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 4
-            await first.click('#whoBtn')
+            await open_profile(first)
             await save(first)
 
             # The other device can sign in with the newly reset password too.
@@ -173,8 +174,8 @@ async def main():
             await second.fill('#csId', student_id)
             await second.fill('#csPassword', RESET_PASSWORD)
             await second.click('#cloudSignIn button[type=submit]')
-            await second.locator('#whoBtn').wait_for(state='visible')
-            await second.click('#whoBtn')
+            await second.locator('body:not(.signed-out)').wait_for()
+            await open_profile(second)
 
             # Arabic fields and live sync status remain readable on a narrow screen.
             await second.select_option('#pfLang', 'ar')

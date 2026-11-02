@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 
 from playwright.async_api import async_playwright
-from student_auth import PASSWORD, disable_cloud, prepare_import, submit_student
+from student_auth import open_profile, PASSWORD, disable_cloud, prepare_import, submit_student
 
 BASE = os.environ.get('BASE_URL', 'http://127.0.0.1:8767/')
 BROWSER = os.environ.get('BROWSER', 'chromium')
@@ -35,14 +35,14 @@ async def main():
                     await page.fill('#siPassword', PASSWORD)
                     await page.locator('#siRemember').set_checked(remember)
                     await page.click('#studentSignIn button[type=submit]')
-                    await page.locator('#whoBtn').wait_for(state='visible')
+                    await page.locator('body:not(.signed-out)').wait_for()
 
                 context, page = await open_browser()
                 await page.click(f'[data-lang="{lang}"]')
                 assert not await page.is_checked('#nsRemember')
                 await page.fill('#nsName', 'Learner')
                 await submit_student(page)
-                await page.locator('#whoBtn').wait_for(state='visible')
+                await page.locator('body:not(.signed-out)').wait_for()
                 await page.evaluate("import('./js/core/store.js').then(s => s.updateProgress(p => p.stats['あ'] = {b:1,c:3,w:0,t:600}))")
                 await page.reload()
                 await page.locator('.student').wait_for()
@@ -58,21 +58,21 @@ async def main():
                 await page.screenshot(path=str(SHOTS / f'remember-login-{lang}.png'), full_page=True)
                 await page.fill('#siPassword', PASSWORD)
                 await page.click('#studentSignIn button[type=submit]')
-                await page.locator('#whoBtn').wait_for(state='visible')
+                await page.locator('body:not(.signed-out)').wait_for()
                 expiry = await page.evaluate('(key) => JSON.parse(localStorage.getItem(key)).expiresAt', KEY)
                 await page.reload()
-                await page.locator('#whoBtn').wait_for(state='visible')
+                await page.locator('body:not(.signed-out)').wait_for()
                 assert await page.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 3
                 assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key)).expiresAt', KEY) == expiry
                 await context.close()
 
                 # A fresh browser process reuses only the on-disk profile.
                 context, page = await open_browser()
-                await page.locator('#whoBtn').wait_for(state='visible')
+                await page.locator('body:not(.signed-out)').wait_for()
                 assert await page.locator('html').get_attribute('lang') == lang
                 assert await page.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 3
                 assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key)).expiresAt', KEY) == expiry
-                await page.click('#whoBtn')
+                await open_profile(page)
                 await page.click('#pSwitch')
                 await page.reload()
                 await page.locator('.student').wait_for()
@@ -98,11 +98,11 @@ async def main():
                 await page.check('#imRemember')
                 exported = {'app': 'hiragana14', 'student': {'name': 'Imported', 'lang': lang}, 'progress': {'stats': {}}}
                 await page.set_input_files('#importFile', {'name': 'student.json', 'mimeType': 'application/json', 'buffer': json.dumps(exported).encode()})
-                await page.locator('#whoBtn').wait_for(state='visible')
+                await page.locator('body:not(.signed-out)').wait_for()
                 await page.reload()
-                await page.locator('#whoBtn').wait_for(state='visible')
-                assert 'Imported' in await page.locator('#whoBtn').inner_text()
-                await page.click('#whoBtn')
+                await page.locator('body:not(.signed-out)').wait_for()
+                assert 'Imported' in await page.locator('#whoBtn').text_content()
+                await open_profile(page)
                 await page.click('#pDelete')
                 await page.click('#pDelete')
                 assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', KEY) is None
@@ -110,10 +110,10 @@ async def main():
                 await page.fill('#nsName', 'Remembered new learner')
                 await page.check('#nsRemember')
                 await submit_student(page)
-                await page.locator('#whoBtn').wait_for(state='visible')
+                await page.locator('body:not(.signed-out)').wait_for()
                 await page.reload()
-                await page.locator('#whoBtn').wait_for(state='visible')
-                assert 'Remembered new learner' in await page.locator('#whoBtn').inner_text()
+                await page.locator('body:not(.signed-out)').wait_for()
+                assert 'Remembered new learner' in await page.locator('#whoBtn').text_content()
                 await context.close()
 
         assert not errors, errors
