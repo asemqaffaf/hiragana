@@ -30,6 +30,7 @@ async def main():
             await pg.evaluate('window.scrollTo(0, 900)'); await pg.wait_for_timeout(150)
             R[lang + '_sticky_top'] = await pg.evaluate("Math.round(document.querySelector('#backBar').getBoundingClientRect().top)")
             await pg.evaluate('window.scrollTo(0, 0)')
+            await pg.tap('nav [data-nav="letters"]'); await pg.wait_for_timeout(200)
             # letter sheet shows 2 more words with hear buttons
             await pg.tap('#tab-chart [data-open="さ"]'); await pg.wait_for_timeout(250)
             R[lang + '_sheet_more'] = [await pg.locator('.sheet .morex .mx').count(), await pg.text_content('.sheet .morex > span')]
