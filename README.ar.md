@@ -1,48 +1,132 @@
-<table width="100%">
-  <tr>
-    <td align="center" width="33%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🇯🇵 <a href="README.md"><b>日本語</b></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-    <td align="center" width="33%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🇬🇧 <a href="README.en.md"><b>English</b></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-    <td align="center" width="33%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;● 🇸🇦 <b>العربية</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-  </tr>
-</table>
+**لغة الدليل:** [日本語](README.md) · [English](README.en.md) · **العربية**
 
-# ひらがな Hiragana in 14 days
+<div dir="rtl" lang="ar">
 
-تعلم جميع حروف الهيراغانا الـ 104 باللغتين العربية والإنجليزية. يتضمن خطة تعليمية لمدة 14 يوماً، وتدريباً على الرسم خطوة بخطوة، وتمارين، وتدريبات قراءة مع الصوت.
+# ひらがな — Hiragana in 14 days
 
-تطوير: عاصم قفاف (Asem Qaffaf)  
-الموقع: https://asemqaffaf.github.io/hiragana/
+تعلّم قراءة وكتابة وتمييز 104 أحرف وتركيبات من الهيراغانا: 46 حرفاً أساسياً، و25 صيغة مجهورة وشبه مجهورة، و33 تركيباً من نوع يوون (yōon). يضم التطبيق دروساً موجّهة، وتدريباً على ترتيب الخطوط، وتمارين استماع وقراءة مع صوت ياباني.
 
-## تطبيق متكامل بدون خادم وبدون قاعدة بيانات (Google Apps Script + Google Drive)
+[**ابدأ التعلّم ←**](https://asemqaffaf.github.io/hiragana/) · [إضافة لغة](docs/languages.md)
 
-يحفظ التطبيق تقدم الطلاب عبر مختلف الأجهزة دون الحاجة إلى خادم خلفي (Backend) أو قاعدة بيانات، باستخدام حساب Google مجاني فقط:
+تطوير: عاصم قفاف (Asem Qaffaf). بُني التطبيق باستخدام HTML وCSS ووحدات JavaScript، دون إطار عمل أو خطوة بناء أو اعتماد على حزم وقت التشغيل.
 
-- **موقع ثابت (Static):** مستضاف على GitHub Pages باستخدام HTML وCSS ووحدات JavaScript نقية، بدون أي أدوات بناء أو أطر عمل.
-- **Google Apps Script كبديل للخادم:** كود نصي بسيط ([`scripts/google-apps-script.gs`](scripts/google-apps-script.gs)) يعمل على بنية Google التحتية ضمن حساب المعلم، ويتولى معالجة طلبات الحفظ والقراءة والحذف وإعادة تعيين كلمة المرور.
-- **Google Drive كبديل لقاعدة البيانات:** تُحفظ بيانات جميع الطلاب في ملف خاص واحد `students.json` داخل Google Drive الخاص بالمعلم (بصلاحية **خاص / Restricted**). ويستخدم Apps Script ميزة القفل (`LockService`) أثناء الكتابة لمنع تعارض الحفظ المتزامن بين الطلاب.
-- **العمل دون اتصال أولاً (Offline-first):** تُحفظ التغييرات في `localStorage` أولاً ثم تتم المزامنة في الخلفية عند توفر الاتصال بالإنترنت.
-- **أمان كلمات المرور:** يتم تجزئة كلمات المرور في المتصفح باستخدام PBKDF2 (بـ 310,000 تكرار)، ولا يُخزن في Google Drive سوى تجزئة SHA-256 دون حفظ كلمة المرور الأصلية مطلقاً.
+## ما الذي يمكنك فعله؟
 
-### الإعداد
+- **اتباع خطة تعلّم:** اختر وتيرة من 7 أو 14 أو 21 يوماً، وحدّد وقت الدراسة اليومي.
+- **التدرّب على الكتابة:** شاهد ترتيب الخطوط واكتب على لوحة تدعم اللمس.
+- **تدريب التمييز والاستماع:** اقرأ الكانا، وأجب عن أسئلة الاختيار، وتدرّب بالصوت الياباني.
+- **القراءة ضمن سياق:** تعلّم مفردات وعبارات وجملاً مع ترجماتها.
+- **متابعة التقدّم:** استخدم ملفات الطلاب، وراجع الأحرف التي تصعب عليك، وصدّر بياناتك أو استوردها.
+- **تخصيص المظهر:** اختر من سبعة ألوان، ومظهر فاتح أو داكن أو تابع للنظام، ووضع الأطفال. تستخدم الواجهة أسطحاً زجاجية شبه شفافة وشريط تنقّل عائماً.
 
-1. أنشئ ملفاً خاصاً باسم `students.json` محتواه `{}` في Google Drive (مضبوط على **خاص / Restricted**)، ثم ضع معرف الملف في [`scripts/google-apps-script.gs`](scripts/google-apps-script.gs).
-2. الصق الكود في [script.google.com](https://script.google.com/)، وأضف `TEACHER_KEY` في **خصائص المشروع (Script Properties)**، ثم انشر كتطبيق ويب (**Web app**) (*التنفيذ بصفتي: أنا*, *إمكانية الوصول: أي شخص*).
-3. أضف رابط `/exec` كـ secret باسم `SYNC_URL` في إعدادات GitHub، واضبط نشر **Pages** ليكون عبر **GitHub Actions**.
+## اللغات
 
-## واجهة مستخدم بنمط iOS 26 مع تجربة استخدام رائعة
+تختلف لغات هذا الدليل عن اللغات المتاحة في واجهة التطبيق:
 
-- **تصميم الزجاج السائل (Liquid Glass):** أشرطة زجاجية شبه شفافة، وشريط تنقل عائم مزود بعدسة مكبرة قابلة للسحب، وبطاقات تنزلق للإغلاق.
-- **تفاعل سلس:** حركة فيزيائية مرنة (Spring motion)، ورسم تفاعلي بالقلم على لوحة الكتابة، وتشغيل فوري للصوت.
-- **تخصيص كامل ودعم اللغات:** 7 سمات مظهرية فاتحة وداكنة، ووضع خاص بالأطفال (Child Mode)، ودعم كامل للغتين الإنجليزية والعربية (اتجاه من اليمين لليسار RTL).
+| اللغة | الدليل | واجهة التطبيق |
+| --- | --- | --- |
+| 日本語 | [日本語](README.md) | غير متاحة حالياً |
+| English | [English](README.en.md) | متاحة، من اليسار إلى اليمين |
+| العربية | هذه الصفحة | متاحة، من اليمين إلى اليسار |
+
+اختر اللغة من الشاشة الأولى، أو غيّرها من ملفك الشخصي. قبل تسجيل الدخول، يستخدم التطبيق لغة الجهاز المحفوظة أو إحدى لغات المتصفح المدعومة، ويعود إلى الإنجليزية عند عدم وجود تطابق. يحتفظ كل ملف طالب بلغته الخاصة.
+
+تُسجّل اللغات في [`js/i18n/locales.js`](js/i18n/locales.js). يستخدم التطبيق بيانات كل لغة لإعداد قوائم الاختيار واتجاه النص وتنسيق التاريخ. تظهر النصوص ومحتويات التعلّم غير المترجمة بالإنجليزية، مما يسمح بإضافة الترجمات تدريجياً.
+
+### إضافة ترجمة
+
+من المجلد الرئيسي للمستودع، أنشئ ملف اللغة باستخدام رمزها واسمها كما يكتبه أهلها:
+
+<div dir="ltr">
+
+```sh
+python3 scripts/add_language.py fr Français
+```
+
+</div>
+
+ينشئ الأمر ملف `js/i18n/fr.js` ويسجّله ويضيفه إلى قوائم اختيار اللغة. ترجم حقلي `strings` و`content` مع الحفاظ على العناصر النائبة مثل `{name}` و`{n}`. للغات المكتوبة من اليمين إلى اليسار، أضف `--direction rtl` إلى أمر الإنشاء.
+
+<div dir="ltr">
+
+```sh
+node scripts/check-locales.mjs fr
+node scripts/check-locales.mjs fr --strict
+```
+
+</div>
+
+يسمح الفحص الافتراضي بوجود ترجمات ناقصة، بينما يُفشل الخيار `--strict` الفحص أيضاً عند نقص نصوص الواجهة. يرفض الوضعان المفاتيح غير المعروفة وأنواع القيم الخاطئة واختلاف العناصر النائبة. تفحص هذه الأداة نصوص الواجهة؛ راجع ترجمات المحتوى التعليمي بصورة منفصلة.
+
+راجع [دليل الترجمة بالإنجليزية](docs/languages.md) لمعرفة قواميس المحتوى وصيغ الجمع ورموز اللغات الإقليمية وفحوص المتصفح. عند تعديل الشرح المشترك، حدّث نسخ README الثلاث، وأضف روابط اللغة عند إنشاء نسخة جديدة.
 
 ## التشغيل محلياً
 
+انسخ المستودع، وانتقل إلى مجلده، ثم شغّل خادم HTTP:
+
+<div dir="ltr">
+
 ```sh
-python3 -m http.server 8000     # http://127.0.0.1:8000/
+git clone https://github.com/asemqaffaf/hiragana.git
+cd hiragana
+python3 -m http.server 8000
 ```
+
+</div>
+
+افتح [http://localhost:8000/](http://localhost:8000/). يكفي Python 3 لتشغيل الخادم؛ تحتاج إلى Node.js لفحوص التطوير فقط. استخدم خادماً محلياً لأن التطبيق يحمّل وحدات JavaScript.
+
+يُحفظ التقدّم في `localStorage` داخل المتصفح. تكون المزامنة السحابية معطّلة افتراضياً في النسخة المحلية. إذا لم تستخدم المزامنة، صدّر ملفك الشخصي قبل مسح بيانات المتصفح أو الانتقال إلى متصفح آخر.
+
+## المزامنة السحابية الاختيارية
+
+يعمل التطبيق محلياً دون إعداد سحابي. لمشاركة التقدّم بين الأجهزة، يعمل [Google Apps Script المرفق](scripts/google-apps-script.gs) كخادم خلفي ويحفظ سجلات الطلاب في ملف JSON خاص على Google Drive. لا تحتاج إلى استضافة خادم منفصل أو خدمة قواعد بيانات.
+
+1. أنشئ ملف `students.json` يحتوي على `{}` في Google Drive، واجعل الوصول **مقيّداً (Restricted)**.
+2. أنشئ مشروع Apps Script، وانسخ إليه [`scripts/google-apps-script.gs`](scripts/google-apps-script.gs)، واستبدل `FILE_ID` بمعرّف ملفك.
+3. من **إعدادات المشروع ← خصائص النص البرمجي (Script Properties)**، اضبط `TEACHER_KEY` على كلمة مرور طويلة وعشوائية.
+4. انشر المشروع كتطبيق ويب (**Web app**) مع **التنفيذ بصفتي: أنا (Execute as: Me)** و**من يمكنه الوصول: أي شخص (Anyone)**، ثم انسخ رابط `/exec`.
+5. في مستودع GitHub، أضف الرابط كسِرّ للمستودع باسم `SYNC_URL` ضمن **Settings → Secrets and variables → Actions**. واضبط **Settings → Pages → Source** على **GitHub Actions**.
+6. ادفع التغييرات إلى `main` أو شغّل [سير عمل Pages](.github/workflows/pages.yml) يدوياً. يضيف سير العمل رابط المزامنة إلى الموقع المنشور؛ وعند غياب السِرّ، يُنشر الموقع دون مزامنة.
+
+لاختبار المزامنة محلياً، ضع رابط تطبيق الويب في `SYNC_URL` داخل [`js/core/cloud-config.js`](js/core/cloud-config.js)، وأبقِ هذا التغيير خارج الالتزامات (commits). بعد تعديل كود Apps Script، انشر إصداراً جديداً.
+
+تُحفظ التغييرات محلياً أولاً، ثم تُدرج للمزامنة عند الاتصال. يستخدم Apps Script خدمة `LockService` لتنظيم عمليات الكتابة، ويتحقق من إصدارات السجلات لاكتشاف تعارضات الحفظ. تُشتق بيانات اعتماد من كلمة المرور في المتصفح باستخدام PBKDF2-SHA-256 مع 310,000 تكرار؛ ويُحفظ في Drive تجزئة SHA-256 لبيانات الاعتماد، دون كلمة المرور الأصلية. يتلقى التطبيق المنشور رابط المزامنة، أما `TEACHER_KEY` فمكانه خصائص Apps Script فقط.
+
+## فحوص التطوير
+
+ثبّت أدوات التطوير وشغّل الفحوص الأساسية:
+
+<div dir="ltr">
+
+```sh
+npm install
+npm run typecheck
+npm run test:core
+node scripts/check-locales.mjs --strict
+```
+
+</div>
+
+لفحص اللغات في المتصفح، ثبّت Playwright داخل بيئة افتراضية:
+
+<div dir="ltr">
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r tests/requirements.txt
+.venv/bin/python -m playwright install chromium
+PYTHON=.venv/bin/python tests/run_all.sh localetest --jobs 1
+```
+
+</div>
+
+يشغّل منفّذ الاختبارات خادمه المحلي تلقائياً. احذف `localetest` لتشغيل جميع مجموعات اختبارات المتصفح. راجع [`docs/languages.md`](docs/languages.md) لطريقة الفحص باستخدام WebKit.
 
 ## المصادر والاعتمادات
 
-- بيانات رسم الحروف: [KanjiVG](https://kanjivg.tagaini.net) ([CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/))
-- الصوت: VOICEVOX:No.7 ([VOICEVOX](https://voicevox.hiroshiba.jp/))
-- الخطوط: Klee One, Zen Kaku Gothic New, IBM Plex Sans Arabic (Google Fonts)
+- بيانات ترتيب الخطوط: [KanjiVG](https://kanjivg.tagaini.net) بترخيص [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- الصوت الياباني: VOICEVOX:No.7 من [VOICEVOX](https://voicevox.hiroshiba.jp/).
+- الخطوط: Klee One وZen Kaku Gothic New وIBM Plex Sans Arabic من Google Fonts.
+
+</div>
