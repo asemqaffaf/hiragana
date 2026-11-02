@@ -174,6 +174,7 @@ export interface LocaleContent {
   wordTitles?: Dictionary;
   phraseTitles?: Dictionary;
   plan?: LocalePlanDay[];
+  slow?: LocalePlanDay[];
   review?: Partial<ReviewDay>;
   /** Generated explanation; return `undefined` to use English. */
   explain?: (kana: Kana) => string | undefined;

@@ -90,6 +90,58 @@ export const SENTENCES = [
 ];
 /** @type {Record<string, import('../../types/app').ExampleWord>} */
 export const EXAMPLES = {"あ":["あめ","ame","rain","مطر"],"い":["いぬ","inu","dog","كلب"],"う":["うみ","umi","sea","بحر"],"え":["えき","eki","station","محطة"],"お":["おちゃ","ocha","green tea","شاي أخضر"],"か":["かさ","kasa","umbrella","مظلّة"],"き":["きって","kitte","stamp","طابع بريد"],"く":["くち","kuchi","mouth","فم"],"け":["けいたい","keitai","mobile phone","هاتف محمول"],"こ":["こども","kodomo","child","طفل"],"さ":["さかな","sakana","fish","سمكة"],"し":["しお","shio","salt","ملح"],"す":["すし","sushi","sushi","سوشي"],"せ":["せんせい","sensei","teacher","معلّم"],"そ":["そら","sora","sky","سماء"],"た":["たまご","tamago","egg","بيضة"],"ち":["ちず","chizu","map","خريطة"],"つ":["つくえ","tsukue","desk","مكتب"],"て":["てがみ","tegami","letter (mail)","رسالة"],"と":["とり","tori","bird","طائر"],"な":["なつ","natsu","summer","صيف"],"に":["にく","niku","meat","لحم"],"ぬ":["ぬいぐるみ","nuigurumi","stuffed toy","دمية محشوّة"],"ね":["ねこ","neko","cat","قطة"],"の":["のみもの","nomimono","drink","مشروب"],"は":["はな","hana","flower","زهرة"],"ひ":["ひと","hito","person","شخص"],"ふ":["ふゆ","fuyu","winter","شتاء"],"へ":["へや","heya","room","غرفة"],"ほ":["ほん","hon","book","كتاب"],"ま":["まち","machi","town","مدينة"],"み":["みず","mizu","water","ماء"],"む":["むし","mushi","insect","حشرة"],"め":["めがね","megane","glasses","نظّارة"],"も":["もも","momo","peach","خوخ"],"や":["やま","yama","mountain","جبل"],"ゆ":["ゆき","yuki","snow","ثلج"],"よ":["よる","yoru","night","ليل"],"ら":["らいねん","rainen","next year","السنة القادمة"],"り":["りんご","ringo","apple","تفاحة"],"る":["るす","rusu","away from home","غير موجود في البيت"],"れ":["れいぞうこ","reizōko","fridge","ثلاجة"],"ろ":["ろうそく","rōsoku","candle","شمعة"],"わ":["わたし","watashi","I, me","أنا"],"を":["みずを のむ","mizu o nomu","drink water","يشرب الماء"],"ん":["ほん","hon","book","كتاب"],"が":["がっこう","gakkō","school","مدرسة"],"ぎ":["ぎんこう","ginkō","bank","بنك"],"ぐ":["ぐあい","guai","how you feel","الحال، الصحة"],"げ":["げんき","genki","well, healthy","بخير"],"ご":["ごはん","gohan","rice, meal","أرز؛ وجبة"],"ざ":["ざっし","zasshi","magazine","مجلّة"],"じ":["じしょ","jisho","dictionary","قاموس"],"ず":["ずっと","zutto","all the time","طوال الوقت"],"ぜ":["ぜんぶ","zenbu","all of it","كل شيء"],"ぞ":["ぞう","zō","elephant","فيل"],"だ":["だれ","dare","who","مَن"],"ぢ":["はなぢ","hanaji","nosebleed","رُعاف"],"づ":["つづく","tsuzuku","to continue","يستمرّ"],"で":["でんしゃ","densha","train","قطار"],"ど":["どこ","doko","where","أين"],"ば":["ばんごはん","bangohan","dinner","عشاء"],"び":["びじゅつかん","bijutsukan","art museum","متحف فنون"],"ぶ":["ぶんか","bunka","culture","ثقافة"],"べ":["べんきょう","benkyō","study","دراسة"],"ぼ":["ぼうし","bōshi","hat","قبّعة"],"ぱ":["いっぱい","ippai","full","ممتلئ"],"ぴ":["えんぴつ","enpitsu","pencil","قلم رصاص"],"ぷ":["きっぷ","kippu","ticket","تذكرة"],"ぺ":["ぺこぺこ","pekopeko","very hungry","جائع جداً"],"ぽ":["さんぽ","sanpo","a walk","نزهة"],"きゃ":["きゃく","kyaku","guest","ضيف"],"きゅ":["きゅう","kyū","nine","تسعة"],"きょ":["きょう","kyō","today","اليوم"],"しゃ":["しゃしん","shashin","photo","صورة"],"しゅ":["しゅみ","shumi","hobby","هواية"],"しょ":["しょくじ","shokuji","meal","وجبة"],"ちゃ":["おちゃ","ocha","green tea","شاي أخضر"],"ちゅ":["ちゅうい","chūi","attention","انتباه"],"ちょ":["ちょっと","chotto","a little","قليلاً"],"にゃ":["にゃあ","nyā","meow","مواء القطة"],"にゅ":["ぎゅうにゅう","gyūnyū","milk","حليب"],"にょ":["にょろにょろ","nyoronyoro","wriggling","يتلوّى"],"ひゃ":["ひゃく","hyaku","hundred","مئة"],"ひゅ":["ひゅうひゅう","hyūhyū","whistling wind","صفير الريح"],"ひょ":["ひょう","hyō","hail","بَرَد"],"みゃ":["みゃく","myaku","pulse","نبض"],"みょ":["みょうじ","myōji","family name","اسم العائلة"],"りゃ":["りゃくご","ryakugo","abbreviation","اختصار"],"りゅ":["りゅう","ryū","dragon","تنّين"],"りょ":["りょこう","ryokō","trip","رحلة"],"ぎゃ":["ぎゃく","gyaku","opposite","عكس"],"ぎゅ":["ぎゅうにゅう","gyūnyū","milk","حليب"],"ぎょ":["きんぎょ","kingyo","goldfish","سمكة ذهبية"],"じゃ":["じゃんけん","janken","rock, paper, scissors","حجرة ورقة مقص"],"じゅ":["じゅぎょう","jugyō","class, lesson","حصة دراسية"],"じょ":["じょうず","jōzu","skilful","ماهر"],"びゃ":["さんびゃく","sanbyaku","three hundred","ثلاثمئة"],"びゅ":["びゅうびゅう","byūbyū","howling wind","عصف الريح"],"びょ":["びょういん","byōin","hospital","مستشفى"],"ぴゃ":["はっぴゃく","happyaku","eight hundred","ثمانمئة"],"ぴゅ":["ぴゅうぴゅう","pyūpyū","whistling","صوت صفير"],"ぴょ":["ぴょんぴょん","pyonpyon","hopping","قفزاً"]};
+/** The slower 21-day start: one row a day instead of two. @type {import('../../types/app').BasePlanDay[]} */
+export const SLOW_PLAN = [
+  {t:"あ row", f:['a'], tasks:[
+    {text: "Tap each new character. Read the memory hook and say the sound out loud.", minutes: 10},
+    {text: "Write each one in Write. It checks the order and direction of every stroke.", minutes: 10},
+    {text: "Drill “Today” in Read mode. Repeat until you score 90% or more.", minutes: 5}]},
+  {t:"か row", f:['k'], tasks:[
+    {text: "Warm up: drill “Learned so far” in Read mode.", minutes: 5},
+    {text: "Learn the 5 new ones. Say each sound out loud.", minutes: 10},
+    {text: "Write each new one 5 times.", minutes: 5},
+    {text: "Drill “Today” to 90% or more.", minutes: 5}]},
+  {t:"さ row", f:['s'], tasks:[
+    {text: "Warm up: drill “Learned so far”.", minutes: 5},
+    {text: "Learn the 5 new ones. し is shi, not si.", minutes: 10},
+    {text: "Write each new one 5 times.", minutes: 5},
+    {text: "Drill “Today” to 90% or more.", minutes: 5}]},
+  {t:"た row", f:['t'], tasks:[
+    {text: "Warm up: drill “Learned so far”.", minutes: 5},
+    {text: "Learn the 5 new ones. Two break the pattern: ち is chi, つ is tsu.", minutes: 10},
+    {text: "Write each new one 5 times.", minutes: 5},
+    {text: "Drill “Today” to 90% or more.", minutes: 5}]},
+  {t:"な row", f:['n'], tasks:[
+    {text: "Warm up: drill “Learned so far”.", minutes: 5},
+    {text: "Learn the 5 new ones. Say each sound out loud.", minutes: 10},
+    {text: "Write each new one 5 times.", minutes: 5},
+    {text: "Drill “Today” to 90% or more.", minutes: 5}]},
+  {t:"は row", f:['h'], tasks:[
+    {text: "Warm up: drill “Learned so far”.", minutes: 5},
+    {text: "Learn the 5 new ones. ふ is fu, blown softly with the lips, no teeth.", minutes: 10},
+    {text: "Write each new one 5 times.", minutes: 5},
+    {text: "Drill “Today” to 90% or more.", minutes: 5}]},
+  {t:"ま row", f:['m'], tasks:[
+    {text: "Warm up: drill “Learned so far”.", minutes: 5},
+    {text: "Learn the 5 new ones. Say each sound out loud.", minutes: 10},
+    {text: "Write each new one 5 times.", minutes: 5},
+    {text: "Drill “Today” to 90% or more.", minutes: 5}]},
+  {t:"や row", f:['y'], tasks:[
+    {text: "Warm up: drill “Learned so far”.", minutes: 5},
+    {text: "Learn the 3 new ones. The や row has only three: や, ゆ, よ.", minutes: 10},
+    {text: "Write each new one 5 times.", minutes: 5},
+    {text: "Drill “Today” to 90% or more.", minutes: 5}]},
+  {t:"ら row", f:['r'], tasks:[
+    {text: "Warm up: drill “Learned so far”.", minutes: 5},
+    {text: "Learn the 5 new ones. Japanese r is a light tap of the tongue, between r, l and d.", minutes: 10},
+    {text: "Write each new one 5 times.", minutes: 5},
+    {text: "Drill “Today” to 90% or more.", minutes: 5}]},
+  {t:"わ, を, ん", f:['w','nn'], tasks:[
+    {text: "Warm up: drill “Learned so far”.", minutes: 5},
+    {text: "Learn the 3 new ones. を is read o. ん is a nasal sound with no vowel.", minutes: 10},
+    {text: "Write each new one 5 times.", minutes: 5},
+    {text: "Drill “Today” to 90% or more.", minutes: 5}]},
+];
 /** @type {import('../../types/app').ReviewDay} */
 export const REVIEW_EN = {t: "Review day", tasks: [
   {text: "Drill “Learned so far” in Read mode.", minutes: 10},

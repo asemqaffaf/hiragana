@@ -1,5 +1,5 @@
 import { me, state } from './store.js';
-import { PLAN, REVIEW_EN } from '../data/content.js';
+import { PLAN, REVIEW_EN, SLOW_PLAN } from '../data/content.js';
 import { A46, ALL, DROWS, ROWS, YROWS, kanaOf } from '../data/letters.js';
 import { LANG, localeFor, translate } from '../i18n/core.js';
 import { isoToUTC, todayISO, uniq } from '../util.js';
@@ -67,11 +67,20 @@ function buildPlan(goal, lang) {
       base: [],
       review: true,
     });
-    out = [];
-    base.forEach((d, i) => {
-      out.push(d);
-      if ([2, 4, 6, 8, 10, 12, 13].includes(i + 1)) out.push(rev());
+    /* 21 days: the first 10 days teach one row each (about 5 letters), then the same days as the 14-day plan */
+    out = SLOW_PLAN.map((d, i) => {
+      const loc = content.slow?.[i] || {};
+      return {
+        t: loc.t ?? d.t,
+        tasks: (loc.tasks ?? d.tasks).slice(),
+        f: d.f.slice(),
+        pool: d.pool,
+        base: [Math.floor(i / 2) + 1],
+      };
     });
+    out.splice(8, 0, rev());
+    out.splice(4, 0, rev());
+    out.push(...base.slice(5));
   } else out = base;
   const f = (goal.min || 30) / 30;
   return out.map((d) => ({ ...d, tasks: d.tasks.map((task) => formatTask(task, f, lang)) }));

@@ -1,4 +1,4 @@
-import { arMin, MEAN_AR, PLAN_AR, REVIEW_AR, SENT_AR, WTITLE_AR } from './ar-content.js';
+import { arMin, MEAN_AR, PLAN_AR, REVIEW_AR, SLOW_AR, SENT_AR, WTITLE_AR } from './ar-content.js';
 import { explainArabic } from './ar-explain.js';
 import { EXAMPLES } from '../data/content.js';
 import { DAILY_ALL, EXTRA, PHRASES } from '../data/daily.js';
@@ -641,6 +641,7 @@ export default /** @satisfies {import('../../types/app').LocaleDefinition} */ ({
   strings,
   content: {
     plan: PLAN_AR,
+    slow: SLOW_AR,
     review: REVIEW_AR,
     explain: explainArabic,
     meanings: MEAN_AR,
