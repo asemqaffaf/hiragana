@@ -35,6 +35,8 @@ const GROUP = {
   progress: 'progress',
   profile: 'profile',
 };
+/** The pages the tab bar opens: they have no Back button. @type {readonly import('../../types/app').TabName[]} */
+const ROOT_PAGES = ['plan', 'chart', 'drill', 'progress'];
 /** Pages shown as a segmented control under the top bar. @type {Record<'practice', readonly import('../../types/app').TabName[]>} */
 const SUBTABS = { practice: ['drill', 'write', 'read', 'phrases'] };
 /** The page each group opens when its tab is tapped. @type {Record<'practice', import('../../types/app').TabName>} */
@@ -148,8 +150,8 @@ export function renderBack() {
   const bar = $('#backBar'),
     prev = ui.navStack[ui.navStack.length - 1];
   if (!bar) return;
-  /* always there, except on Today (the home page) and the login screen */
-  bar.hidden = ui.currentTab === 'plan' || document.body.classList.contains('signed-out');
+  /* as in iOS: the pages the tab bar opens (Today, Letters, Practice, Progress) have no Back; every page opened from them does */
+  bar.hidden = ROOT_PAGES.includes(ui.currentTab) || document.body.classList.contains('signed-out');
   const page = t(`tab.${prev && prev !== ui.currentTab ? prev : 'plan'}`),
     lab = must('#backLabel');
   /* the capsule shows where Back goes; the full sentence is its accessible name */

@@ -22,10 +22,11 @@ async def main():
             R[lang + '_back_everywhere'] = vis
             # tapping back from profile goes to the previous page; from Letters goes to Today
             await pg.tap('#backBtn'); await pg.wait_for_timeout(150); R[lang + '_back_from_profile'] = await pg.evaluate('location.hash')
-            await pg.tap('nav [data-nav="letters"]'); await pg.wait_for_timeout(100); await pg.tap('#backBtn'); await pg.wait_for_timeout(150)
+            await pg.tap('nav [data-nav="letters"]'); await pg.wait_for_timeout(100); R[lang + '_letters_back_hidden'] = await pg.is_hidden('#backBar')
+            await pg.tap('#whoBtn'); await pg.wait_for_timeout(100); await pg.tap('#backBtn'); await pg.wait_for_timeout(150)
             R[lang + '_back_from_letters'] = await pg.evaluate('location.hash')
-            # sticky: scroll far down the Letters page, the bar stays at the top
-            await pg.tap('nav [data-nav="letters"]'); await pg.wait_for_timeout(100)
+            # sticky: scroll far down the Profile page, the bar stays at the top
+            await pg.tap('#whoBtn'); await pg.wait_for_timeout(100)
             await pg.evaluate('window.scrollTo(0, 900)'); await pg.wait_for_timeout(150)
             R[lang + '_sticky_top'] = await pg.evaluate("Math.round(document.querySelector('#backBar').getBoundingClientRect().top)")
             await pg.evaluate('window.scrollTo(0, 0)')

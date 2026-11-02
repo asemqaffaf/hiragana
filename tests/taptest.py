@@ -15,7 +15,7 @@ async def main():
             ok = []
             for nav in ['letters','practice','progress','letters']:
                 await pg.tap(f'nav [data-nav="{nav}"]'); await pg.wait_for_timeout(80)
-                await pg.tap('#backBtn'); await pg.wait_for_timeout(120)
+                await pg.tap('nav [data-nav="home"]'); await pg.wait_for_timeout(120)
                 ok.append(await pg.evaluate("(()=>{const t=document.querySelector('#tab-plan');return getComputedStyle(t).display+'|'+(document.documentElement.scrollWidth===innerWidth)+'|'+t.className})()"))
             R[lang+'_after_back'] = ok
             # whole example row plays (tap the left, away from the speaker button)
