@@ -94,12 +94,12 @@ export function renderProfile() {
   /* [paper, surface, grid] for light, then for dark, so each preview matches the mode in use */
   /** @type {Record<import('../../types/app').Tint, string[]>} */
   const TC = {
-    sage: ['#F5F7F3', '#FFFFFF', '#B7D2C8', '#15221D', '#1B2B25', '#3A5A4F'],
+    slate: ['#F3F4F5', '#FFFFFF', '#BCC3C9', '#17191C', '#1F2226', '#474D55'],
     sand: ['#F8F4EC', '#FFFFFF', '#D8CDB4', '#211C14', '#2A241A', '#5A4D36'],
     sky: ['#F1F6FA', '#FFFFFF', '#B4CADB', '#121D28', '#192733', '#3A5870'],
     rose: ['#FBF3F2', '#FFFFFF', '#E0BDB8', '#241A1B', '#2E2223', '#5E4040'],
     lilac: ['#F5F3FA', '#FFFFFF', '#C8C0DD', '#1B1826', '#241F32', '#4E4670'],
-    slate: ['#F3F4F5', '#FFFFFF', '#BCC3C9', '#17191C', '#1F2226', '#474D55'],
+    sage: ['#F5F7F3', '#FFFFFF', '#B7D2C8', '#15221D', '#1B2B25', '#3A5A4F'],
     white: ['#FFFFFF', '#F6F7F5', '#C3D3CC', '#000000', '#111513', '#3A4A43'],
   };
   h +=

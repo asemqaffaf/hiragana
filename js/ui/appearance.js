@@ -22,7 +22,7 @@ export function applyTheme(theme, remember) {
   themeReady = true;
   if (th.mode === 'system') r.removeAttribute('data-theme');
   else r.setAttribute('data-theme', th.mode);
-  if (th.tint === 'sage') r.removeAttribute('data-tint');
+  if (th.tint === 'slate') r.removeAttribute('data-tint');
   else r.setAttribute('data-tint', th.tint);
   if (remember) {
     try {

@@ -14,7 +14,7 @@ import {
 
 export const COLORS = ['#2A7361', '#CC3226', '#3C5A99', '#95601A', '#7A4E9C', '#4F6B2E'];
 /** @type {readonly import('../../types/app').Tint[]} */
-export const TINTS = ['sage', 'sand', 'sky', 'rose', 'lilac', 'slate', 'white'];
+export const TINTS = ['slate', 'sand', 'sky', 'rose', 'lilac', 'sage', 'white'];
 /** @type {readonly import('../../types/app').ThemeMode[]} */
 export const MODES = ['system', 'light', 'dark'];
 const DAY_KEY = /^([1-9]|1[0-9]|2[01])$/;
@@ -32,7 +32,7 @@ const oneOf = (options, value, fallback) => options.find((option) => option === 
 /** @param {unknown} x @returns {import('../../types/app').Theme} */
 export const cleanTheme = (x) => {
   const theme = isObject(x) ? x : {};
-  return { mode: oneOf(MODES, theme.mode, 'system'), tint: oneOf(TINTS, theme.tint, 'sage') };
+  return { mode: oneOf(MODES, theme.mode, 'system'), tint: oneOf(TINTS, theme.tint, 'slate') };
 };
 export const ISO = /^\d{4}-\d{2}-\d{2}$/;
 /** @param {unknown} value @returns {value is import('../../types/app').ISODate} */

@@ -217,7 +217,7 @@ export type Reason = 'jlpt' | 'travel' | 'work' | 'school' | 'fun' | 'all';
 export type Pace = 7 | 14 | 21;
 export type DailyMinutes = 10 | 20 | 30;
 export type ThemeMode = 'system' | 'light' | 'dark';
-export type Tint = 'sage' | 'sand' | 'sky' | 'rose' | 'lilac' | 'slate' | 'white';
+export type Tint = 'slate' | 'sand' | 'sky' | 'rose' | 'lilac' | 'sage' | 'white';
 
 export interface Theme {
   mode: ThemeMode;
