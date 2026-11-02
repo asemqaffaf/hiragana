@@ -428,6 +428,8 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   "auth.newPassword": "New password (at least 10 characters)",
   "auth.confirm": "Confirm password",
   "auth.signIn": "Sign in",
+  "auth.remember": "Remember me on this device for 30 days",
+  "auth.rememberHint": "Use only on a device you trust. Switch student to sign out and forget this login.",
   "auth.set": "Set password and sign in",
   "auth.enter": "Enter your password to open this student.",
   "auth.enroll": "This existing profile needs a password. Set one now; it will sync when a connection is available.",

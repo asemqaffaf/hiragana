@@ -11,7 +11,7 @@ import { recordLessonReading } from './core/lesson.js';
 import { ui } from './core/ui-state.js';
 import { KVG } from './data/kvg.js';
 import { checkBadges, initTracking } from './features/gamify.js';
-import { showLogin } from './features/login.js';
+import { restoreLogin, showLogin } from './features/login.js';
 import { renderChart } from './features/chart.js';
 import { renderDaily, renderPhrases } from './features/daily.js';
 import { renderDrill } from './features/drill.js';
@@ -44,8 +44,10 @@ function boot() {
   subscribeProgress(() => checkBadges(false));
   initTracking();
   startCloudSync();
-  clearCurrentStudent();
-  showLogin();
+  if (!restoreLogin()) {
+    clearCurrentStudent();
+    showLogin();
+  }
 }
 boot();
 if (/[#&]test\b/.test(location.hash))

@@ -120,9 +120,13 @@ async def main():
             await second.wait_for_function("document.querySelector('#csMsg').textContent.length > 0")
             assert await second.locator('#whoBtn').is_hidden()
             await second.fill('#csPassword', PASSWORD)
+            await second.check('#csRemember')
             await second.click('#cloudSignIn button[type=submit]')
             await second.locator('#whoBtn').wait_for(state='visible')
-            assert await second.evaluate("window.__hira.getState().stats['あ'].c") == 4
+            assert await second.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 4
+            await second.reload()
+            await second.locator('#whoBtn').wait_for(state='visible')
+            assert await second.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 4
             await second.click('#whoBtn')
             await second.fill('#pfName', 'Newer cloud name')
             await second.click('#pfForm button[type=submit]')

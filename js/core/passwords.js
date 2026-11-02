@@ -1,6 +1,7 @@
 import {
   canStore, readPasswordVerifier, readSyncSecret, writePasswordVerifier, writePendingPassword, writeSyncSecret,
 } from './storage.js';
+import { forgetLogin } from './remembered-login.js';
 /** Password gates still work for a temporary guest when browser storage is blocked. @type {Map<string, string>} */
 const temporaryVerifiers = new Map();
 
@@ -32,6 +33,7 @@ export async function verifyPassword(id, password) {
 }
 /** Accept a credential only after a cloud login has verified it. @param {string} id @param {string} secret */
 export async function rememberPassword(id, secret) {
+  forgetLogin(id);
   if (!writePasswordVerifier(id, await verifierFor(secret)) || !writeSyncSecret(id, secret)) throw new Error('local storage');
   writePendingPassword(id, null);
 }
@@ -43,6 +45,7 @@ export async function setPassword(id, password) {
   const secret = await passwordSecret(id, password);
   const previous = readSyncSecret(id);
   const verifier = await verifierFor(secret);
+  forgetLogin(id);
   if (!canStore) {
     temporaryVerifiers.set(id, verifier);
     return;

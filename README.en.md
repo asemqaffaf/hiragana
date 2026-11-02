@@ -2,6 +2,10 @@
 
 # ひらがな — Hiragana in 14 days
 
+**No server to manage. No database to set up. Full-stack app experience.**
+
+A complete browser-based learning app with profiles, password sign-in, progress storage, and optional cloud sync. The default app runs entirely in the browser using `localStorage`. Optional sync uses Google Apps Script as a managed backend and private JSON files in Google Drive, so there is no separate server to manage or database service to provision.
+
 Learn to read, write, and recognise 104 hiragana characters and combinations: 46 basic characters, 25 voiced and semi-voiced forms, and 33 yōon combinations. Study with guided lessons, stroke-order practice, listening drills, and reading exercises with Japanese audio.
 
 [**Start learning →**](https://asemqaffaf.github.io/hiragana/) · [Add a language](docs/languages.md)
@@ -63,6 +67,14 @@ python3 -m http.server 8000
 Open [http://localhost:8000/](http://localhost:8000/). Python 3 is enough to serve the app; Node.js is only needed for development checks. Use a local server because the app loads JavaScript modules.
 
 Progress is saved in the browser's `localStorage`. Cloud sync is disabled by default in a local checkout. Export your profile before clearing browser data or moving to another browser if you are not using sync.
+
+## Remember your sign-in
+
+Select **Remember me on this device for 30 days** when creating a profile, signing in, or importing a profile to reopen the app without entering your password again. It is off by default; use it only on a trusted device. Reloading or reopening the browser does not extend the 30-day expiry. Without this option, the app asks for your password again after a reload or browser restart.
+
+Choose **Switch student** in your profile to sign out and clear the remembered login. Deleting the profile, changing its password on this device, clearing browser storage, or reaching the expiry also ends it. Remembered sign-in is unavailable when browser storage is blocked; private browsing may discard it when the private session ends.
+
+This is a device-local convenience, not a server-issued JWT or refresh-token session. It uses a local expiry record tied to the profile's password verifier; the app already stores a password-derived bearer credential in `localStorage` for cloud sync. Anyone with access to the browser profile or scripts running on the same origin can access local data and credentials. Cloud authorization still checks the credential on every request; password changes on another device do not immediately lock local data here. Server-enforced sessions with protected cookies, refresh-token rotation, and remote revocation require a backend designed for those features.
 
 ## Optional cloud sync
 

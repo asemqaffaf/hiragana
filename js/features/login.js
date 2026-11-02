@@ -1,6 +1,7 @@
 import { showTab } from '../core/nav.js';
 import { recoverCloud, signInCloud, syncOn } from '../core/cloud.js';
 import { hasPassword, setPassword, verifyPassword } from '../core/passwords.js';
+import { forgetLogin, rememberedStudent, rememberLogin } from '../core/remembered-login.js';
 import { goalOf } from '../core/plan.js';
 import { renderAll } from '../core/render-all.js';
 import {
@@ -47,6 +48,13 @@ function passwordFields(prefix, create) {
     (create ? 'new-password' : 'current-password') + '" required></label>' +
     (create ? '<label class="field"><span class="small muted">' + t('auth.confirm') +
     '</span><input type="password" id="' + prefix + 'Confirm" maxlength="256" autocomplete="new-password" required></label>' : '');
+}
+/** @param {string} prefix */
+function rememberField(prefix) {
+  return '<label class="remember-login"><input type="checkbox" id="' + prefix + 'Remember"' +
+    (canStore ? '' : ' disabled') + ' aria-describedby="' + prefix + 'RememberHint"><span>' +
+    t('auth.remember') + '</span></label><p class="small muted" id="' + prefix + 'RememberHint">' +
+    t('auth.rememberHint') + '</p>';
 }
 /** @param {string} prefix @param {ParentNode} root */
 function newPassword(prefix, root) {
@@ -147,7 +155,7 @@ export function showLogin() {
     const create = !hasPassword(selected.id);
     h += '<form id="studentSignIn" class="sform" novalidate><h3 dir="auto">' + esc(selected.name) +
       '</h3><p class="small muted">' + t(create ? 'auth.enroll' : 'auth.enter') + '</p>' +
-      passwordFields('si', create) + '<p class="fmsg" id="siMsg" role="alert"></p><div class="btnrow">' +
+      passwordFields('si', create) + rememberField('si') + '<p class="fmsg" id="siMsg" role="alert"></p><div class="btnrow">' +
       '<button class="btn primary" type="submit">' + t(create ? 'auth.set' : 'auth.signIn') + '</button></div></form>';
   }
   if (syncOn) h += '<details class="more"' + (list.length ? '' : ' open') + '><summary>' + t('auth.otherDevice') +
@@ -156,7 +164,7 @@ export function showLogin() {
     passwordFields('cs', false) + '<details class="more"><summary>' + t('auth.forgot') +
     '</summary><label class="field"><span class="small muted">' + t('auth.resetCode') +
     '</span><input id="csCode" dir="ltr" maxlength="64" autocomplete="off" autocapitalize="none" spellcheck="false"></label></details>' +
-    '<p class="fmsg" id="csMsg" role="alert"></p><div class="btnrow">' +
+    rememberField('cs') + '<p class="fmsg" id="csMsg" role="alert"></p><div class="btnrow">' +
     '<button class="btn primary" type="submit">' + t('auth.signIn') + '</button></div></form></details>';
   h += (mode === 'in' ? '<p class="swap"><button type="button" class="link" data-mode="new">' + t('login.toNew') + '</button></p>' : '') + '</div><div id="modeNew"' + (mode === 'new' ? '' : ' hidden') + '>';
   const nextId = newId();
@@ -184,13 +192,13 @@ export function showLogin() {
     sel('nsMin', minOpts(), 30, t('f.min')) +
     sel('nsReason', reasonOpts(), 'jlpt', t('f.reason'), goalHint('jlpt')) +
     '</div>';
-  h += '<p class="fmsg" id="nsMsg" role="alert"></p>';
+  h += rememberField('ns') + '<p class="fmsg" id="nsMsg" role="alert"></p>';
   h +=
     '<div class="btnrow"><button class="btn primary" type="submit">' +
     t('login.createBtn') +
     '</button></div></form>';
   h +=
-    '<details class="more"><summary>' + t('login.import') + '</summary><div class="sform">' + passwordFields('im', true) +
+    '<details class="more"><summary>' + t('login.import') + '</summary><div class="sform">' + passwordFields('im', true) + rememberField('im') +
     '<p class="small imp"><button class="link" id="importBtn" type="button">' +
     t('login.import') +
     '</button><span class="muted">' +
@@ -239,7 +247,7 @@ export function showLogin() {
       if (hasPassword(selected.id)) {
         if (!await verifyPassword(selected.id, must('#siPassword', signIn, HTMLInputElement).value)) throw new Error(t('auth.wrong'));
       } else await setPassword(selected.id, newPassword('si', signIn));
-      if (signIn.isConnected) login(selected.id);
+      if (signIn.isConnected) login(selected.id, must('#siRemember', signIn, HTMLInputElement).checked);
     } catch (error) {
       must('#siMsg', signIn).textContent = error instanceof Error ? error.message : t('auth.failed');
     } finally { button.disabled = false; }
@@ -259,13 +267,13 @@ export function showLogin() {
         must('#csCode', cloudSignIn, HTMLInputElement).value = '';
       }
       if (local && hasPassword(id) && !resetCode && await verifyPassword(id, password)) {
-        if (cloudSignIn.isConnected) login(id);
+        if (cloudSignIn.isConnected) login(id, must('#csRemember', cloudSignIn, HTMLInputElement).checked);
       } else {
         const data = await signInCloud(id, password);
         if (!cloudSignIn.isConnected) return;
         if (local) restoreStudent(data.student, data.progress);
         else addStudent(data.student, data.progress);
-        login(id);
+        login(id, must('#csRemember', cloudSignIn, HTMLInputElement).checked);
       }
     } catch (error) {
       const code = error instanceof Error ? error.message : '';
@@ -317,7 +325,7 @@ export function showLogin() {
       await setPassword(id, newPassword('ns', root));
       if (!button.isConnected) return;
       addStudent(p, { start: ISO.test(start) ? start : todayISO() });
-      enterApp();
+      login(id, must('#nsRemember', root, HTMLInputElement).checked);
     } catch (error) {
       msg.textContent = error instanceof Error ? error.message : t('auth.failed');
     } finally { button.disabled = false; }
@@ -347,7 +355,7 @@ export function showLogin() {
         { ...d.student, id, name, last: Date.now(), lang: d.student.lang || LANG },
         d.progress,
       );
-      enterApp();
+      login(id, must('#imRemember', root, HTMLInputElement).checked);
     } catch (err) {
       ui.loginMsg = 'err.badFile';
       showLogin();
@@ -356,11 +364,21 @@ export function showLogin() {
   const first = mode === 'new' ? nameInput : mode === 'in' ? $('[data-login]', root) || $('#csId', root, HTMLInputElement) : $('[data-mode]', root);
   if (first && !matchMedia('(pointer: coarse)').matches) first.focus();
 }
-/** @param {string} id */
-export function login(id) {
+/** @param {string} id @param {boolean} [remember] */
+export function login(id, remember = false) {
   const p = selectStudent(id);
   if (!p) return showLogin();
+  forgetLogin();
+  if (remember) rememberLogin(id);
   enterApp();
+}
+/** Restore only an explicitly remembered profile, without renewing its expiry. */
+export function restoreLogin() {
+  const id = rememberedStudent();
+  if (!id || !students.list.some((student) => student.id === id)) return false;
+  if (!selectStudent(id)) return false;
+  enterApp();
+  return true;
 }
 export function renderWho() {
   const p = me(),

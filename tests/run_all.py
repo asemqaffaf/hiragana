@@ -15,6 +15,7 @@ from architecture import check_architecture
 
 ROOT = Path(__file__).resolve().parent.parent
 SUITES = (
+    'sessiontest',
     'cloudtest',
     'localetest', 'refactortest', 'swipetest', 'tallsheet', 'locktest', 'taptest',
     'phrasetap', 'phfilter', 'wordsfilter', 'goals', 'dragselect', 'barscroll', 'backbar',
