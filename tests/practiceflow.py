@@ -20,6 +20,14 @@ async def continue_to(page, tab):
     await visible_tab(page, tab)
 
 
+async def open_write(page, kana):
+    await page.click('nav [data-nav="letters"]')
+    await page.locator('#tab-chart').wait_for(state='visible')
+    await page.locator(f'#tab-chart [data-open="{kana}"]').first.click()
+    await page.click('#shWrite')
+    await visible_tab(page, 'write')
+
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -36,6 +44,7 @@ async def main():
             await page.locator('body:not(.signed-out)').wait_for()
             await page.click('nav [data-nav="practice"]')
             await visible_tab(page, 'write')
+            assert await page.locator('#tab-write select').count() == 0
             assert await page.locator('#subnav [data-sub]').evaluate_all('els => els.map(el => el.dataset.sub)') == ['write', 'read', 'phrases', 'drill']
             assert await page.locator('#backBar').is_hidden()
             assert await page.locator('#homeBtn').is_visible()
@@ -46,7 +55,7 @@ async def main():
             assert await page.locator('#startDrill').is_enabled()
             await page.click('#subnav [data-sub="write"]')
             await visible_tab(page, 'write')
-            await page.select_option('#wGroup', 'n')
+            await open_write(page, 'な')
             await page.click('[data-wk="ぬ"]')
             await page.screenshot(path=f'shots/practice_write_{lang}_{width}.png')
             await continue_to(page, 'read')
@@ -75,7 +84,7 @@ async def main():
             # Browsing a new row must not discard an unfinished quiz.
             await page.click('#subnav [data-sub="write"]')
             await visible_tab(page, 'write')
-            await page.select_option('#wGroup', 'k')
+            await open_write(page, 'か')
             await continue_to(page, 'read')
             await continue_to(page, 'phrases')
             await continue_to(page, 'drill')
