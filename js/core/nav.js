@@ -252,5 +252,7 @@ $$('nav.tabs button').forEach((b) =>
   window.addEventListener('resize', () => {
     moveThumb($('nav.tabs .in'), 'tabs', true);
     moveThumb($('#subnav .seg'), 'subnav', true);
+    moveThumb($('#tab-chart .seg'), 'chart', true);
+    moveThumb($('#tab-progress .seg'), 'pgseg', true);
   });
 })();

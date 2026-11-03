@@ -43,8 +43,17 @@ let drag = null;
 /** @type {{c: HTMLElement, until: number} | null} */
 let swallow = null;
 
-/** The thumb key for a bar. @param {Element} c @returns {'tabs' | 'subnav' | null} */
-const keyOf = (c) => (c.matches('nav.tabs .in') ? 'tabs' : c.closest('#subnav') ? 'subnav' : null);
+/** The thumb key for a bar. @param {Element} c @returns {string | null} */
+const keyOf = (c) =>
+  c.matches('nav.tabs .in')
+    ? 'tabs'
+    : c.closest('#subnav')
+    ? 'subnav'
+    : c.closest('#tab-chart')
+    ? 'chart'
+    : c.closest('#tab-progress')
+    ? 'pgseg'
+    : (c instanceof HTMLElement && c.dataset.thumbKey) || null;
 /** @param {HTMLElement} c @returns {HTMLButtonElement[]} */
 const items = (c) =>
   /** @type {HTMLButtonElement[]} */ (Array.from(c.querySelectorAll(':scope > button'))).filter(

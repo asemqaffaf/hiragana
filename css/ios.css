@@ -37,9 +37,9 @@
 /* segmented control: gray capsule, the selected segment is a raised capsule */
 .seg{padding:3px;gap:2px;border:0;border-radius:999px;background:var(--gray-fill);overflow:visible}
 .seg button{border:0;border-radius:999px;color:var(--ink);font-weight:500}
-.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg button[aria-pressed="true"]{background:rgba(255,255,255,.18);box-shadow:none}}
-:root[data-theme="dark"] .seg button[aria-pressed="true"]{background:rgba(255,255,255,.18);box-shadow:none}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg button[aria-pressed="true"],:root:not([data-theme="light"]) .seg button[aria-selected="true"]{background:rgba(255,255,255,.18);box-shadow:none}}
+:root[data-theme="dark"] .seg button[aria-pressed="true"],:root[data-theme="dark"] .seg button[aria-selected="true"]{background:rgba(255,255,255,.18);box-shadow:none}
 
 /* tab bar: a floating glass capsule; the selected tab sits on a lighter pill */
 nav.tabs{--gap:max(10px,calc(env(safe-area-inset-bottom,0px) - 12px));left:max(21px,calc((100vw - 680px) / 2));right:max(21px,calc((100vw - 680px) / 2));bottom:var(--gap);padding:4px;border:0;border-radius:34px;background:var(--glass);box-shadow:var(--glass-shadow),inset 0 0 0 1px var(--glass-edge),inset 0 1px 0 var(--glass-hi)}
@@ -141,7 +141,7 @@ html[dir="rtl"]{--pd:-1}
 .has-thumb > button{position:relative;z-index:1}
 nav.tabs .has-thumb > .thumb,nav.tabs .in > .thumb{border-radius:30px;background:var(--gray-fill)}
 .seg.has-thumb > .thumb{top:3px;bottom:3px;border-radius:999px;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
-.seg.has-thumb button[aria-pressed="true"],nav.tabs .has-thumb button[aria-selected="true"]{background:none;box-shadow:none}
+.seg.has-thumb button[aria-pressed="true"],.seg.has-thumb button[aria-selected="true"],nav.tabs .has-thumb button[aria-selected="true"]{background:none;box-shadow:none}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg.has-thumb > .thumb{background:rgba(255,255,255,.18);box-shadow:none}}
 :root[data-theme="dark"] .seg.has-thumb > .thumb{background:rgba(255,255,255,.18);box-shadow:none}
 /* pressing the selected tab or segment lifts the glass, as in iOS 26 */
