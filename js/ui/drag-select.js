@@ -53,6 +53,8 @@ const keyOf = (c) =>
     ? 'chart'
     : c.closest('#tab-progress')
     ? 'pgseg'
+    : c.closest('.themebox')
+    ? 'mode'
     : (c instanceof HTMLElement && c.dataset.thumbKey) || null;
 /** @param {HTMLElement} c @returns {HTMLButtonElement[]} */
 const items = (c) =>
