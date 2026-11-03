@@ -244,23 +244,6 @@ export function renderWrite(play) {
         : nextWrite();
   let h = '<h2>' + t('tab.write') + '</h2>';
   h +=
-    '<div class="wpicker"><select class="rowpick" id="wGroup" dir="ltr" aria-label="' +
-    t('write.rows') +
-    '">' +
-    WGROUPS.map(
-      (x) =>
-        '<option value="' +
-        x.id +
-        '"' +
-        (x.id === g.id ? ' selected' : '') +
-        '>' +
-        x.label +
-        ' ' +
-        rom(x.label) +
-        '</option>',
-    ).join('') +
-    '</select>';
-  h +=
     '<div class="strip">' +
     g.kana
       .map(
@@ -285,7 +268,7 @@ export function renderWrite(play) {
           '"></span></button>',
       )
       .join('') +
-    '</div></div>';
+    '</div>';
   h += '<div class="wgrid"><div class="wleft">';
   h +=
     '<p class="wmeta"><b>' +
@@ -371,16 +354,6 @@ export function renderWrite(play) {
     ui.writeCheck && wq && wq.tpl ? writeHandler : null,
   );
   if (ui.writeCheck && wq) wSay(startText(wq));
-  const row = must('#wGroup', root, HTMLSelectElement);
-  row.onchange = () => {
-    const group = WGROUPS.find((x) => x.id === row.value);
-    if (!group) return;
-    ui.lessonWrite = false;
-    ui.writeGroup = group.id;
-    ui.writeK = group.kana[0];
-    renderWrite();
-    must('#wGroup', root).focus({ preventScroll: true });
-  };
   $$('[data-wk]', root).forEach(
     (b) =>
       (b.onclick = () => {

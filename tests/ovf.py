@@ -23,7 +23,7 @@ async def main():
         for tab in ['plan', 'progress', 'chart', 'drill', 'write', 'read', 'phrases', 'profile']:
             await go(pg, tab); await pg.wait_for_timeout(2000)
             r = await pg.evaluate("""() => { const W = document.documentElement.clientWidth; const out = [];
-              document.querySelectorAll('body *').forEach(e => { const r = e.getBoundingClientRect(); if (r.width && r.right > W + 1 && !e.closest('.strip,.rowpick')) out.push((e.className && e.className.baseVal === undefined ? e.className : e.tagName) + ' ' + Math.round(r.right)); });
+              document.querySelectorAll('body *').forEach(e => { const r = e.getBoundingClientRect(); if (r.width && r.right > W + 1 && !e.closest('.strip')) out.push((e.className && e.className.baseVal === undefined ? e.className : e.tagName) + ' ' + Math.round(r.right)); });
               return [document.documentElement.scrollWidth, out.slice(0, 6)]; }""")
             print(tab, r)
             assert r[0] <= 390, (tab, r)
