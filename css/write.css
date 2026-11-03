@@ -21,6 +21,9 @@
 .opts label{min-height:36px}
 .wtips{max-width:420px;margin:6px auto 0}
 .wtips summary{font-size:14px}
+.wnotes{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.wnotes .hook{margin:0;font-size:16px;line-height:1.5}
+.wnotes .morex{max-width:none}
 @media (max-width:599px){
   body:not(.signed-out) header.top p{display:none}
   body:not(.signed-out) header.top{padding-top:12px}
@@ -47,6 +50,26 @@
   .wright .opts{justify-content:flex-start}
 }
 .wsq canvas{position:absolute;inset:0;width:100%;height:100%;z-index:3;touch-action:none;cursor:crosshair;transition:opacity .25s}
+.wsq .mark.ok circle{stroke:var(--jade)}
+.wsq.write-success{border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft);animation:writeSuccessGlow .9s ease-out}
+.wcelebrate{position:absolute;inset:0;z-index:4;pointer-events:none;color:var(--jade)}
+.wcelebrate span{position:absolute;opacity:0;font-size:clamp(16px,6vw,26px);line-height:1;transform:translate(-50%,-50%)}
+.wcelebrate span:nth-child(1){left:18%;top:20%}
+.wcelebrate span:nth-child(2){left:50%;top:9%;animation-delay:.06s}
+.wcelebrate span:nth-child(3){left:82%;top:20%;animation-delay:.12s}
+.wcelebrate span:nth-child(4){left:91%;top:50%;animation-delay:.04s}
+.wcelebrate span:nth-child(5){left:82%;top:80%;animation-delay:.1s}
+.wcelebrate span:nth-child(6){left:50%;top:91%;animation-delay:.16s}
+.wcelebrate span:nth-child(7){left:18%;top:80%;animation-delay:.08s}
+.wcelebrate span:nth-child(8){left:9%;top:50%;animation-delay:.14s}
+.write-success .wcelebrate span{animation-name:writeSparkle;animation-duration:.8s;animation-timing-function:ease-out}
+@keyframes writeSuccessGlow{0%,100%{box-shadow:0 0 0 3px var(--jade-soft)}45%{box-shadow:0 0 0 9px var(--jade-soft),0 0 24px var(--jade-soft)}}
+@keyframes writeSparkle{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:0;transform:translate(-50%,calc(-50% - 14px)) scale(.5)}}
+@media (prefers-reduced-motion:reduce){
+  .wsq.write-success{animation:none}
+  .wsq .mark.ok circle{animation:none;stroke-dashoffset:0}
+  .wcelebrate{display:none}
+}
 .wmeta{margin:6px 0 0;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
 .wmeta b{font-size:20px}
 .wstat{min-height:46px;max-width:380px;margin:8px auto 0;text-align:center;font-size:16px;line-height:1.45}
