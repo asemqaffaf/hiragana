@@ -7,6 +7,7 @@ import { DAILY_ALL, EXTRA } from '../data/daily.js';
 import { dailyFor, dailySoFar } from '../core/daily.js';
 import { dailyCard } from '../ui/daily-card.js';
 import { wordCard } from '../ui/word-card.js';
+import { bindPracticeNext } from '../ui/practice-next.js';
 import { t, tList } from '../i18n/core.js';
 import { exampleMeaning, meanOf, wtitleOf } from '../i18n/helpers.js';
 import { $, closest, must } from '../util.js';
@@ -149,6 +150,7 @@ export function renderRead() {
   const k = ui.rdFilter,
     root = must('#tab-read');
   root.innerHTML = k ? renderWordsFor(k) : allWordsHtml(dayNumber());
+  bindPracticeNext(root, 'read');
   /* filtered pages always show romaji and meaning, so the checkboxes and the tap-to-open toggle only apply to the full list */
   root.classList.toggle('show-ro', !k && ui.showRo);
   root.classList.toggle('show-mean', !k && ui.showMean);

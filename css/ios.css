@@ -89,10 +89,8 @@ body:not(.signed-out) header.top p{display:none}
 body:not(.signed-out) .who{margin-top:0;gap:6px;padding-inline:4px 12px}
 body:not(.signed-out) .who .av{width:30px;height:30px;font-size:14px}
 body:not(.signed-out) .who .nm{font-size:14px;font-weight:600}
-/* Back: a round Liquid Glass button floating over a soft fade at the top edge of the page, as in iOS 26 */
-.backbar{pointer-events:none;background:none;margin:-10px -16px 6px;padding:4px 16px}
-/* no fade behind it: the page scrolls under the glass and shows through, blurred, as in iOS 26 */
-.backbar::before{content:none}
+/* Back replaces the title in the header, keeping navigation on one row. */
+.backbar{pointer-events:none}
 .back{pointer-events:auto;position:relative;gap:0;justify-content:center;width:44px;min-height:44px;padding:0;border-radius:50%;border:0;background:color-mix(in srgb,var(--surface) 34%,transparent);color:var(--jade);font-weight:600;font-size:16px;
   -webkit-backdrop-filter:blur(18px) saturate(1.9) brightness(1.04);backdrop-filter:blur(18px) saturate(1.9) brightness(1.04);
   box-shadow:0 6px 20px rgba(24,36,30,.14),0 1px 2px rgba(24,36,30,.10),inset 0 0 0 1px var(--glass-edge),inset 1px 2px 1px var(--glass-hi),inset -1px -2px 2px color-mix(in srgb,var(--glass-hi) 45%,transparent);transition:scale .5s var(--spring),filter .2s}

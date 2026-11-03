@@ -1,6 +1,7 @@
 import { enterAnim, pageSnapshot, replay } from './motion.js';
 import { ui } from './ui-state.js';
 import { enterPage } from './pages.js';
+import { PRACTICE_STEPS, nextPracticeStep, practiceQuizPreset } from './practice.js';
 import { moveThumb } from '../ui/thumb.js';
 import { t } from '../i18n/core.js';
 import { closeSheet } from '../ui/sheet-state.js';
@@ -36,11 +37,11 @@ const GROUP = {
   profile: 'profile',
 };
 /** The pages the tab bar and the profile button open: they have no Back button. @type {readonly import('../../types/app').TabName[]} */
-const ROOT_PAGES = ['plan', 'chart', 'drill', 'progress', 'profile'];
+const ROOT_PAGES = ['plan', 'chart', 'progress', 'profile'];
 /** Pages shown as a segmented control under the top bar. @type {Record<'practice', readonly import('../../types/app').TabName[]>} */
-const SUBTABS = { practice: ['drill', 'write', 'read', 'phrases'] };
+const SUBTABS = { practice: PRACTICE_STEPS };
 /** The page each group opens when its tab is tapped. @type {Record<'practice', import('../../types/app').TabName>} */
-const lastSub = { practice: 'drill' };
+const lastSub = { practice: 'write' };
 /** @param {unknown} name @returns {name is import('../../types/app').TabName} */
 export const isTab = (name) => typeof name === 'string' && TABS.some((tab) => tab === name);
 /** @param {import('../../types/app').TabName} name */
@@ -65,13 +66,17 @@ function renderSubnav(name) {
         (s) =>
           '<button role="tab" data-sub="' +
           s +
-          '" aria-selected="' +
+          '" aria-label="' +
+          t(`tab.${s}`) +
+          '"' +
+          (s === name ? ' aria-current="step"' : '') +
+          ' aria-selected="' +
           (s === name) +
           '" aria-pressed="' +
           (s === name) +
-          '">' +
+          '"><span class="step-label">' +
           t(`tab.${s}`) +
-          '</button>',
+          '</span></button>',
       )
       .join('') +
     '</div>';
@@ -85,14 +90,19 @@ function renderSubnav(name) {
       }),
   );
 }
-/* The letter that Words and Phrases follow: from Write it is the letter being written, and between Words and Phrases it stays while the page is filtered */
+/* Each next step follows the current letter while the page is filtered. */
 /** @param {import('../../types/app').TabName} to */
 function carryLetter(to) {
-  if (to !== 'phrases' && to !== 'read') return undefined;
+  if (to !== 'phrases' && to !== 'read' && to !== 'drill') return undefined;
   if (ui.currentTab === 'write') return ui.writeK || undefined;
   if (ui.currentTab === 'read') return ui.rdFilter || undefined;
   if (ui.currentTab === 'phrases') return ui.phFilter || undefined;
   return undefined;
+}
+/** Continues the suggested sequence; no steps are locked or marked complete here. */
+export function continuePractice() {
+  const next = nextPracticeStep(ui.currentTab);
+  if (next) showTab(next, { letter: carryLetter(next) });
 }
 /** @param {{tab: import('../../types/app').TabName, sheet?: boolean}} st @param {boolean} [replace] */
 function setHist(st, replace) {
@@ -107,6 +117,7 @@ function setHist(st, replace) {
 export function showTab(requested, opts = {}) {
   const name = isTab(requested) ? requested : 'plan';
   if (opts.initial) {
+    lastSub.practice = 'write';
     ui.navStack = [];
     setHist({ tab: name }, true);
   } else if (!opts.fromHistory && name !== ui.currentTab) {
@@ -126,6 +137,14 @@ export function showTab(requested, opts = {}) {
   if (name === 'read') {
     if (opts.letter !== undefined) ui.rdFilter = ui.rdLetter = opts.letter;
     else if (!opts.fromHistory) ui.rdFilter = ui.rdLetter = null;
+  }
+  if (name === 'drill' && opts.letter && (!ui.session || ui.session.done)) {
+    const preset = practiceQuizPreset(opts.letter);
+    if (preset) {
+      ui.drillSel = new Set([preset]);
+      ui.session = null;
+      ui.lessonQuiz = false;
+    }
   }
   ui.currentTab = name;
   $$('nav.tabs button').forEach((b) =>
@@ -150,8 +169,11 @@ export function renderBack() {
   const bar = $('#backBar'),
     prev = ui.navStack[ui.navStack.length - 1];
   if (!bar) return;
-  /* as in iOS: the pages the tab bar opens (Today, Letters, Practice, Progress) and Profile have no Back; every page opened from them does */
-  bar.hidden = ROOT_PAGES.includes(ui.currentTab) || document.body.classList.contains('signed-out');
+  /* Section entry pages have no Back. Continuing a sequence keeps the previous step in history. */
+  bar.hidden =
+    ROOT_PAGES.includes(ui.currentTab) ||
+    ((ui.currentTab === 'write' || ui.currentTab === 'drill') && ui.rootView) ||
+    document.body.classList.contains('signed-out');
   const page = t(`tab.${prev && prev !== ui.currentTab ? prev : 'plan'}`),
     lab = must('#backLabel');
   /* the capsule shows where Back goes; the full sentence is its accessible name */
@@ -256,5 +278,6 @@ $$('nav.tabs button').forEach((b) =>
     moveThumb($('#tab-progress .seg'), 'pgseg', true);
     moveThumb($('#tab-profile .modeseg'), 'mode', true);
     moveThumb($('#tab-drill .drillseg'), 'drill', true);
+    moveThumb($('#tab-drill .quiz-modes'), 'quiz-mode', true);
   });
 })();

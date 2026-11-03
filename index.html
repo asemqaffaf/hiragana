@@ -103,12 +103,14 @@
 </head>
 <body class="signed-out">
 <header class="top">
-  <div class="ttl"><h1 id="homeBtn" role="link" tabindex="0">ひらがな</h1><p id="appSub">Read all hiragana in 14 days, 30 minutes a day</p></div>
+  <div class="ttl">
+    <div class="backbar" id="backBar" hidden><button class="back" id="backBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="backLabel">Back</span></button></div>
+    <h1 id="homeBtn" role="link" tabindex="0">ひらがな</h1><p id="appSub">Read all hiragana in 14 days, 30 minutes a day</p>
+  </div>
   <button class="who" id="whoBtn" type="button" aria-haspopup="dialog" hidden></button>
 </header>
 <main class="wrap">
   <section id="login" aria-label="Choose a student" hidden></section>
-  <div class="backbar" id="backBar" hidden><button class="back" id="backBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="backLabel">Back</span></button></div>
   <div class="subnav" id="subnav" hidden></div>
   <section class="tab" id="tab-plan" aria-label="Plan"></section>
   <section class="tab" id="tab-meet" aria-label="Meet" hidden></section>

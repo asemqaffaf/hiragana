@@ -9,3 +9,11 @@ body.kid nav.tabs button svg{width:28px;height:28px}
 .subnav{margin:0 0 14px}
 .subnav[hidden]{display:none}
 .subnav .seg{max-width:460px}
+.subnav [data-sub]{display:flex;align-items:center;justify-content:center;gap:4px;padding-inline:8px}
+.step-label{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.practice-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.practice-heading h2{margin:0}
+.practice-heading .practice-next{flex:0 1 auto;min-width:0;font-size:14px;padding-inline:16px}
+.practice-continue-slot:empty{display:none}
+.practice-continue-slot:not(:empty){margin-top:12px}
+.practice-continue-slot .practice-next{width:100%}

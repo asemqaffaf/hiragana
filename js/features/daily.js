@@ -10,6 +10,7 @@ import { DAILY_ALL, EXTRA, PHRASES } from '../data/daily.js';
 import { completeLessonWords, lesson, recordLessonWord } from '../core/lesson.js';
 import { wordCard } from '../ui/word-card.js';
 import { dailyCard } from '../ui/daily-card.js';
+import { bindPracticeNext } from '../ui/practice-next.js';
 import { t } from '../i18n/core.js';
 import { meanOf, phraseTitle } from '../i18n/helpers.js';
 import { $, closest, must } from '../util.js';
@@ -158,6 +159,7 @@ export function renderPhrases() {
   }
   const root = must('#tab-phrases');
   root.innerHTML = h;
+  bindPracticeNext(root, 'phrases');
   const all = $('#phAll', root);
   if (all)
     all.onclick = () => {
