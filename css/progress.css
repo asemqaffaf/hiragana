@@ -85,7 +85,7 @@ nav.tabs button{font-size:12px}
 .pgsub > h4{margin:0 0 6px;font-size:17px}
 
 /* Progress: one panel at a time under a segmented switch */
-.pgseg{margin:18px 0 6px}
+.pgseg{max-width:440px;margin:18px 0 6px}
 .pgpanel[hidden]{display:none}
 .pgpanel .pgsub:first-child{margin-top:12px}
 .pgpanel .badges{margin-top:6px}

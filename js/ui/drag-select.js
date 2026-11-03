@@ -55,6 +55,8 @@ const keyOf = (c) =>
     ? 'pgseg'
     : c.closest('.themebox')
     ? 'mode'
+    : c.closest('#tab-drill')
+    ? 'drill'
     : (c instanceof HTMLElement && c.dataset.thumbKey) || null;
 /** @param {HTMLElement} c @returns {HTMLButtonElement[]} */
 const items = (c) =>

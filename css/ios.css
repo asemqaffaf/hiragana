@@ -16,11 +16,11 @@
 :root[data-theme="dark"]{--glass-edge:rgba(255,255,255,.16); --glass-hi:rgba(255,255,255,.14); --glass-shadow:0 10px 32px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.4); --gray-fill:rgba(120,120,128,.30)}
 @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) and (color:color-mix(in srgb,red 50%,blue)){
   :root{--glass:color-mix(in srgb,var(--surface) 62%,transparent); --glass-strong:color-mix(in srgb,var(--paper) 78%,transparent)}
-  nav.tabs,.actionbar,.who,.sheet,.back{-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8)}
+  nav.tabs,.actionbar,.who,.sheet,.back,.seg{-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8)}
 }
 @media (prefers-reduced-transparency:reduce){
   :root{--glass:var(--surface) !important; --glass-strong:var(--paper) !important}
-  nav.tabs,.actionbar,.who,.sheet,.back{-webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+  nav.tabs,.actionbar,.who,.sheet,.back,.seg{-webkit-backdrop-filter:none !important;backdrop-filter:none !important}
 }
 
 /* buttons: prominent (filled tint), gray (tinted label on a gray fill), destructive, as on iOS */
@@ -35,11 +35,20 @@
 .tool.primary{background:var(--fill);color:var(--fill-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.24)}
 
 /* segmented control: gray capsule, the selected segment is a raised capsule */
-.seg{padding:3px;gap:2px;border:0;border-radius:999px;background:var(--gray-fill);overflow:visible}
-.seg button{border:0;border-radius:999px;color:var(--ink);font-weight:500}
-.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg button[aria-pressed="true"],:root:not([data-theme="light"]) .seg button[aria-selected="true"]{background:rgba(255,255,255,.18);box-shadow:none}}
-:root[data-theme="dark"] .seg button[aria-pressed="true"],:root[data-theme="dark"] .seg button[aria-selected="true"]{background:rgba(255,255,255,.18);box-shadow:none}
+.seg{display:flex;position:relative;padding:2px;gap:0;border:0;border-radius:999px;background:var(--gray-fill);overflow:visible;box-shadow:inset 0 0 0 1px var(--glass-edge),inset 0 1px 2px rgba(0,0,0,.04)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg{box-shadow:inset 0 0 0 1px var(--glass-edge),inset 0 1px 2px rgba(0,0,0,.25)}}
+:root[data-theme="dark"] .seg{box-shadow:inset 0 0 0 1px var(--glass-edge),inset 0 1px 2px rgba(0,0,0,.25)}
+.seg button{position:relative;z-index:1;flex:1 1 0;min-width:0;min-height:40px;padding:0 12px;border:0;border-radius:999px;background:none;font-size:13.5px;font-weight:500;letter-spacing:-.01em;color:var(--pencil);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.seg button:hover:not([aria-selected="true"]):not([aria-pressed="true"]){color:var(--ink)}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{color:var(--ink);font-weight:600}
+.seg:not(.has-thumb) button[aria-pressed="true"],.seg:not(.has-thumb) button[aria-selected="true"]{background:var(--surface);box-shadow:0 2px 8px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 .5px rgba(0,0,0,.04)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg:not(.has-thumb) button[aria-pressed="true"],:root:not([data-theme="light"]) .seg:not(.has-thumb) button[aria-selected="true"]{background:rgba(255,255,255,.18);box-shadow:0 2px 8px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 .5px rgba(255,255,255,.12)}}
+:root[data-theme="dark"] .seg:not(.has-thumb) button[aria-pressed="true"],:root[data-theme="dark"] .seg:not(.has-thumb) button[aria-selected="true"]{background:rgba(255,255,255,.18);box-shadow:0 2px 8px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 .5px rgba(255,255,255,.12)}
+.seg button + button::before{content:"";position:absolute;left:0;top:22%;bottom:22%;width:1px;background:rgba(120,120,128,.28);pointer-events:none;transition:opacity .2s}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg button + button::before{background:rgba(255,255,255,.16)}}
+:root[data-theme="dark"] .seg button + button::before{background:rgba(255,255,255,.16)}
+.seg button[aria-selected="true"]::before,.seg button[aria-pressed="true"]::before,.seg button[aria-selected="true"] + button::before,.seg button[aria-pressed="true"] + button::before{opacity:0}
+html[dir="rtl"] .seg button + button::before{left:auto;right:0}
 
 /* tab bar: a floating glass capsule; the selected tab sits on a lighter pill */
 nav.tabs{--gap:max(10px,calc(env(safe-area-inset-bottom,0px) - 12px));left:max(21px,calc((100vw - 680px) / 2));right:max(21px,calc((100vw - 680px) / 2));bottom:var(--gap);padding:4px;border:0;border-radius:34px;background:var(--glass);box-shadow:var(--glass-shadow),inset 0 0 0 1px var(--glass-edge),inset 0 1px 0 var(--glass-hi)}
@@ -140,12 +149,12 @@ html[dir="rtl"]{--pd:-1}
 .has-thumb > .thumb{position:absolute;left:0;top:0;bottom:0;z-index:0;pointer-events:none;transition:transform .5s var(--spring),width .5s var(--spring),scale .35s var(--spring),opacity .2s,background-color .3s,box-shadow .3s}
 .has-thumb > button{position:relative;z-index:1}
 nav.tabs .has-thumb > .thumb,nav.tabs .in > .thumb{border-radius:30px;background:var(--gray-fill)}
-.seg.has-thumb > .thumb{top:3px;bottom:3px;border-radius:999px;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+.seg.has-thumb > .thumb{top:2px;bottom:2px;border-radius:999px;background:var(--surface);box-shadow:0 2px 8px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 .5px rgba(0,0,0,.04)}
 .seg.has-thumb button[aria-pressed="true"],.seg.has-thumb button[aria-selected="true"],nav.tabs .has-thumb button[aria-selected="true"]{background:none;box-shadow:none}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg.has-thumb > .thumb{background:rgba(255,255,255,.18);box-shadow:none}}
-:root[data-theme="dark"] .seg.has-thumb > .thumb{background:rgba(255,255,255,.18);box-shadow:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg.has-thumb > .thumb{background:rgba(255,255,255,.18);box-shadow:0 2px 8px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 .5px rgba(255,255,255,.12)}}
+:root[data-theme="dark"] .seg.has-thumb > .thumb{background:rgba(255,255,255,.18);box-shadow:0 2px 8px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 .5px rgba(255,255,255,.12)}
 /* pressing the selected tab or segment lifts the glass, as in iOS 26 */
-.has-thumb:has(> button:active) > .thumb{scale:1.07}
+.has-thumb:has(> button:active) > .thumb{scale:1.03}
 /* the lens (lens.js): clear glass that magnifies what is under it. The flat pill fades out while the lens is up. */
 .lensing > .thumb{opacity:var(--thumb-o,1) !important;transition:transform .5s var(--spring),width .5s var(--spring) !important}
 .lens{position:absolute;left:0;top:0;z-index:4;overflow:hidden;border-radius:999px;pointer-events:none;will-change:transform,width,height,opacity;

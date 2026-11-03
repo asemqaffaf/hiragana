@@ -22,6 +22,7 @@ import {
 } from '../data/letters.js';
 import { recordLessonQuiz } from '../core/lesson.js';
 import { kb } from '../ui/letter-button.js';
+import { moveThumb } from '../ui/thumb.js';
 import { K, t } from '../i18n/core.js';
 import { explain } from '../i18n/helpers.js';
 import { $, $$, MARK_SVG, SPEAK_SVG, must, reduceMotion, shuffle } from '../util.js';
@@ -159,14 +160,18 @@ function renderSetup(root) {
   h +=
     '</div><h3>' +
     t('drill.questions') +
-    '</h3><div class="seg" role="group" aria-label="' +
+    '</h3><div class="seg drillseg" role="tablist" aria-label="' +
     t('drill.questions') +
-    '">' +
+    '" data-thumb-key="drill">' +
     DRILL_LENGTHS
       .map(
         (x) =>
-          '<button data-len="' +
+          '<button type="button" role="tab" data-len="' +
           x +
+          '" id="drillLen-' +
+          x +
+          '" aria-selected="' +
+          (ui.drillLen === x) +
           '" aria-pressed="' +
           (ui.drillLen === x) +
           '">' +
@@ -183,6 +188,8 @@ function renderSetup(root) {
     (pool.length ? t('drill.start', { n, p: pool.length }) : t('drill.pick')) +
     '</button></div>';
   root.innerHTML = h;
+  const lenSeg = $('.drillseg', root);
+  moveThumb(lenSeg, 'drill');
   $$('[data-sel]', root).forEach(
     (b) =>
       (b.onclick = () => {
