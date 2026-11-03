@@ -1,14 +1,14 @@
-import { bindSay, exampleHtml, moreExHtml, speakFull } from '../core/audio.js';
+import { bindSay, speakFull } from '../core/audio.js';
 
 import { markSheetOpen, showTab } from '../core/nav.js';
 import { st } from '../core/stats.js';
 import { state } from '../core/store.js';
 import { ui } from '../core/ui-state.js';
-import { FULL_SIZE, LOOK, rom } from '../data/letters.js';
+import { FULL_SIZE, rom } from '../data/letters.js';
 import { groupOf } from '../data/writing.js';
 import { closeSheet } from './sheet-state.js';
 import { t } from '../i18n/core.js';
-import { explain } from '../i18n/helpers.js';
+import { letterNotesHtml } from './letter-notes.js';
 import { strokeCount } from '../strokes/check.js';
 import { strokeSVG } from '../strokes/draw.js';
 import { $, $$, SPEAK_SVG, closest, must } from '../util.js';
@@ -24,7 +24,6 @@ function openSheet(k) {
     s.c + s.w
       ? t('card.drilled', { n: s.c + s.w, c: s.c, avg: s.t ? (s.t / 1000).toFixed(1) : '' })
       : t('card.notDrilled');
-  const looks = LOOK[k] || [];
   const sc = parts.reduce((sum, part) => sum + (strokeCount(part) ?? 0), 0);
   const combo = parts.length > 1;
   let h =
@@ -39,25 +38,7 @@ function openSheet(k) {
     '<small>' +
     t('strokes', { n: sc }) +
     '</small></div></div>';
-  h += '<p class="hook">' + explain(k) + '</p>' + exampleHtml(k) + moreExHtml(k);
-  if (looks.length)
-    h +=
-      '<p class="small muted">' +
-      t('card.mixUp', {
-        list: looks
-          .map(
-            (x) =>
-              '<button class="link" data-open="' +
-              x +
-              '"><span style="font-family:var(--kana);font-size:18px">' +
-              x +
-              '</span> (' +
-              rom(x) +
-              ')</button>',
-          )
-          .join(t('or')),
-      }) +
-      '</p>';
+  h += letterNotesHtml(k);
   if (combo)
     h +=
       '<p class="small muted">' +

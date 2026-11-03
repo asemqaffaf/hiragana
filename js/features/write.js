@@ -1,4 +1,4 @@
-import { hasClip, speakFull } from '../core/audio.js';
+import { bindSay, hasClip, speakFull } from '../core/audio.js';
 import { reduceAnim } from '../core/motion.js';
 import { showTab } from '../core/nav.js';
 import { me, state } from '../core/store.js';
@@ -17,6 +17,7 @@ import { recordLessonWrite, writeList } from '../core/lesson.js';
 import { t } from '../i18n/core.js';
 import { judgeStroke, strokeCount, strokeMessage, strokeTemplates } from '../strokes/check.js';
 import { strokeSVG } from '../strokes/draw.js';
+import { letterNotesHtml } from '../ui/letter-notes.js';
 import { $, $$, MARK_SVG, SPEAK_SVG, must } from '../util.js';
 
 /* ---------- write ---------- */
@@ -105,6 +106,7 @@ function startText(wq) {
 function setMark(on) {
   const m = $('#wsq .mark');
   if (m) m.setAttribute('class', 'mark' + (on ? ' ok' : ''));
+  $('#wsq')?.classList.toggle('write-success', on);
 }
 /* The bar under the writing area. Writing a lesson's letters: it is always there, Next waits (dimmed) until the letter is written.
    Free writing: it appears once the letter is written. */
@@ -296,6 +298,9 @@ export function renderWrite(play) {
     t('write.area', { k: ui.writeK }) +
     '"></canvas>' +
     MARK_SVG +
+    '<span class="wcelebrate" aria-hidden="true">' +
+    '<span>✦</span>'.repeat(8) +
+    '</span>' +
     '</div>';
   h += '</div><div class="wright">';
   h +=
@@ -334,6 +339,7 @@ export function renderWrite(play) {
     '> ' +
     t('write.check') +
     '</label></div>';
+  h += '<div class="wnotes">' + letterNotesHtml(ui.writeK) + '</div>';
   h +=
     '<details class="more wtips"><summary>' +
     t('write.howTitle') +
@@ -343,6 +349,7 @@ export function renderWrite(play) {
   h += '</div></div>';
   const root = must('#tab-write');
   root.innerHTML = h;
+  bindSay(root);
   showDone(false);
   const rp = $('.rowpick', root),
     rc = rp && $('[aria-pressed="true"]', rp);
