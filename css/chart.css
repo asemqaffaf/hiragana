@@ -5,5 +5,6 @@
 .cell .k{font-size:30px}
 .chart.y3 .cell .k{font-size:32px}
 .blank{aspect-ratio:1/1}
+.chartseg{max-width:440px;margin-bottom:14px}
 .chartpanel[hidden]{display:none}
 

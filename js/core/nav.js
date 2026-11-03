@@ -255,5 +255,6 @@ $$('nav.tabs button').forEach((b) =>
     moveThumb($('#tab-chart .seg'), 'chart', true);
     moveThumb($('#tab-progress .seg'), 'pgseg', true);
     moveThumb($('#tab-profile .modeseg'), 'mode', true);
+    moveThumb($('#tab-drill .drillseg'), 'drill', true);
   });
 })();
