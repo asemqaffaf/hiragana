@@ -113,8 +113,17 @@ function strokeFit(u, e) {
   }
   return {avg: sum / u.length, avgA: sumA / u.length, frA: frechet(a, e), pos: Math.hypot(dx, dy), start: Math.hypot(u[0][0] - e[0][0], u[0][1] - e[0][1])};
 }
+/**
+ * In-memory cache for computed stroke templates to avoid re-parsing SVG paths,
+ * cubic Bézier subdivision, resampling, length computation, and polygon area calculation.
+ * @type {Map<string, import('../../types/app').StrokeTemplates>}
+ */
+const templateCache = new Map();
+
 /** @param {string} k @returns {import('../../types/app').StrokeTemplates | null} */
 export function strokeTemplates(k) {
+  const cached = templateCache.get(k);
+  if (cached) return cached;
   const d = KVG[k];
   if (!d) return null;
   const raw = d.p.map(parsePath);
@@ -122,7 +131,9 @@ export function strokeTemplates(k) {
   const lens = raw.map(plen);
   /* closed loops (the ゜ circle): remember which way round they turn */
   const turn = pts.map((p, i) => { const e = p[p.length - 1]; const closed = Math.hypot(p[0][0] - e[0], p[0][1] - e[1]) < 0.25 * lens[i]; const a = signedArea(p); return closed && Math.abs(a) > 0.002 ? a : 0; });
-  return {pts, lens, cents: pts.map(centroid), turn};
+  const tpl = {pts, lens, cents: pts.map(centroid), turn};
+  templateCache.set(k, tpl);
+  return tpl;
 }
 /** @param {number} le @param {number} lenient */
 const shapeTol = (le, lenient) => Math.min(STROKE_TOL.shape, Math.max(0.04, 0.32 * le)) * lenient;
