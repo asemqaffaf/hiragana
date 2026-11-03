@@ -18,11 +18,27 @@ const { dailyFor } = await import('../js/core/daily.js');
 const { todayISO } = await import('../js/util.js');
 const { replaceLang } = await import('../js/i18n/core.js');
 const pages = await import('../js/core/pages.js');
+const practice = await import('../js/core/practice.js');
 const passwords = await import('../js/core/passwords.js');
 const remembered = await import('../js/core/remembered-login.js');
 const storage = await import('../js/core/storage.js');
 
 let studentNumber = 0;
+
+test('practice has four optional steps and reviews the current letter’s row', () => {
+  assert.deepEqual(practice.PRACTICE_STEPS, ['write', 'read', 'phrases', 'drill']);
+  assert.equal(practice.nextPracticeStep('write'), 'read');
+  assert.equal(practice.nextPracticeStep('read'), 'phrases');
+  assert.equal(practice.nextPracticeStep('phrases'), 'drill');
+  assert.equal(practice.nextPracticeStep('drill'), null);
+  assert.equal(practice.nextPracticeStep('plan'), null);
+  for (const [kana, preset] of [
+    ['あ', 'row-a'], ['ぬ', 'row-n'], ['が', 'row-g'], ['ぢ', 'row-d'],
+    ['きゃ', 'row-k'], ['ゃ', 'row-y'], ['ゅ', 'row-y'], ['ょ', 'row-y'], ['っ', 'row-t'],
+  ]) assert.equal(practice.practiceQuizPreset(kana), preset, kana);
+  assert.equal(practice.practiceQuizPreset(''), null);
+  assert.equal(practice.practiceQuizPreset('?'), null);
+});
 function student(pace = 14) {
   return store.addStudent(
     { id: String(++studentNumber), name: 'Learner', goal: { pace } },

@@ -102,63 +102,70 @@ function buildSeq(pool, n) {
 }
 export function renderDrill() {
   const root = must('#tab-drill');
+  root.classList.toggle('quiz-setup', !ui.session);
   if (!ui.session) return renderSetup(root);
   if (ui.session.done) return renderResults(root, ui.session);
   renderQuestion(root, ui.session);
 }
-/** @param {HTMLElement} root */
-function renderSetup(root) {
+/** @param {HTMLElement} root @param {string} [focus] restore the control after changing a setting */
+function renderSetup(root, focus) {
   const pool = drillPool();
   const n = ui.drillLen === 'all' ? pool.length : ui.drillLen;
   const weakEmpty = ui.drillSel.has('weak') && weakPool().length === 0;
+  const otherPresets = [...PRESETS.slice(3), ...ROWPRESETS];
+  const selectedPresets = otherPresets.filter((p) => ui.drillSel.has(p.id));
+  const selectedMore = selectedPresets.length;
+  const moreOpen = $('#drillMore', root, HTMLDetailsElement)?.open ?? false;
+  const presetButton = (/** @type {Preset} */ p) =>
+    '<button class="chip" data-sel="' +
+    p.id +
+    '" aria-pressed="' +
+    ui.drillSel.has(p.id) +
+    '">' +
+    presetLabel(p) +
+    '</button>';
   let h = '<h2>' + t('tab.drill') + '</h2><p class="muted">' + t('drill.intro') + '</p>';
   h +=
     '<div class="chips">' +
-    PRESETS.map(
-      (p) =>
-        '<button class="chip" data-sel="' +
-        p.id +
-        '" aria-pressed="' +
-        ui.drillSel.has(p.id) +
-        '">' +
-        presetLabel(p) +
-        '</button>',
-    ).join('') +
+    PRESETS.slice(0, 3).map(presetButton).join('') +
     '</div>';
   h +=
-    '<details class="more"' +
-    (ROWPRESETS.some((p) => ui.drillSel.has(p.id)) ? ' open' : '') +
+    '<details class="more quiz-more" id="drillMore"' +
+    (moreOpen ? ' open' : '') +
     '><summary>' +
-    t('drill.rows') +
+    (selectedMore === 1
+      ? t('drill.moreChoice', { set: presetLabel(selectedPresets[0]) })
+      : selectedMore
+        ? t('drill.moreSelected', { n: selectedMore })
+        : t('drill.moreSets')) +
     '</summary><div class="chips">' +
-    ROWPRESETS.map(
-      (p) =>
-        '<button class="chip" data-sel="' +
-        p.id +
-        '" aria-pressed="' +
-        ui.drillSel.has(p.id) +
-        '">' +
-        presetLabel(p) +
-        '</button>',
-    ).join('') +
+    PRESETS.slice(3).map(presetButton).join('') +
+    '</div><h3>' +
+    t('drill.rows') +
+    '</h3><div class="chips">' +
+    ROWPRESETS.map(presetButton).join('') +
     '</div></details>';
-  h += '<h3>' + t('drill.how') + '</h3><div class="modes">';
+  h +=
+    '<h3>' + t('drill.how') + '</h3><div class="seg quiz-modes" role="group" aria-label="' +
+    t('drill.how') + '">';
   h += DRILL_MODES
     .map(
       (id) =>
-        '<button class="mode" data-mode="' +
+        '<button type="button" data-mode="' +
         id +
         '" aria-pressed="' +
         (ui.drillMode === id) +
-        '"><b>' +
+        '"' +
+        (ui.drillMode === id ? ' aria-describedby="drillModeHelp"' : '') +
+        '>' +
         t(`mode.${id}`) +
-        '</b><span>' +
-        t(`mode.${id}D`) +
-        '</span></button>',
+        '</button>',
     )
     .join('');
   h +=
-    '</div><h3>' +
+    '</div><p class="small muted quiz-mode-help" id="drillModeHelp">' +
+    t(`mode.${ui.drillMode}D`) +
+    '</p><h3>' +
     t('drill.questions') +
     '</h3><div class="seg drillseg" role="tablist" aria-label="' +
     t('drill.questions') +
@@ -190,6 +197,8 @@ function renderSetup(root) {
   root.innerHTML = h;
   const lenSeg = $('.drillseg', root);
   moveThumb(lenSeg, 'drill');
+  moveThumb($('.quiz-modes', root), 'quiz-mode');
+  if (focus) $(focus, root)?.focus({ preventScroll: true });
   $$('[data-sel]', root).forEach(
     (b) =>
       (b.onclick = () => {
@@ -197,7 +206,7 @@ function renderSetup(root) {
         if (!id) return;
         if (ui.drillSel.has(id)) ui.drillSel.delete(id);
         else ui.drillSel.add(id);
-        renderSetup(root);
+        renderSetup(root, '[data-sel="' + id + '"]');
       }),
   );
   $$('[data-mode]', root).forEach(
@@ -205,14 +214,14 @@ function renderSetup(root) {
       (b.onclick = () => {
         const mode = DRILL_MODES.find((m) => m === b.dataset.mode);
         if (mode) ui.drillMode = mode;
-        renderSetup(root);
+        renderSetup(root, '[data-mode="' + mode + '"]');
       }),
   );
   $$('[data-len]', root).forEach(
     (b) =>
       (b.onclick = () => {
         ui.drillLen = b.dataset.len === 'all' ? 'all' : Number(b.dataset.len);
-        renderSetup(root);
+        renderSetup(root, '[data-len="' + ui.drillLen + '"]');
       }),
   );
   must('#startDrill', root).onclick = () => startDrill(pool);

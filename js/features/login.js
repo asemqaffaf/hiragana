@@ -402,6 +402,8 @@ function enterApp() {
   root.hidden = true;
   root.innerHTML = '';
   ui.session = null;
+  ui.lessonWrite = false;
+  ui.lessonQuiz = false;
   ui.wq = null;
   ui.demoShown = false;
   ui.resetArmed = false;

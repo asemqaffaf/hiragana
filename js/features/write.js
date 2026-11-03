@@ -18,6 +18,7 @@ import { t } from '../i18n/core.js';
 import { judgeStroke, strokeCount, strokeMessage, strokeTemplates } from '../strokes/check.js';
 import { strokeSVG } from '../strokes/draw.js';
 import { letterNotesHtml } from '../ui/letter-notes.js';
+import { bindPracticeNext } from '../ui/practice-next.js';
 import { $, $$, MARK_SVG, SPEAK_SVG, must } from '../util.js';
 
 /* ---------- write ---------- */
@@ -228,6 +229,8 @@ const tool = (id, icon, label, cls) =>
   '</span></button>';
 /** @param {boolean} [play] start the stroke-order demo straight away */
 export function renderWrite(play) {
+  const root = must('#tab-write');
+  const settingsOpen = $('#wOptions', root, HTMLDetailsElement)?.open ?? false;
   const g = WGROUPS.find((x) => x.id === ui.writeGroup) || WGROUPS[0];
   if (!g.kana.includes(ui.writeK)) ui.writeK = g.kana[0];
   const wl = ui.lessonWrite ? writeList() : [],
@@ -241,20 +244,22 @@ export function renderWrite(play) {
         : nextWrite();
   let h = '<h2>' + t('tab.write') + '</h2>';
   h +=
-    '<div class="chips rowpick" role="group" aria-label="' +
+    '<div class="wpicker"><select class="rowpick" id="wGroup" dir="ltr" aria-label="' +
     t('write.rows') +
     '">' +
     WGROUPS.map(
       (x) =>
-        '<button class="chip" data-wg="' +
+        '<option value="' +
         x.id +
-        '" aria-pressed="' +
-        (x.id === g.id) +
-        '"><span class="kana">' +
+        '"' +
+        (x.id === g.id ? ' selected' : '') +
+        '>' +
         x.label +
-        '</span></button>',
+        ' ' +
+        rom(x.label) +
+        '</option>',
     ).join('') +
-    '</div>';
+    '</select>';
   h +=
     '<div class="strip">' +
     g.kana
@@ -280,7 +285,7 @@ export function renderWrite(play) {
           '"></span></button>',
       )
       .join('') +
-    '</div>';
+    '</div></div>';
   h += '<div class="wgrid"><div class="wleft">';
   h +=
     '<p class="wmeta"><b>' +
@@ -320,13 +325,18 @@ export function renderWrite(play) {
   h +=
     '<div class="btnrow wdone actionbar inflow" id="wDone" hidden><button class="btn" id="wAgain" hidden>' +
     t('write.again') +
-    '</button><button class="btn primary" id="wNext" disabled aria-disabled="true">' +
+    '</button><button class="btn' + (ui.lessonWrite ? ' primary' : '') + '" id="wNext" disabled aria-disabled="true">' +
     (nx.k ? t('write.next') + ' <span class="kana">' + nx.k + '</span>' : t('lesson.back')) +
     '</button></div>';
   h += '<button class="btn red" id="wCompleteBtn" hidden></button>';
   if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
+  h += '<div class="practice-continue-slot"></div>';
   h +=
-    '<div class="toggles opts"><label><input type="checkbox" role="switch" id="wGuide"' +
+    '<details class="more wsettings" id="wOptions"' +
+    (settingsOpen ? ' open' : '') +
+    '><summary>' +
+    t('write.settings') +
+    '</summary><div class="toggles opts"><label><input type="checkbox" role="switch" id="wGuide"' +
     (ui.writeGuide ? ' checked' : '') +
     '> ' +
     t('write.guide') +
@@ -338,7 +348,7 @@ export function renderWrite(play) {
     (ui.writeCheck ? ' checked' : '') +
     '> ' +
     t('write.check') +
-    '</label></div>';
+    '</label></div></details>';
   h += '<div class="wnotes">' + letterNotesHtml(ui.writeK) + '</div>';
   h +=
     '<details class="more wtips"><summary>' +
@@ -347,17 +357,10 @@ export function renderWrite(play) {
     (ui.writeCheck ? t('write.howCheck') : t('write.howFree')) +
     '</p></details>';
   h += '</div></div>';
-  const root = must('#tab-write');
   root.innerHTML = h;
   bindSay(root);
+  bindPracticeNext(root, 'write');
   showDone(false);
-  const rp = $('.rowpick', root),
-    rc = rp && $('[aria-pressed="true"]', rp);
-  if (rp && rc)
-    rp.scrollLeft +=
-      rc.getBoundingClientRect().left +
-      rc.offsetWidth / 2 -
-      (rp.getBoundingClientRect().left + rp.clientWidth / 2);
   const wsq = must('#wsq', root);
   ui.writeSvg = strokeSVG(ui.writeK, { guide: ui.writeGuide, nums: ui.writeNums, inkHidden: true });
   if (ui.writeSvg) wsq.insertBefore(ui.writeSvg, wsq.firstChild);
@@ -368,16 +371,16 @@ export function renderWrite(play) {
     ui.writeCheck && wq && wq.tpl ? writeHandler : null,
   );
   if (ui.writeCheck && wq) wSay(startText(wq));
-  $$('[data-wg]', root).forEach(
-    (b) =>
-      (b.onclick = () => {
-        const group = WGROUPS.find((x) => x.id === b.dataset.wg);
-        if (!group) return;
-        ui.writeGroup = group.id;
-        ui.writeK = group.kana[0];
-        renderWrite();
-      }),
-  );
+  const row = must('#wGroup', root, HTMLSelectElement);
+  row.onchange = () => {
+    const group = WGROUPS.find((x) => x.id === row.value);
+    if (!group) return;
+    ui.lessonWrite = false;
+    ui.writeGroup = group.id;
+    ui.writeK = group.kana[0];
+    renderWrite();
+    must('#wGroup', root).focus({ preventScroll: true });
+  };
   $$('[data-wk]', root).forEach(
     (b) =>
       (b.onclick = () => {
@@ -400,6 +403,7 @@ export function renderWrite(play) {
   check.onchange = () => {
     ui.writeCheck = check.checked;
     renderWrite();
+    must('#wCheck', root).focus({ preventScroll: true });
   };
   must('#wPlay', root).onclick = () => {
     if (ui.pad) ui.pad.clear();
