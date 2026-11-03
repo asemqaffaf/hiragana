@@ -5,4 +5,5 @@
 .cell .k{font-size:30px}
 .chart.y3 .cell .k{font-size:32px}
 .blank{aspect-ratio:1/1}
+.chartpanel[hidden]{display:none}
 

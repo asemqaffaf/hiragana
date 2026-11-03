@@ -22,7 +22,7 @@ button.sq:active{transform:translateY(1px)}
 .seg{display:flex;border:1.5px solid var(--grid);border-radius:8px;overflow:hidden;background:var(--surface)}
 .seg button{flex:1;min-height:44px;border:0;background:none;border-inline-end:1.5px solid var(--grid);font-weight:500}
 .seg button:last-child{border-inline-end:0}
-.seg button[aria-pressed="true"]{background:var(--jade);color:var(--jade-ink);font-weight:700}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--jade);color:var(--jade-ink);font-weight:700}
 
 /* bottom tab bar */
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1.5px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
