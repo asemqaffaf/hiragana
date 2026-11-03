@@ -14,6 +14,7 @@ import { ui } from '../core/ui-state.js';
 import { A46 } from '../data/letters.js';
 import { setLang } from './language.js';
 import { renderWho, showLogin, switchStudent } from './login.js';
+import { moveThumb } from '../ui/thumb.js';
 import { avatar, cleanName, nameTaken, swatches, syncText } from '../ui/student.js';
 import {
   ageOpts,
@@ -107,13 +108,17 @@ export function renderProfile() {
     t('pf.look') +
     '</h3><div class="themebox"><span class="small muted">' +
     t('th.mode') +
-    '</span><div class="seg" role="group" aria-label="' +
+    '</span><div class="seg modeseg" role="tablist" aria-label="' +
     t('th.mode') +
-    '">' +
+    '" data-thumb-key="mode">' +
     MODES.map(
       (m) =>
-        '<button type="button" data-mode="' +
+        '<button type="button" role="tab" data-mode="' +
         m +
+        '" id="modeTab-' +
+        m +
+        '" aria-selected="' +
+        (th.mode === m) +
         '" aria-pressed="' +
         (th.mode === m) +
         '">' +
@@ -226,7 +231,11 @@ export function renderProfile() {
     (pfDelArmed ? t(syncOn ? 'cloud.deleteConfirm' : 'p.deleteConfirm', { name: esc(p.name) }) : t('p.delete')) +
     '</button></div>';
   const root = must('#tab-profile');
+  const same = root.dataset.rendered === '1';
   root.innerHTML = h;
+  root.dataset.rendered = '1';
+  const modeSeg = $('.modeseg', root);
+  moveThumb(modeSeg, 'mode', !same);
   const cloudSave = $('#cloudSave', root, HTMLButtonElement);
   const cloudRestore = $('#cloudRestore', root, HTMLButtonElement);
   if (cloudSave) cloudSave.onclick = async () => {
@@ -266,8 +275,15 @@ export function renderProfile() {
     (b) =>
       (b.onclick = () => {
         const mode = MODES.find((m) => m === b.dataset.mode);
-        if (mode) setTheme({ mode });
-        $$('[data-mode]', root).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        if (mode) {
+          setTheme({ mode });
+          $$('[data-mode]', root).forEach((x) => {
+            const on = x === b;
+            x.setAttribute('aria-selected', String(on));
+            x.setAttribute('aria-pressed', String(on));
+          });
+          moveThumb(modeSeg, 'mode');
+        }
       }),
   );
   $$('input[name="pfTint"]', root, HTMLInputElement).forEach(
