@@ -81,6 +81,26 @@ async def main():
             await page.click('#startDrill')
             await page.locator('#qin').wait_for()
             assert await page.evaluate("(async () => { const {ui} = await import('./js/core/ui-state.js'); window.__practiceSession = ui.session; return ui.session.pool.join('') === 'なにぬねの'; })()")
+            # Typing either answer must wait for Check or Enter before grading.
+            correct = await page.evaluate("""async () => {
+                const {ui} = await import('./js/core/ui-state.js');
+                const {rom} = await import('./js/data/letters.js');
+                return rom(ui.session.seq[ui.session.i].k);
+            }""")
+            await page.fill('#qin', correct)
+            await page.wait_for_timeout(800)
+            assert await page.evaluate("window.__practiceSession.results.length === 0 && !window.__practiceSession.locked")
+            assert await page.locator('#qsq .mark.ok').count() == 0
+            await page.click('#qCheck')
+            assert await page.evaluate("window.__practiceSession.results.length === 1 && window.__practiceSession.results[0].ok")
+            await page.wait_for_function("window.__practiceSession.i === 1 && !window.__practiceSession.locked")
+            await page.fill('#qin', 'wrong')
+            await page.wait_for_timeout(800)
+            assert await page.evaluate("window.__practiceSession.results.length === 1 && !window.__practiceSession.locked")
+            await page.press('#qin', 'Enter')
+            assert await page.evaluate("window.__practiceSession.results.length === 2 && !window.__practiceSession.results[1].ok")
+            assert await page.locator('#qsq .mark.no').count() == 1
+            await page.click('#qNext')
             # Browsing a new row must not discard an unfinished quiz.
             await page.click('#subnav [data-sub="write"]')
             await visible_tab(page, 'write')
@@ -98,29 +118,6 @@ async def main():
             await continue_to(page, 'phrases')
             await continue_to(page, 'drill')
             assert await page.locator('[data-sel="row-k"]').get_attribute('aria-pressed') == 'true'
-            # Each missed letter starts its own quiz in the same mode, without opening writing.
-            for mode in ['read', 'choose', 'listen']:
-                for kana in ['お', 'う']:
-                    await page.evaluate("""async (mode) => {
-                        const {ui} = await import('./js/core/ui-state.js');
-                        const {renderDrill} = await import('./js/features/drill.js');
-                        ui.session = {pool: ['お', 'う'], src: 'test', mode,
-                            seq: [{k: 'お'}, {k: 'う'}], i: 2, results: [
-                                {k: 'お', ok: false, ms: 1000}, {k: 'う', ok: false, ms: 1000}],
-                            misses: ['お', 'う'], built: false, locked: true, t0: 0, done: true};
-                        renderDrill();
-                    }""", mode)
-                    await page.locator(f'.missed [data-drill-miss="{kana}"]').click()
-                    await visible_tab(page, 'drill')
-                    assert await page.locator('#sheetRoot').inner_text() == ''
-                    assert await page.evaluate("""async ({mode, kana}) => {
-                        const {ui} = await import('./js/core/ui-state.js');
-                        const s = ui.session;
-                        return s.mode === mode && s.pool.length === 1 && s.pool[0] === kana &&
-                            s.seq.length === 6 && s.seq.every(q => q.k === kana) &&
-                            s.i === 0 && !s.done && s.results.length === 0;
-                    }""", {'mode': mode, 'kana': kana})
-            await page.click('#qEnd')
             if lang == 'en' and width == 393:
                 # Lesson modes belong to the signed-in learner, even if they switch mid-lesson.
                 await page.click('nav [data-nav="home"]')

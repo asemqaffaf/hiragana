@@ -286,15 +286,6 @@ function renderQuestion(root, s) {
         '</button></div></div><div id="qfb"></div>';
       s.built = true;
       const inp = must('#qin', root, HTMLInputElement);
-      const autoCheck = () => {
-        if (s.locked || !ui.session || ui.session !== s) return;
-        if (isRight(s.seq[s.i].k, inp.value)) answer(s, true, inp.value);
-      };
-      inp.addEventListener('input', (e) => {
-        if (e instanceof InputEvent && e.isComposing) return;
-        autoCheck();
-      });
-      inp.addEventListener('compositionend', autoCheck);
       inp.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
         e.preventDefault();
@@ -550,7 +541,7 @@ function renderResults(root, s) {
       '<h3>' +
       t('res.missed') +
       '</h3><div class="missed">' +
-      s.misses.map((k) => kb(k).replace('data-open=', 'data-drill-miss=')).join('') +
+      s.misses.map((k) => kb(k)).join('') +
       '</div>';
   }
   h +=
@@ -578,11 +569,6 @@ function renderResults(root, s) {
       t('plan.markDone', { d: day }) +
       '</button></div>';
   root.innerHTML = h;
-  $$('[data-drill-miss]', root).forEach((button) => {
-    button.onclick = () => {
-      if (button.dataset.drillMiss) startMissRound(s, [button.dataset.drillMiss]);
-    };
-  });
   const miss = $('#rMiss', root);
   if (miss) miss.onclick = () => startMissRound(s, s.misses.slice());
   must('#rAgain', root).onclick = () => {
