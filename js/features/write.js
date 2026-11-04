@@ -208,6 +208,7 @@ const writeHandler = {
   },
 };
 const ICON = {
+  settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M9 4v6M15 14v6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
   play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>',
   hint: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 18h5M10.5 21h3M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   undo: '<svg class="mir" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5L4.5 11 9 15.5M5 11h9.5a5 5 0 0 1 0 10H12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -230,7 +231,7 @@ const tool = (id, icon, label, cls) =>
 /** @param {boolean} [play] start the stroke-order demo straight away */
 export function renderWrite(play) {
   const root = must('#tab-write');
-  const settingsOpen = $('#wOptions', root, HTMLDetailsElement)?.open ?? false;
+  const settingsOpen = $('#wOptions', root, HTMLDialogElement)?.open ?? false;
   const g = WGROUPS.find((x) => x.id === ui.writeGroup) || WGROUPS[0];
   if (!g.kana.includes(ui.writeK)) ui.writeK = g.kana[0];
   const wl = ui.lessonWrite ? writeList() : [],
@@ -243,6 +244,8 @@ export function renderWrite(play) {
           : { k: '', g: '' }
         : nextWrite();
   let h = '<h2>' + t('tab.write') + '</h2>';
+  h += '<div class="wsettings-bar"><button class="btn wsettings-trigger" id="wSettings" type="button" aria-haspopup="dialog" aria-controls="wOptions">' +
+    ICON.settings + t('write.settings') + '</button></div>';
   h +=
     '<div class="strip">' +
     g.kana
@@ -315,11 +318,10 @@ export function renderWrite(play) {
   if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
   h += '<div class="practice-continue-slot"></div>';
   h +=
-    '<details class="more wsettings" id="wOptions"' +
-    (settingsOpen ? ' open' : '') +
-    '><summary>' +
+    '<dialog class="wsettings-dialog" id="wOptions" aria-labelledby="wSettingsTitle"><div class="wsettings-heading"><h2 id="wSettingsTitle">' +
     t('write.settings') +
-    '</summary><div class="toggles opts"><label><input type="checkbox" role="switch" id="wGuide"' +
+    '</h2><button class="btn" id="wSettingsClose" type="button">' + t('close') +
+    '</button></div><div class="toggles opts"><label><input type="checkbox" role="switch" id="wGuide"' +
     (ui.writeGuide ? ' checked' : '') +
     '> ' +
     t('write.guide') +
@@ -331,7 +333,7 @@ export function renderWrite(play) {
     (ui.writeCheck ? ' checked' : '') +
     '> ' +
     t('write.check') +
-    '</label></div></details>';
+    '</label></div></dialog>';
   h += '<div class="wnotes">' + letterNotesHtml(ui.writeK) + '</div>';
   h +=
     '<details class="more wtips"><summary>' +
@@ -341,6 +343,16 @@ export function renderWrite(play) {
     '</p></details>';
   h += '</div></div>';
   root.innerHTML = h;
+  const settings = must('#wOptions', root, HTMLDialogElement);
+  must('#wSettings', root).onclick = () => settings.showModal();
+  must('#wSettingsClose', root).onclick = () => settings.close();
+  settings.addEventListener('close', () => $('#wSettings', root)?.focus({ preventScroll: true }));
+  settings.addEventListener('click', (event) => {
+    if (event.target !== settings) return;
+    const rect = settings.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) settings.close();
+  });
+  if (settingsOpen) settings.showModal();
   bindSay(root);
   bindPracticeNext(root, 'write');
   showDone(false);
