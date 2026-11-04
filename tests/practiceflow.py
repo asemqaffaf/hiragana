@@ -53,7 +53,7 @@ async def main():
             assert all(b['width'] >= 80 for b in option_bounds)
             for control in ['wGuide', 'wNums', 'wCheck']:
                 bounds = await page.locator('#' + control).locator('..').bounding_box()
-                assert bounds['height'] >= 54
+                assert 44 <= bounds['height'] <= 52
                 assert bounds['y'] >= 0 and bounds['y'] + bounds['height'] < height
             await page.locator('#wGuide').locator('..').click()
             assert not await page.locator('#wGuide').is_checked()

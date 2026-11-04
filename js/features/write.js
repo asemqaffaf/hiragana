@@ -272,12 +272,12 @@ export function renderWrite(play) {
       .join('') +
     '</div>';
   h += '<fieldset class="wsettings-inline" id="wOptions"><legend>' + t('write.settings') +
-    '</legend><div class="wsettings-options"><label><input type="checkbox" role="switch" id="wGuide"' +
-    (ui.writeGuide ? ' checked' : '') + '><span class="woption-label">' + ICON.guide + '<span>' + t('write.guide') +
-    '</span></span></label><label><input type="checkbox" role="switch" id="wNums"' +
-    (ui.writeNums ? ' checked' : '') + '><span class="woption-label">' + ICON.numbers + '<span>' + t('write.nums') +
-    '</span></span></label><label><input type="checkbox" role="switch" id="wCheck"' +
-    (ui.writeCheck ? ' checked' : '') + '><span class="woption-label">' + ICON.check + '<span>' + t('write.check') +
+    '</legend><div class="wsettings-options"><label><input type="checkbox" role="switch" id="wGuide" aria-label="' + t('write.guide') + '"' +
+    (ui.writeGuide ? ' checked' : '') + '><span class="woption-label">' + ICON.guide + '<span>' + t('write.guideShort') +
+    '</span></span></label><label><input type="checkbox" role="switch" id="wNums" aria-label="' + t('write.nums') + '"' +
+    (ui.writeNums ? ' checked' : '') + '><span class="woption-label">' + ICON.numbers + '<span>' + t('write.numsShort') +
+    '</span></span></label><label><input type="checkbox" role="switch" id="wCheck" aria-label="' + t('write.check') + '"' +
+    (ui.writeCheck ? ' checked' : '') + '><span class="woption-label">' + ICON.check + '<span>' + t('write.checkShort') +
     '</span></span></label></div></fieldset>';
   h += '<div class="wgrid"><div class="wleft">';
   h +=
