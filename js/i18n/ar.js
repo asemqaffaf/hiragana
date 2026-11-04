@@ -155,10 +155,10 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   'write.undo': 'تراجع',
   'write.restart': 'من جديد',
   'write.clear': 'مسح',
-  'write.guide': 'الدليل',
+  'write.guide': 'إظهار دليل تتبّع الحرف',
   'write.settings': 'إعدادات الكتابة',
-  'write.nums': 'الأرقام',
-  'write.check': 'تحقّق من الخطوط',
+  'write.nums': 'إظهار أرقام الخطوط',
+  'write.check': 'التحقّق من خطوطي',
   'write.silent': 'っ الصغيرة ليس لها صوت خاص: إنها وقفة قصيرة.',
   'write.howTitle': 'كيف يعمل تمرين الكتابة',
   'write.howCheck':

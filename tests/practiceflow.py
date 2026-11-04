@@ -44,23 +44,23 @@ async def main():
             await page.locator('body:not(.signed-out)').wait_for()
             await page.click('nav [data-nav="practice"]')
             await visible_tab(page, 'write')
-            # Writing settings are visible at entry and stay open when the screen rerenders.
-            settings_bounds = await page.locator('#wSettings').bounding_box()
-            assert settings_bounds['y'] >= 0 and settings_bounds['y'] + settings_bounds['height'] < height
-            await page.click('#wSettings')
-            assert await page.locator('#wOptions').evaluate("el => el.matches(':popover-open')")
-            await page.locator('#wGuide').uncheck()
+            # All writing options are directly visible and can be changed by tapping their row.
+            assert await page.locator('#wSettings').count() == 0
+            for control in ['wGuide', 'wNums', 'wCheck']:
+                bounds = await page.locator('#' + control).locator('..').bounding_box()
+                assert bounds['height'] >= 54
+                assert bounds['y'] >= 0 and bounds['y'] + bounds['height'] < height
+            await page.locator('#wGuide').locator('..').click()
+            assert not await page.locator('#wGuide').is_checked()
             assert await page.locator('#wsq .strokes').evaluate("el => el.classList.contains('no-guide')")
             await page.locator('#wGuide').check()
+            await page.locator('#wNums').uncheck()
+            assert await page.locator('#wsq .strokes').evaluate("el => el.classList.contains('no-num')")
+            await page.locator('#wNums').check()
             await page.locator('#wCheck').uncheck()
-            assert await page.locator('#wOptions').evaluate("el => el.matches(':popover-open')")
+            assert await page.locator('#wOptions').is_visible()
             assert await page.evaluate("document.activeElement.id === 'wCheck'")
             await page.locator('#wCheck').check()
-            await page.click('#wSettingsClose')
-            assert await page.evaluate("document.activeElement.id === 'wSettings'")
-            await page.click('#wSettings')
-            await page.keyboard.press('Escape')
-            assert not await page.locator('#wOptions').evaluate("el => el.matches(':popover-open')")
             assert await page.locator('#tab-write select').count() == 0
             assert await page.locator('#subnav [data-sub]').evaluate_all('els => els.map(el => el.dataset.sub)') == ['write', 'read', 'phrases', 'drill']
             assert await page.locator('#backBar').is_hidden()

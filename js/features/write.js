@@ -208,7 +208,9 @@ const writeHandler = {
   },
 };
 const ICON = {
-  settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M9 4v6M15 14v6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+  guide: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
+  numbers: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m8 9 2-1v8m-2 0h4m3-6h2m-2 4h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  check: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m7.5 12 3 3 6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>',
   hint: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 18h5M10.5 21h3M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   undo: '<svg class="mir" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5L4.5 11 9 15.5M5 11h9.5a5 5 0 0 1 0 10H12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -231,7 +233,6 @@ const tool = (id, icon, label, cls) =>
 /** @param {boolean} [play] start the stroke-order demo straight away */
 export function renderWrite(play) {
   const root = must('#tab-write');
-  const settingsOpen = $('#wOptions', root)?.matches(':popover-open') ?? false;
   const g = WGROUPS.find((x) => x.id === ui.writeGroup) || WGROUPS[0];
   if (!g.kana.includes(ui.writeK)) ui.writeK = g.kana[0];
   const wl = ui.lessonWrite ? writeList() : [],
@@ -270,9 +271,17 @@ export function renderWrite(play) {
       )
       .join('') +
     '</div>';
+  h += '<fieldset class="wsettings-inline" id="wOptions"><legend>' + t('write.settings') +
+    '</legend><div class="toggles opts"><label><input type="checkbox" role="switch" id="wGuide"' +
+    (ui.writeGuide ? ' checked' : '') + '><span class="woption-label">' + ICON.guide + '<span>' + t('write.guide') +
+    '</span></span></label><label><input type="checkbox" role="switch" id="wNums"' +
+    (ui.writeNums ? ' checked' : '') + '><span class="woption-label">' + ICON.numbers + '<span>' + t('write.nums') +
+    '</span></span></label><label><input type="checkbox" role="switch" id="wCheck"' +
+    (ui.writeCheck ? ' checked' : '') + '><span class="woption-label">' + ICON.check + '<span>' + t('write.check') +
+    '</span></span></label></div></fieldset>';
   h += '<div class="wgrid"><div class="wleft">';
   h +=
-    '<div class="wmeta-row"><p class="wmeta"><b>' +
+    '<p class="wmeta"><b>' +
     rom(ui.writeK) +
     '</b><span class="muted small">' +
     t('strokes', { n: n ?? 0 }) +
@@ -280,8 +289,7 @@ export function renderWrite(play) {
     (ui.writeCheck
       ? '<span class="muted small" id="wCount">' + cleanText(ui.writeK) + '</span>'
       : '') +
-    '</p><button class="btn wsettings-trigger" id="wSettings" type="button" popovertarget="wOptions" aria-haspopup="dialog" aria-label="' +
-    t('write.settings') + '" title="' + t('write.settings') + '">' + ICON.settings + '</button></div>';
+    '</p>';
   h +=
     '<div class="sq wsq" id="wsq"><canvas id="wpad" aria-label="' +
     t('write.area', { k: ui.writeK }) +
@@ -315,23 +323,6 @@ export function renderWrite(play) {
   h += '<button class="btn primary" id="wCompleteBtn" hidden></button>';
   if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
   h += '<div class="practice-continue-slot"></div>';
-  h +=
-    '<div class="wsettings-popover" id="wOptions" popover="auto" role="dialog" aria-labelledby="wSettingsTitle"><div class="wsettings-heading"><h2 id="wSettingsTitle">' +
-    t('write.settings') +
-    '</h2><button class="btn" id="wSettingsClose" type="button" popovertarget="wOptions" popovertargetaction="hide" aria-label="' + t('close') + '" title="' + t('close') + '">×' +
-    '</button></div><div class="toggles opts"><label><input type="checkbox" role="switch" id="wGuide"' +
-    (ui.writeGuide ? ' checked' : '') +
-    '> ' +
-    t('write.guide') +
-    '</label><label><input type="checkbox" role="switch" id="wNums"' +
-    (ui.writeNums ? ' checked' : '') +
-    '> ' +
-    t('write.nums') +
-    '</label><label><input type="checkbox" role="switch" id="wCheck"' +
-    (ui.writeCheck ? ' checked' : '') +
-    '> ' +
-    t('write.check') +
-    '</label></div></div>';
   h += '<div class="wnotes">' + letterNotesHtml(ui.writeK) + '</div>';
   h +=
     '<details class="more wtips"><summary>' +
@@ -341,20 +332,6 @@ export function renderWrite(play) {
     '</p></details>';
   h += '</div></div>';
   root.innerHTML = h;
-  const settings = must('#wOptions', root);
-  must('#wSettingsClose', root).onclick = () => {
-    settings.hidePopover();
-    must('#wSettings', root).focus({ preventScroll: true });
-  };
-  settings.addEventListener('beforetoggle', (event) => {
-    if (event.newState !== 'open') return;
-    const rect = must('#wSettings', root).getBoundingClientRect();
-    const width = Math.min(320, window.innerWidth - 24);
-    const left = document.documentElement.dir === 'rtl' ? rect.left : rect.right - width;
-    settings.style.left = Math.max(12, Math.min(left, window.innerWidth - width - 12)) + 'px';
-    settings.style.setProperty('--settings-top', Math.max(12, rect.bottom + 8) + 'px');
-  });
-  if (settingsOpen) settings.showPopover();
   bindSay(root);
   bindPracticeNext(root, 'write');
   showDone(false);
