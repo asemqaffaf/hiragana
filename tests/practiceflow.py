@@ -48,19 +48,19 @@ async def main():
             settings_bounds = await page.locator('#wSettings').bounding_box()
             assert settings_bounds['y'] >= 0 and settings_bounds['y'] + settings_bounds['height'] < height
             await page.click('#wSettings')
-            assert await page.locator('#wOptions').evaluate('el => el.open')
+            assert await page.locator('#wOptions').evaluate("el => el.matches(':popover-open')")
             await page.locator('#wGuide').uncheck()
             assert await page.locator('#wsq .strokes').evaluate("el => el.classList.contains('no-guide')")
             await page.locator('#wGuide').check()
             await page.locator('#wCheck').uncheck()
-            assert await page.locator('#wOptions').evaluate('el => el.open')
+            assert await page.locator('#wOptions').evaluate("el => el.matches(':popover-open')")
             assert await page.evaluate("document.activeElement.id === 'wCheck'")
             await page.locator('#wCheck').check()
             await page.click('#wSettingsClose')
             assert await page.evaluate("document.activeElement.id === 'wSettings'")
             await page.click('#wSettings')
             await page.keyboard.press('Escape')
-            assert not await page.locator('#wOptions').evaluate('el => el.open')
+            assert not await page.locator('#wOptions').evaluate("el => el.matches(':popover-open')")
             assert await page.locator('#tab-write select').count() == 0
             assert await page.locator('#subnav [data-sub]').evaluate_all('els => els.map(el => el.dataset.sub)') == ['write', 'read', 'phrases', 'drill']
             assert await page.locator('#backBar').is_hidden()
@@ -83,7 +83,7 @@ async def main():
             await page.screenshot(path=f'shots/practice_phrases_{lang}_{width}.png')
             await continue_to(page, 'drill')
             assert await page.locator('[data-sel="row-n"]').get_attribute('aria-pressed') == 'true'
-            assert not await page.locator('#drillMore').evaluate('el => el.open')
+            assert not await page.locator('#drillMore').evaluate("el => el.matches(':popover-open')")
             await page.screenshot(path=f'shots/practice_quiz_{lang}_{width}.png')
             assert await page.locator('#backBar').is_visible()
             assert await page.evaluate("Object.keys(window.__hira.getState().ws).length === 0 && Object.keys(window.__hira.getState().cl).length === 0 && window.__hira.getState().rounds.length === 0")

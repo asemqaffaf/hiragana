@@ -231,7 +231,7 @@ const tool = (id, icon, label, cls) =>
 /** @param {boolean} [play] start the stroke-order demo straight away */
 export function renderWrite(play) {
   const root = must('#tab-write');
-  const settingsOpen = $('#wOptions', root, HTMLDialogElement)?.open ?? false;
+  const settingsOpen = $('#wOptions', root)?.matches(':popover-open') ?? false;
   const g = WGROUPS.find((x) => x.id === ui.writeGroup) || WGROUPS[0];
   if (!g.kana.includes(ui.writeK)) ui.writeK = g.kana[0];
   const wl = ui.lessonWrite ? writeList() : [],
@@ -244,8 +244,6 @@ export function renderWrite(play) {
           : { k: '', g: '' }
         : nextWrite();
   let h = '<h2>' + t('tab.write') + '</h2>';
-  h += '<div class="wsettings-bar"><button class="btn wsettings-trigger" id="wSettings" type="button" aria-haspopup="dialog" aria-controls="wOptions">' +
-    ICON.settings + t('write.settings') + '</button></div>';
   h +=
     '<div class="strip">' +
     g.kana
@@ -274,7 +272,7 @@ export function renderWrite(play) {
     '</div>';
   h += '<div class="wgrid"><div class="wleft">';
   h +=
-    '<p class="wmeta"><b>' +
+    '<div class="wmeta-row"><p class="wmeta"><b>' +
     rom(ui.writeK) +
     '</b><span class="muted small">' +
     t('strokes', { n: n ?? 0 }) +
@@ -282,8 +280,8 @@ export function renderWrite(play) {
     (ui.writeCheck
       ? '<span class="muted small" id="wCount">' + cleanText(ui.writeK) + '</span>'
       : '') +
-    '</p>' +
-    '';
+    '</p><button class="btn wsettings-trigger" id="wSettings" type="button" popovertarget="wOptions" aria-haspopup="dialog" aria-label="' +
+    t('write.settings') + '" title="' + t('write.settings') + '">' + ICON.settings + '</button></div>';
   h +=
     '<div class="sq wsq" id="wsq"><canvas id="wpad" aria-label="' +
     t('write.area', { k: ui.writeK }) +
@@ -318,9 +316,9 @@ export function renderWrite(play) {
   if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
   h += '<div class="practice-continue-slot"></div>';
   h +=
-    '<dialog class="wsettings-dialog" id="wOptions" aria-labelledby="wSettingsTitle"><div class="wsettings-heading"><h2 id="wSettingsTitle">' +
+    '<div class="wsettings-popover" id="wOptions" popover="auto" role="dialog" aria-labelledby="wSettingsTitle"><div class="wsettings-heading"><h2 id="wSettingsTitle">' +
     t('write.settings') +
-    '</h2><button class="btn" id="wSettingsClose" type="button">' + t('close') +
+    '</h2><button class="btn" id="wSettingsClose" type="button" popovertarget="wOptions" popovertargetaction="hide" aria-label="' + t('close') + '" title="' + t('close') + '">×' +
     '</button></div><div class="toggles opts"><label><input type="checkbox" role="switch" id="wGuide"' +
     (ui.writeGuide ? ' checked' : '') +
     '> ' +
@@ -333,7 +331,7 @@ export function renderWrite(play) {
     (ui.writeCheck ? ' checked' : '') +
     '> ' +
     t('write.check') +
-    '</label></div></dialog>';
+    '</label></div></div>';
   h += '<div class="wnotes">' + letterNotesHtml(ui.writeK) + '</div>';
   h +=
     '<details class="more wtips"><summary>' +
@@ -343,16 +341,20 @@ export function renderWrite(play) {
     '</p></details>';
   h += '</div></div>';
   root.innerHTML = h;
-  const settings = must('#wOptions', root, HTMLDialogElement);
-  must('#wSettings', root).onclick = () => settings.showModal();
-  must('#wSettingsClose', root).onclick = () => settings.close();
-  settings.addEventListener('close', () => $('#wSettings', root)?.focus({ preventScroll: true }));
-  settings.addEventListener('click', (event) => {
-    if (event.target !== settings) return;
-    const rect = settings.getBoundingClientRect();
-    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) settings.close();
+  const settings = must('#wOptions', root);
+  must('#wSettingsClose', root).onclick = () => {
+    settings.hidePopover();
+    must('#wSettings', root).focus({ preventScroll: true });
+  };
+  settings.addEventListener('beforetoggle', (event) => {
+    if (event.newState !== 'open') return;
+    const rect = must('#wSettings', root).getBoundingClientRect();
+    const width = Math.min(320, window.innerWidth - 24);
+    const left = document.documentElement.dir === 'rtl' ? rect.left : rect.right - width;
+    settings.style.left = Math.max(12, Math.min(left, window.innerWidth - width - 12)) + 'px';
+    settings.style.setProperty('--settings-top', Math.max(12, rect.bottom + 8) + 'px');
   });
-  if (settingsOpen) settings.showModal();
+  if (settingsOpen) settings.showPopover();
   bindSay(root);
   bindPracticeNext(root, 'write');
   showDone(false);
