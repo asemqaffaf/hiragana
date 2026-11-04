@@ -311,7 +311,7 @@ export function renderWrite(play) {
     '</button><button class="btn' + (ui.lessonWrite ? ' primary' : '') + '" id="wNext" disabled aria-disabled="true">' +
     (nx.k ? t('write.next') + ' <span class="kana">' + nx.k + '</span>' : t('lesson.back')) +
     '</button></div>';
-  h += '<button class="btn red" id="wCompleteBtn" hidden></button>';
+  h += '<button class="btn primary" id="wCompleteBtn" hidden></button>';
   if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
   h += '<div class="practice-continue-slot"></div>';
   h +=
