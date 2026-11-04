@@ -17,10 +17,10 @@
 .fb .ans .kana{font-family:var(--kana);font-size:28px}
 .mark{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;overflow:visible}
 .mark circle,.mark path{fill:none;stroke:var(--red);stroke-width:4.5;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;opacity:0}
-.mark.ok circle{opacity:.9;animation:draw .42s ease-out forwards}
+.mark.ok circle{stroke:var(--jade);opacity:.9;animation:draw .42s ease-out forwards}
 .mark.no path{opacity:.9;animation:draw .36s ease-out forwards}
 @keyframes draw{to{stroke-dashoffset:0}}
-.flash{min-height:30px;text-align:center;font-size:22px;font-weight:700;color:var(--red);margin-top:8px}
+.flash{min-height:30px;text-align:center;font-size:22px;font-weight:700;color:var(--jade);margin-top:8px}
 .result{font-family:var(--kana);font-size:64px;font-weight:600;line-height:1;margin:10px 0 6px}
 .missed{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .drillseg{max-width:320px;margin:8px 0 16px}
