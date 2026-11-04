@@ -71,18 +71,34 @@ function smooth(p) {
   }
   return q;
 }
+/**
+ * Preallocated dynamic programming buffer for 32x32 Fréchet distance calculations.
+ * Reusing a single Float64Array eliminates thousands of heap allocations and GC pauses
+ * during real-time stroke judging.
+ */
+const frechetBuffer = new Float64Array(SN * SN);
+
 /** Discrete Fréchet distance between two equally sampled strokes. @param {import('../../types/app').StrokePath} a @param {import('../../types/app').StrokePath} b */
 function frechet(a, b) {
-  const n = a.length, m = b.length, c = new Float64Array(n * m);
-  for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) {
-    const d = Math.hypot(a[i][0] - b[j][0], a[i][1] - b[j][1]);
-    /** @type {number} */
-    let v;
-    if (!i && !j) v = d;
-    else if (!i) v = Math.max(c[j - 1], d);
-    else if (!j) v = Math.max(c[(i - 1) * m], d);
-    else v = Math.max(Math.min(c[(i - 1) * m + j], c[(i - 1) * m + j - 1], c[i * m + j - 1]), d);
-    c[i * m + j] = v;
+  const n = a.length, m = b.length;
+  // Reusable buffer when evaluating standard SNxSN strokes; fallback to new array if dynamic
+  const c = n === SN && m === SN ? frechetBuffer : new Float64Array(n * m);
+  for (let i = 0; i < n; i++) {
+    const ai0 = a[i][0], ai1 = a[i][1];
+    const row = i * m;
+    const prevRow = row - m;
+    for (let j = 0; j < m; j++) {
+      const dx = ai0 - b[j][0], dy = ai1 - b[j][1];
+      // Math.sqrt is significantly faster than Math.hypot across JS engines
+      const d = Math.sqrt(dx * dx + dy * dy);
+      /** @type {number} */
+      let v;
+      if (!i && !j) v = d;
+      else if (!i) v = Math.max(c[j - 1], d);
+      else if (!j) v = Math.max(c[prevRow], d);
+      else v = Math.max(Math.min(c[prevRow + j], c[prevRow + j - 1], c[row + j - 1]), d);
+      c[row + j] = v;
+    }
   }
   return c[n * m - 1];
 }
