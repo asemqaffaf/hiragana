@@ -57,6 +57,8 @@ html[dir="rtl"]{--sx:-22px}
 /* feedback and meeting cards */
 .fb{animation:rise .3s ease-out}
 .qsq .k.flip,.meetcard.flip{animation:cardIn .3s cubic-bezier(.2,.7,.2,1)}
+.qsq .mark.ok,.choices .mark.ok{transform-origin:center;animation:quizSuccess .5s ease-out}
+@keyframes quizSuccess{0%{transform:scale(.94)}60%{transform:scale(1.03)}100%{transform:none}}
 .mark.no{animation:shake .4s}
 @keyframes shake{0%,100%{transform:none}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
 /* taps */
@@ -66,7 +68,7 @@ nav.tabs button[aria-selected="true"] .g{display:inline-block;animation:navPop .
 html.themeanim body,html.themeanim body *{transition:background-color .35s,color .35s,border-color .35s,fill .35s,stroke .35s !important}
 @media (prefers-reduced-motion:reduce){
   .tab.enter > *,.tab.enter .rbar i,.tab.enter .pstat div,.tab.enter .road li,.tab.enter .road .node circle,.tab.enter .cmap button,.tab.enter .cal i,
-  .tab.enter .steps li.done .snum path,.steps li.now .snum,.lessondone,.scrim,.sheet,.fb,.qsq .k.flip,.meetcard.flip,.mark.no,
+  .tab.enter .steps li.done .snum path,.steps li.now .snum,.lessondone,.scrim,.sheet,.fb,.qsq .k.flip,.meetcard.flip,.mark.no,.qsq .mark.ok,.choices .mark.ok,
   nav.tabs button[aria-selected="true"] .g,#homeBtn.bounce{animation:none !important}
   .btn,nav.tabs button,.cmap button,.cell,.tool,.say,.sbody,#homeBtn{transition:none}
   .btn:active,nav.tabs button:active,.cmap button:active,.cell:active,.tool:active,.say:active,.sbody:active,#homeBtn:active{transform:none}
