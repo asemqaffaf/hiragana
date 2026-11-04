@@ -46,6 +46,11 @@ async def main():
             await visible_tab(page, 'write')
             # All writing options are directly visible and can be changed by tapping their row.
             assert await page.locator('#wSettings').count() == 0
+            option_bounds = await page.locator('.wsettings-options label').evaluate_all(
+                'els => els.map(el => ({top: el.getBoundingClientRect().top, width: el.getBoundingClientRect().width}))')
+            assert len(option_bounds) == 3
+            assert max(b['top'] for b in option_bounds) - min(b['top'] for b in option_bounds) < 1
+            assert all(b['width'] >= 80 for b in option_bounds)
             for control in ['wGuide', 'wNums', 'wCheck']:
                 bounds = await page.locator('#' + control).locator('..').bounding_box()
                 assert bounds['height'] >= 54

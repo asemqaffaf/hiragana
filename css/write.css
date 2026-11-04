@@ -20,10 +20,19 @@
 .wtips summary{font-size:14px}
 .wsettings-inline{min-width:0;margin:12px 0 16px;padding:0;border:0}
 .wsettings-inline legend{padding:0;margin-bottom:8px;font-size:17px;font-weight:600;color:var(--ink)}
-.wsettings-inline .toggles.opts{margin:0;font-size:17px}
-.wsettings-inline .toggles.opts label{min-height:54px;line-height:1.4;padding-block:6px}
-.woption-label{display:flex;align-items:center;gap:10px;min-width:0}
-.woption-label svg{width:22px;height:22px;flex:none;color:var(--jade)}
+.wsettings-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:420px}
+.wsettings-options label{display:flex;flex-direction:column-reverse;align-items:center;justify-content:space-between;gap:6px;min-width:0;min-height:100px;padding:8px 4px;border:1px solid var(--grid);border-radius:14px;background:var(--surface);cursor:pointer}
+.wsettings-options label:has(:checked){border-color:var(--jade);background:var(--jade-soft)}
+.woption-label{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;text-align:center;font-size:15px;font-weight:500;line-height:1.2}
+.woption-label span{display:flex;align-items:center;min-height:2.4em}
+.woption-label svg{width:20px;height:20px;flex:none;color:var(--jade)}
+.wsettings-options input{appearance:none;-webkit-appearance:none;position:relative;flex:none;width:42px;height:26px;margin:0;border:0;border-radius:99px;background:var(--gray-fill,var(--grid));cursor:pointer}
+.wsettings-options input::after{content:"";position:absolute;top:2px;inset-inline-start:2px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .15s}
+.wsettings-options input:checked{background:var(--jade)}
+.wsettings-options input:checked::after{transform:translateX(16px)}
+[dir="rtl"] .wsettings-options input:checked::after{transform:translateX(-16px)}
+.wsettings-options input:focus-visible{outline:2px solid var(--jade);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.wsettings-options input::after{transition:none}}
 .wnotes{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
 .wnotes .hook{margin:0;font-size:16px;line-height:1.5}
 .wnotes .morex{max-width:none}

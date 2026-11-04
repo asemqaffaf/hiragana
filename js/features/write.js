@@ -272,7 +272,7 @@ export function renderWrite(play) {
       .join('') +
     '</div>';
   h += '<fieldset class="wsettings-inline" id="wOptions"><legend>' + t('write.settings') +
-    '</legend><div class="toggles opts"><label><input type="checkbox" role="switch" id="wGuide"' +
+    '</legend><div class="wsettings-options"><label><input type="checkbox" role="switch" id="wGuide"' +
     (ui.writeGuide ? ' checked' : '') + '><span class="woption-label">' + ICON.guide + '<span>' + t('write.guide') +
     '</span></span></label><label><input type="checkbox" role="switch" id="wNums"' +
     (ui.writeNums ? ' checked' : '') + '><span class="woption-label">' + ICON.numbers + '<span>' + t('write.nums') +

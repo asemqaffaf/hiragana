@@ -148,10 +148,10 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   'write.undo': 'Undo',
   'write.restart': 'Restart',
   'write.clear': 'Clear',
-  'write.guide': 'Show tracing guide',
+  'write.guide': 'Tracing guide',
   'write.settings': 'Writing settings',
-  'write.nums': 'Show stroke numbers',
-  'write.check': 'Check my strokes',
+  'write.nums': 'Stroke numbers',
+  'write.check': 'Check strokes',
   'write.silent': 'Small っ has no sound of its own: it is a pause.',
   'write.howTitle': 'How writing practice works',
   'write.howCheck':
