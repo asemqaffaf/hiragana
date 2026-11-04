@@ -51,12 +51,21 @@ async def main():
             assert len(option_bounds) == 3
             assert max(b['top'] for b in option_bounds) - min(b['top'] for b in option_bounds) < 1
             assert all(b['width'] >= 80 for b in option_bounds)
+            assert await page.evaluate("""() => {
+                const selected = getComputedStyle(document.querySelector('#wPlay'));
+                return [...document.querySelectorAll('.wsettings-options label')].every(el => {
+                    const style = getComputedStyle(el);
+                    return style.backgroundColor === selected.backgroundColor &&
+                        style.color === selected.color && getComputedStyle(el, '::after').content === 'none';
+                });
+            }""")
             for control in ['wGuide', 'wNums', 'wCheck']:
                 bounds = await page.locator('#' + control).locator('..').bounding_box()
                 assert 44 <= bounds['height'] <= 52
                 assert bounds['y'] >= 0 and bounds['y'] + bounds['height'] < height
             await page.locator('#wGuide').locator('..').click()
             assert not await page.locator('#wGuide').is_checked()
+            assert await page.evaluate("getComputedStyle(document.querySelector('#wGuide').parentElement).backgroundColor === getComputedStyle(document.querySelector('#wUndo')).backgroundColor")
             assert await page.locator('#wsq .strokes').evaluate("el => el.classList.contains('no-guide')")
             await page.locator('#wGuide').check()
             await page.locator('#wNums').uncheck()
