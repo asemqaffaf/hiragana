@@ -98,6 +98,29 @@ async def main():
             await continue_to(page, 'phrases')
             await continue_to(page, 'drill')
             assert await page.locator('[data-sel="row-k"]').get_attribute('aria-pressed') == 'true'
+            # Each missed letter starts its own quiz in the same mode, without opening writing.
+            for mode in ['read', 'choose', 'listen']:
+                for kana in ['お', 'う']:
+                    await page.evaluate("""async (mode) => {
+                        const {ui} = await import('./js/core/ui-state.js');
+                        const {renderDrill} = await import('./js/features/drill.js');
+                        ui.session = {pool: ['お', 'う'], src: 'test', mode,
+                            seq: [{k: 'お'}, {k: 'う'}], i: 2, results: [
+                                {k: 'お', ok: false, ms: 1000}, {k: 'う', ok: false, ms: 1000}],
+                            misses: ['お', 'う'], built: false, locked: true, t0: 0, done: true};
+                        renderDrill();
+                    }""", mode)
+                    await page.locator(f'.missed [data-drill-miss="{kana}"]').click()
+                    await visible_tab(page, 'drill')
+                    assert await page.locator('#sheetRoot').inner_text() == ''
+                    assert await page.evaluate("""async ({mode, kana}) => {
+                        const {ui} = await import('./js/core/ui-state.js');
+                        const s = ui.session;
+                        return s.mode === mode && s.pool.length === 1 && s.pool[0] === kana &&
+                            s.seq.length === 6 && s.seq.every(q => q.k === kana) &&
+                            s.i === 0 && !s.done && s.results.length === 0;
+                    }""", {'mode': mode, 'kana': kana})
+            await page.click('#qEnd')
             if lang == 'en' and width == 393:
                 # Lesson modes belong to the signed-in learner, even if they switch mid-lesson.
                 await page.click('nav [data-nav="home"]')

@@ -550,7 +550,7 @@ function renderResults(root, s) {
       '<h3>' +
       t('res.missed') +
       '</h3><div class="missed">' +
-      s.misses.map((k) => kb(k)).join('') +
+      s.misses.map((k) => kb(k).replace('data-open=', 'data-drill-miss=')).join('') +
       '</div>';
   }
   h +=
@@ -578,6 +578,11 @@ function renderResults(root, s) {
       t('plan.markDone', { d: day }) +
       '</button></div>';
   root.innerHTML = h;
+  $$('[data-drill-miss]', root).forEach((button) => {
+    button.onclick = () => {
+      if (button.dataset.drillMiss) startMissRound(s, [button.dataset.drillMiss]);
+    };
+  });
   const miss = $('#rMiss', root);
   if (miss) miss.onclick = () => startMissRound(s, s.misses.slice());
   must('#rAgain', root).onclick = () => {
