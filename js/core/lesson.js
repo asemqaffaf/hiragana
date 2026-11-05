@@ -1,7 +1,7 @@
 import { dailyFor } from './daily.js';
 import { PL, PLEN, curDay, dayNumber, focusKana } from './plan.js';
 import { me, state, updateProgress } from './store.js';
-import { WRITING_PASSES } from './writing-sequence.js';
+import { WRITING_PASSES, revokeWritingStage } from './writing-sequence.js';
 import { todayISO } from '../util.js';
 
 /** @type {readonly import('../../types/app').LessonStepId[]} */
@@ -102,17 +102,37 @@ export function lessonWritingSequence(kana) {
   return { studentId: me()?.id || '', day: curDay(), k: kana, index, completed, passed: index < completed };
 }
 
+/** @param {import('../../types/app').LessonWritingSequence} sequence */
+function validWritingSequence(sequence) {
+  return lessonOn() && sequence.studentId === me()?.id && sequence.day === curDay() && writeList().includes(sequence.k) &&
+    Number.isInteger(sequence.index) && Number.isInteger(sequence.completed) && sequence.index >= 0 &&
+    sequence.index < WRITING_PASSES.length && sequence.completed >= sequence.index && sequence.completed <= WRITING_PASSES.length;
+}
+
 /** Save after a successful write or a step change. @param {import('../../types/app').LessonWritingSequence} sequence */
 export function saveLessonWriting(sequence) {
-  if (sequence.studentId !== me()?.id || sequence.day !== curDay() || !writeList().includes(sequence.k) ||
-      !Number.isInteger(sequence.index) || !Number.isInteger(sequence.completed) || sequence.index < 0 ||
-      sequence.index >= WRITING_PASSES.length || sequence.completed < sequence.index || sequence.completed > WRITING_PASSES.length) return;
+  if (!validWritingSequence(sequence)) return;
   updateLesson((progress) => {
     const previous = progress.writing?.[sequence.k];
     progress.writing = { ...progress.writing, [sequence.k]: {
       index: sequence.index, completed: Math.max(previous?.completed ?? 0, sequence.completed),
     } };
     if (!progress.w.includes(sequence.k)) progress.writingResume = sequence.k;
+  });
+}
+
+/** A new mistake invalidates completion immediately, including saved lesson/day completion. @param {import('../../types/app').LessonWritingSequence} sequence */
+export function revokeLessonWriting(sequence) {
+  if (!validWritingSequence(sequence)) return;
+  revokeWritingStage(sequence);
+  updateProgress((progress) => {
+    const current = lesson();
+    current.writing = { ...current.writing, [sequence.k]: { index: sequence.index, completed: sequence.completed } };
+    current.writingResume = sequence.k;
+    current.w = current.w.filter((kana) => kana !== sequence.k);
+    progress.les[sequence.day] = current;
+    delete progress.cl[sequence.k];
+    delete progress.done[sequence.day];
   });
 }
 

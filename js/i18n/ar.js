@@ -164,6 +164,7 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   'write.checkShort': 'التحقّق',
   'write.settings': 'إعدادات الكتابة',
   'write.passDone': 'اكتملت الخطوة {i} من {n}.',
+  'write.passRevoked': 'أُلغي الاجتياز. اكتب هذه الخطوة مجددًا دون أخطاء.',
   'write.stages': 'خطوات الكتابة',
   'write.stageGuide': 'الدليل',
   'write.stageNumbers': 'الأرقام',

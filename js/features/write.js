@@ -13,7 +13,7 @@ import {
 import { ui } from '../core/ui-state.js';
 import { rom } from '../data/letters.js';
 import { WGROUPS, groupOf } from '../data/writing.js';
-import { lessonWritingSequence, nextLessonStep, nextWritingKana, recordLessonWrite, saveLessonWriting, writeList } from '../core/lesson.js';
+import { lessonWritingSequence, nextLessonStep, nextWritingKana, recordLessonWrite, revokeLessonWriting, saveLessonWriting, writeList } from '../core/lesson.js';
 import { runStep } from './lesson.js';
 import { curDay } from '../core/plan.js';
 import { WRITING_PASSES, advanceWritingStage, passWritingStage, selectWritingStage, writingSequenceComplete } from '../core/writing-sequence.js';
@@ -69,8 +69,14 @@ function refreshComplete() {
 function markStrip(k) {
   const b = $('.strip [data-wk="' + k + '"]');
   if (b) b.classList.toggle('cl', isComplete(k));
+  const bar = b && $('.wm', b);
+  if (bar) bar.style.setProperty('--m', String(writeProgress(k)));
 }
 const wsOf = writingStats;
+/** @param {string} k */
+const writeProgress = (k) => ui.lessonWrite
+  ? lessonWritingSequence(k).completed / WRITING_PASSES.length
+  : Math.min(wsOf(k).p, CLEAN_GOAL) / CLEAN_GOAL;
 /** @type {readonly import('../../types/app').TextKey[]} */
 const STAGE_LABELS = ['write.stageGuide', 'write.stageNumbers', 'write.stageMemory'];
 function closeWritingHelp() {
@@ -205,7 +211,7 @@ function finishWrite() {
   const c = $('#wCount');
   if (c) c.textContent = cleanText(wq.k);
   const bar = $('.strip [data-wk="' + wq.k + '"] .wm');
-  if (bar) bar.style.setProperty('--m', String(Math.min(wsOf(wq.k).p, CLEAN_GOAL) / CLEAN_GOAL));
+  if (bar) bar.style.setProperty('--m', String(writeProgress(wq.k)));
   showDone(true);
   refreshComplete();
   if (!sequence && canComplete(wq.k)) wSay(t('cl.ready', { k: wq.k }), 'good');
@@ -248,7 +254,17 @@ const writeHandler = {
     }
     wq.miss++;
     wq.sm++;
-    wSay(strokeMessage(v, i, ui.writeNums), 'bad');
+    const sequence = ui.lessonWrite ? ui.lessonWritingSequence : null;
+    const revoked = !!sequence && (sequence.passed || sequence.completed > sequence.index);
+    if (sequence) {
+      revokeLessonWriting(sequence);
+      closeWritingHelp();
+      refreshWritingStages();
+      markStrip(wq.k);
+      setMark(false);
+      showDone(false);
+    }
+    wSay(strokeMessage(v, i, ui.writeNums) + (revoked ? ' ' + t('write.passRevoked') : ''), 'bad');
     if (v.kind === 'shape' || wq.sm >= 2) ui.writeSvg?.hint(i);
     return 'bad';
   },
@@ -329,7 +345,7 @@ export function renderWrite(play) {
           '"><span class="k">' +
           k +
           '</span><span class="wm" style="--m:' +
-          Math.min(wsOf(k).p, CLEAN_GOAL) / CLEAN_GOAL +
+          writeProgress(k) +
           '"></span></button>',
       )
       .join('') +

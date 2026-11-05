@@ -67,6 +67,19 @@ test('writing steps allow review without unlocking unfinished future steps', () 
   for (const index of [-1, 3, 0.5, NaN]) assert.equal(writing.selectWritingStage(sequence, index), false);
 });
 
+test('a failed review revokes the current pass and later passes', () => {
+  for (const index of [0, 1, 2]) {
+    const sequence = { studentId: 'learner', day: 1, k: 'あ', index, passed: true, completed: 3 };
+    writing.passWritingStage(sequence, false);
+    assert.equal(sequence.passed, false);
+    assert.equal(sequence.completed, index);
+    assert.equal(writing.advanceWritingStage(sequence), false);
+    if (index < 2) assert.equal(writing.selectWritingStage(sequence, index + 1), false);
+    writing.passWritingStage(sequence, true);
+    assert.equal(sequence.completed, index + 1, 'one clean retry restores just this step');
+  }
+});
+
 let studentNumber = 0;
 
 test('practice has four optional steps and reviews the current letter’s row', () => {
@@ -141,6 +154,48 @@ test('writing moves to unfinished letters before continuing the lesson', () => {
   assert.equal(lessons.nextLessonStep('write'), 'quiz');
   lessons.recordLessonQuiz(100);
   assert.equal(lessons.nextLessonStep('write'), null);
+});
+
+test('revocation clears saved letter and day completion and survives reload', () => {
+  const learner = student(21), list = lessons.writeList(), kana = list[0];
+  for (const letter of plan.focusKana(plan.curDay())) lessons.markLetterMet(letter);
+  for (const letter of list) lessons.recordLessonWrite(letter);
+  lessons.completeLessonWords();
+  lessons.recordLessonQuiz(100);
+  for (let i = 0; i < 3; i++) progress.recordWrite(kana, true);
+  progress.recordHeard(kana);
+  progress.completeLetter(kana, true);
+  assert.ok(store.state.done[1]);
+  const sequence = lessons.lessonWritingSequence(kana);
+  writing.selectWritingStage(sequence, 1);
+  lessons.revokeLessonWriting(sequence);
+  assert.equal(sequence.completed, 1);
+  assert.equal(sequence.passed, false);
+  assert.equal(progress.isComplete(kana), false);
+  assert.equal(lessons.lesson().w.includes(kana), false);
+  assert.equal(store.state.done[1], undefined);
+  assert.deepEqual(lessons.lesson().w, list.slice(1));
+  assert.equal(lessons.lesson().dd, true, 'other activities retain progress');
+  assert.equal(progress.writingStats(kana).p, 3, 'historical writing statistics are retained');
+  store.restoreProgress(store.loadProgress(learner.id));
+  const restored = lessons.lessonWritingSequence(kana);
+  assert.equal(restored.completed, 1);
+  assert.equal(restored.passed, false);
+  assert.equal(writing.selectWritingStage(restored, 2), false);
+  assert.equal(lessons.resumeWritingKana(), kana);
+  for (let i = 1; i < 3; i++) {
+    writing.passWritingStage(restored, true);
+    lessons.saveLessonWriting(restored);
+    writing.advanceWritingStage(restored);
+  }
+  progress.completeLetter(kana, true);
+  lessons.recordLessonWrite(kana);
+  assert.ok(store.state.done[1]);
+  assert.equal(progress.isComplete(kana), true);
+  const another = student(21);
+  lessons.revokeLessonWriting(restored);
+  assert.equal(store.state.les[1], undefined, 'a stale student cannot revoke another student’s progress');
+  assert.notEqual(another.id, learner.id);
 });
 
 test('finishing introductions continues to the next unfinished lesson activity', () => {

@@ -157,6 +157,7 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   'write.checkShort': 'Check',
   'write.settings': 'Writing settings',
   'write.passDone': 'Step {i} of {n} complete.',
+  'write.passRevoked': 'Pass removed. Write this step cleanly again.',
   'write.stages': 'Writing steps',
   'write.stageGuide': 'Guide',
   'write.stageNumbers': 'Numbers',

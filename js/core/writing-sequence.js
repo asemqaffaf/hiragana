@@ -9,8 +9,18 @@ export const WRITING_PASSES = [
 export const writingSequenceComplete = (sequence) =>
   sequence.index === WRITING_PASSES.length - 1 && sequence.passed;
 
-/** A failed attempt never advances the sequence. @param {import('../../types/app').LessonWritingSequence} sequence @param {boolean} clean */
+/** Revoke this step and every later step, preserving earlier passes. @param {import('../../types/app').LessonWritingSequence} sequence */
+export function revokeWritingStage(sequence) {
+  sequence.completed = Math.min(sequence.completed, sequence.index);
+  sequence.passed = false;
+}
+
+/** A failed attempt revokes a previous pass. @param {import('../../types/app').LessonWritingSequence} sequence @param {boolean} clean */
 export function passWritingStage(sequence, clean) {
+  if (!clean) {
+    revokeWritingStage(sequence);
+    return;
+  }
   if (clean && sequence.index <= sequence.completed) {
     sequence.passed = true;
     sequence.completed = Math.max(sequence.completed, sequence.index + 1);
