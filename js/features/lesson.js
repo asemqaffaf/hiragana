@@ -2,7 +2,7 @@ import { bindSay, cacheClip, exampleHtml, moreExHtml, speakFull } from '../core/
 import { replay } from '../core/motion.js';
 import { showTab } from '../core/nav.js';
 import { curDay, focusKana, todayPool } from '../core/plan.js';
-import { lesson, markLetterMet, nextLessonStep, writeList } from '../core/lesson.js';
+import { lesson, markLetterMet, nextLessonStep, resumeWritingKana, saveLessonWriting, lessonWritingSequence, writeList } from '../core/lesson.js';
 import { ui } from '../core/ui-state.js';
 import { me } from '../core/store.js';
 import { rom } from '../data/letters.js';
@@ -14,6 +14,15 @@ import { strokeSVG } from '../strokes/draw.js';
 import { SPEAK_SVG, must } from '../util.js';
 
 /* ---------- guided daily lesson ---------- */
+export function prepareLessonWrite() {
+  if (!writeList().length) return;
+  ui.lessonWrite = true;
+  ui.lessonWritingSequence = null;
+  ui.writeK = resumeWritingKana();
+  ui.writeGroup = groupOf(ui.writeK);
+  ui.writeCheck = true;
+  saveLessonWriting(lessonWritingSequence(ui.writeK));
+}
 /** Opens the screen for a lesson step. @param {import('../../types/app').LessonStepId} id */
 export function runStep(id) {
   const focus = focusKana(curDay()),
@@ -25,12 +34,7 @@ export function runStep(id) {
     );
     showTab('meet');
   } else if (id === 'write') {
-    const wl = writeList();
-    ui.lessonWrite = true;
-    ui.lessonWritingSequence = null;
-    ui.writeK = wl.find((k) => !x.w.includes(k)) || wl[0];
-    ui.writeGroup = groupOf(ui.writeK);
-    ui.writeCheck = true;
+    prepareLessonWrite();
     showTab('write');
   } else if (id === 'read') showTab('read');
   else if (id === 'words') showTab('daily');

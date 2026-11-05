@@ -151,6 +151,7 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   'write.next': 'الحرف التالي:',
   'write.completeNext': 'أكمل {k} وانتقل للتالي',
   'write.completeDone': 'أكمل {k} وأنهِ التمرين',
+  'write.completeContinue': 'أكمل {k} وتابع إلى {activity}',
   'write.play': 'عرض',
   'write.hear': 'استمع',
   'write.hint': 'تلميح',

@@ -44,8 +44,7 @@ async def main():
                         assert not await pg.evaluate('(k) => !!window.__hira.getState().cl[k]', cur)
                     await pg.click('#wNext'); await pg.wait_for_timeout(150)
                 assert await pg.evaluate('(k) => !!window.__hira.getState().cl[k]', cur)
-            R[lang + '_after_write'] = [await pg.evaluate('location.hash'), await pg.text_content('#goNext')]
-            await pg.click('#goNext'); await pg.wait_for_timeout(250)
+            R[lang + '_after_write'] = [await pg.evaluate('location.hash')]
             R[lang + '_daily'] = [await pg.evaluate('location.hash'), await pg.locator('#tab-daily .dcard').count(), await pg.text_content('#dHeard')]
             await pg.screenshot(path=f'shots/daily_{lang}.png')
             for i in range(await pg.locator('#tab-daily [data-dw]').count()):
@@ -77,7 +76,7 @@ async def main():
         for lang in ['en', 'ar']:
             assert R[lang + '_done'][1] == 'day 1 marked done', R[lang + '_done']
             assert R[lang + '_after_meet'][0] == '#write'
-            assert R[lang + '_after_write'][0] == '#plan'
+            assert R[lang + '_after_write'][0] == '#daily'
             assert R[lang + '_daily'][1] == 12
             assert R[lang + '_quiz'][0] == '10 / 10'
         assert not errs, errs

@@ -144,6 +144,7 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   'write.next': 'Next letter:',
   'write.completeNext': 'Mark {k} complete & next',
   'write.completeDone': 'Mark {k} complete & finish',
+  'write.completeContinue': 'Complete {k} & continue to {activity}',
   'write.play': 'Play',
   'write.hear': 'Hear',
   'write.hint': 'Hint',

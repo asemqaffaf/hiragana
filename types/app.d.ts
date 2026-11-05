@@ -286,6 +286,9 @@ export interface LessonProgress {
   r: boolean;
   d: string[];
   dd: boolean;
+  /** Writing checkpoints, scoped to this student and lesson day. */
+  writing?: Partial<Record<Kana, { index: number; completed: number }>>;
+  writingResume?: Kana;
 }
 export interface Round {
   d: ISODate;

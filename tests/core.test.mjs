@@ -90,6 +90,59 @@ function student(pace = 14) {
   );
 }
 
+test('writing checkpoints survive reload, import, review and student switching', () => {
+  const first = student(21), kana = lessons.writeList()[1];
+  const sequence = lessons.lessonWritingSequence(kana);
+  writing.passWritingStage(sequence, true);
+  writing.advanceWritingStage(sequence);
+  lessons.saveLessonWriting(sequence);
+  const persisted = store.loadProgress(first.id);
+  store.restoreProgress(persisted);
+  assert.deepEqual(lessons.lessonWritingSequence(kana), sequence);
+  assert.equal(lessons.resumeWritingKana(), kana);
+  assert.equal(lessons.lesson().w.includes(kana), false, 'a checkpoint is not letter completion');
+  writing.selectWritingStage(sequence, 0);
+  lessons.saveLessonWriting(sequence);
+  assert.equal(lessons.lessonWritingSequence(kana).completed, 1);
+  assert.equal(lessons.lessonWritingSequence(kana).index, 0);
+  student(21);
+  lessons.saveLessonWriting(sequence);
+  assert.equal(lessons.lessonWritingSequence(kana).completed, 0, 'another student cannot inherit or save this checkpoint');
+  store.selectStudent(first.id);
+  assert.equal(lessons.lessonWritingSequence(kana).completed, 1);
+  progress.setStartDate('2026-01-01');
+  lessons.saveLessonWriting(sequence);
+  assert.equal(store.state.les[plan.curDay()], undefined, 'a stale lesson day cannot save a checkpoint');
+});
+
+test('imported writing checkpoints are bounded and legacy lesson records still load', () => {
+  const cleaned = store.normalize({ les: { 1: {
+    writing: { 'あ': { index: 100, completed: 100 }, 'い': { index: -4, completed: -1 }, 'う': { index: 2, completed: 0 }, invalid: { index: 1, completed: 3 } },
+    writingResume: 'invalid',
+  } } });
+  assert.deepEqual(cleaned.les[1].writing, {
+    'あ': { index: 2, completed: 3 }, 'い': { index: 0, completed: 0 }, 'う': { index: 0, completed: 0 },
+  });
+  assert.equal(cleaned.les[1].writingResume, undefined);
+  const legacy = store.normalize({ les: { 1: { w: ['あ'] } } });
+  assert.deepEqual(legacy.les[1].w, ['あ']);
+  assert.equal(legacy.les[1].writing, undefined);
+});
+
+test('writing moves to unfinished letters before continuing the lesson', () => {
+  student(21);
+  const list = lessons.writeList();
+  assert.equal(lessons.nextWritingKana(list.at(-1)), list[0], 'jumping to the last letter cannot skip earlier letters');
+  for (const kana of list.slice(0, -1)) lessons.recordLessonWrite(kana);
+  assert.equal(lessons.nextWritingKana(list.at(-1)), '');
+  lessons.recordLessonWrite(list.at(-1));
+  assert.equal(lessons.nextLessonStep('write'), 'words');
+  lessons.completeLessonWords();
+  assert.equal(lessons.nextLessonStep('write'), 'quiz');
+  lessons.recordLessonQuiz(100);
+  assert.equal(lessons.nextLessonStep('write'), null);
+});
+
 test('finishing introductions continues to the next unfinished lesson activity', () => {
   student(21);
   assert.equal(lessons.nextLessonStep('meet'), 'write');

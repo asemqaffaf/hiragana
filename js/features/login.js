@@ -16,7 +16,8 @@ import {
   students,
 } from '../core/store.js';
 import { canStore } from '../core/storage.js';
-import { reconcileLessonCompletion } from '../core/lesson.js';
+import { lesson, reconcileLessonCompletion, writeList } from '../core/lesson.js';
+import { prepareLessonWrite } from './lesson.js';
 import { ui } from '../core/ui-state.js';
 import { checkBadges } from './gamify.js';
 import { byline, deviceLang, langChip, langStep, setLang } from './language.js';
@@ -419,6 +420,7 @@ function enterApp() {
   checkBadges(true);
   ui.currentTab = 'plan';
   renderAll();
+  if (location.hash === '#write' && lesson().writingResume && writeList().includes(lesson().writingResume || '')) prepareLessonWrite();
   showTab(location.hash.slice(1), { initial: true });
 }
 export function switchStudent() {

@@ -4,6 +4,7 @@ import { isObject, todayISO } from '../util.js';
 import { AGES, JLEVELS, MINUTES, PACES, REASONS } from './goals.js';
 import { localeIds, supportedLocale } from '../i18n/core.js';
 import { forgetLogin } from './remembered-login.js';
+import { WRITING_PASSES } from './writing-sequence.js';
 import {
   readStudents,
   writeStudents,
@@ -149,6 +150,11 @@ export function normalize(input) {
             ? v.d.filter((x) => typeof x === 'string' && DAILY_ALL.some((w) => w[0] === x))
             : [],
           dd: !!v.dd,
+          ...(isObject(v.writing) ? { writing: cleanObjMap(v.writing, LETTERS(), (checkpoint) => {
+            const completed = Math.min(WRITING_PASSES.length, Math.max(0, Math.floor(num(checkpoint.completed))));
+            return { completed, index: Math.min(WRITING_PASSES.length - 1, completed, Math.max(0, Math.floor(num(checkpoint.index)))) };
+          }) } : {}),
+          ...(typeof v.writingResume === 'string' && LETTERS().includes(v.writingResume) ? { writingResume: v.writingResume } : {}),
         };
     }
   /** @type {Record<string, import('../../types/app').ISODate>} */

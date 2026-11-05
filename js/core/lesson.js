@@ -1,6 +1,7 @@
 import { dailyFor } from './daily.js';
 import { PL, PLEN, curDay, dayNumber, focusKana } from './plan.js';
-import { state, updateProgress } from './store.js';
+import { me, state, updateProgress } from './store.js';
+import { WRITING_PASSES } from './writing-sequence.js';
 import { todayISO } from '../util.js';
 
 /** @type {readonly import('../../types/app').LessonStepId[]} */
@@ -89,7 +90,44 @@ export function recordLessonWrite(kana) {
   if (!writeList().includes(kana) || lesson().w.includes(kana)) return;
   updateLesson((progress) => {
     progress.w = [...progress.w, kana];
+    if (progress.writingResume === kana) delete progress.writingResume;
   });
+}
+
+/** Restore a letter's current step without changing saved progress. @param {string} kana @returns {import('../../types/app').LessonWritingSequence} */
+export function lessonWritingSequence(kana) {
+  const progress = lesson(), saved = progress.writing?.[kana];
+  const completed = saved?.completed ?? (progress.w.includes(kana) ? WRITING_PASSES.length : 0);
+  const index = saved?.index ?? Math.min(completed, WRITING_PASSES.length - 1);
+  return { studentId: me()?.id || '', day: curDay(), k: kana, index, completed, passed: index < completed };
+}
+
+/** Save after a successful write or a step change. @param {import('../../types/app').LessonWritingSequence} sequence */
+export function saveLessonWriting(sequence) {
+  if (sequence.studentId !== me()?.id || sequence.day !== curDay() || !writeList().includes(sequence.k) ||
+      !Number.isInteger(sequence.index) || !Number.isInteger(sequence.completed) || sequence.index < 0 ||
+      sequence.index >= WRITING_PASSES.length || sequence.completed < sequence.index || sequence.completed > WRITING_PASSES.length) return;
+  updateLesson((progress) => {
+    const previous = progress.writing?.[sequence.k];
+    progress.writing = { ...progress.writing, [sequence.k]: {
+      index: sequence.index, completed: Math.max(previous?.completed ?? 0, sequence.completed),
+    } };
+    if (!progress.w.includes(sequence.k)) progress.writingResume = sequence.k;
+  });
+}
+
+/** The saved unfinished letter, or the first unfinished one. */
+export function resumeWritingKana() {
+  const progress = lesson(), list = writeList(), saved = progress.writingResume;
+  return saved && list.includes(saved) && !progress.w.includes(saved)
+    ? saved : list.find((kana) => !progress.w.includes(kana)) || list[0];
+}
+
+/** Continue unfinished letters before leaving writing, even after reviewing out of order. @param {string} kana */
+export function nextWritingKana(kana) {
+  const list = writeList(), completed = lesson().w, index = list.indexOf(kana);
+  const pending = list.filter((letter) => letter !== kana && !completed.includes(letter));
+  return pending.find((letter) => list.indexOf(letter) > index) || pending[0] || '';
 }
 
 /** @param {string} kana the word, as written in the daily list */
