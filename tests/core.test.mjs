@@ -27,7 +27,7 @@ const writing = await import('../js/core/writing-sequence.js');
 test('lesson writing requires guide with numbers, numbers only, then neither', () => {
   assert.deepEqual(writing.WRITING_PASSES.map(({ guide, numbers }) => [guide, numbers]),
     [[true, true], [false, true], [false, false]]);
-  const sequence = { studentId: 'learner', day: 1, k: 'あ', index: 0, passed: false };
+  const sequence = { studentId: 'learner', day: 1, k: 'あ', index: 0, passed: false, completed: 0 };
   for (let index = 0; index < 3; index++) {
     assert.equal(sequence.index, index);
     assert.equal(writing.writingSequenceComplete(sequence), false);
@@ -39,6 +39,32 @@ test('lesson writing requires guide with numbers, numbers only, then neither', (
   }
   assert.equal(sequence.index, 2);
   assert.equal(writing.writingSequenceComplete(sequence), true);
+});
+
+test('writing steps allow review without unlocking unfinished future steps', () => {
+  const sequence = { studentId: 'learner', day: 1, k: 'あ', index: 0, passed: false, completed: 0 };
+  assert.equal(writing.selectWritingStage(sequence, 1), false);
+  writing.passWritingStage(sequence, true);
+  assert.equal(writing.selectWritingStage(sequence, 1), true);
+  assert.equal(sequence.passed, false);
+  assert.equal(writing.selectWritingStage(sequence, 2), false);
+  assert.equal(writing.selectWritingStage(sequence, 0), true);
+  assert.equal(sequence.passed, true);
+  writing.passWritingStage(sequence, true);
+  assert.equal(sequence.completed, 1, 'repeating a passed step cannot unlock later steps');
+  assert.equal(writing.advanceWritingStage(sequence), true);
+  assert.equal(sequence.passed, false);
+  writing.passWritingStage(sequence, false);
+  assert.equal(writing.selectWritingStage(sequence, 2), false);
+  writing.passWritingStage(sequence, true);
+  assert.equal(writing.selectWritingStage(sequence, 2), true);
+  writing.passWritingStage(sequence, true);
+  assert.equal(writing.selectWritingStage(sequence, 0), true);
+  assert.equal(sequence.completed, 3);
+  assert.equal(writing.advanceWritingStage(sequence), true);
+  assert.equal(writing.advanceWritingStage(sequence), true);
+  assert.equal(writing.writingSequenceComplete(sequence), true);
+  for (const index of [-1, 3, 0.5, NaN]) assert.equal(writing.selectWritingStage(sequence, index), false);
 });
 
 let studentNumber = 0;

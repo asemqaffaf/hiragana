@@ -400,6 +400,8 @@ export interface LessonWritingSequence {
   k: Kana;
   index: number;
   passed: boolean;
+  /** Number of sequential steps passed; earlier steps remain available for review. */
+  completed: number;
 }
 export interface WriteAttempt {
   k: Kana;

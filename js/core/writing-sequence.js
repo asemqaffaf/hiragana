@@ -11,13 +11,22 @@ export const writingSequenceComplete = (sequence) =>
 
 /** A failed attempt never advances the sequence. @param {import('../../types/app').LessonWritingSequence} sequence @param {boolean} clean */
 export function passWritingStage(sequence, clean) {
-  if (clean) sequence.passed = true;
+  if (clean && sequence.index <= sequence.completed) {
+    sequence.passed = true;
+    sequence.completed = Math.max(sequence.completed, sequence.index + 1);
+  }
+}
+
+/** Revisit a completed step or open the next unlocked step. @param {import('../../types/app').LessonWritingSequence} sequence @param {number} index */
+export function selectWritingStage(sequence, index) {
+  if (!Number.isInteger(index) || index < 0 || index >= WRITING_PASSES.length || index > sequence.completed) return false;
+  sequence.index = index;
+  sequence.passed = index < sequence.completed;
+  return true;
 }
 
 /** @param {import('../../types/app').LessonWritingSequence} sequence */
 export function advanceWritingStage(sequence) {
   if (!sequence.passed || writingSequenceComplete(sequence)) return false;
-  sequence.index++;
-  sequence.passed = false;
-  return true;
+  return selectWritingStage(sequence, sequence.index + 1);
 }

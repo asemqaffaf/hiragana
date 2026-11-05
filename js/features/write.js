@@ -15,7 +15,7 @@ import { rom } from '../data/letters.js';
 import { WGROUPS, groupOf } from '../data/writing.js';
 import { recordLessonWrite, writeList } from '../core/lesson.js';
 import { curDay } from '../core/plan.js';
-import { WRITING_PASSES, advanceWritingStage, passWritingStage, writingSequenceComplete } from '../core/writing-sequence.js';
+import { WRITING_PASSES, advanceWritingStage, passWritingStage, selectWritingStage, writingSequenceComplete } from '../core/writing-sequence.js';
 import { t } from '../i18n/core.js';
 import { judgeStroke, strokeCount, strokeMessage, strokeTemplates } from '../strokes/check.js';
 import { strokeSVG } from '../strokes/draw.js';
@@ -70,6 +70,39 @@ function markStrip(k) {
   if (b) b.classList.toggle('cl', isComplete(k));
 }
 const wsOf = writingStats;
+/** @type {readonly import('../../types/app').TextKey[]} */
+const STAGE_LABELS = ['write.stageGuide', 'write.stageNumbers', 'write.stageMemory'];
+function closeWritingHelp() {
+  const help = $('#wStageHelp');
+  if (help?.matches(':popover-open')) help.hidePopover();
+}
+/** @param {HTMLElement} button @param {number} index */
+function showWritingHelp(button, index) {
+  const sequence = ui.lessonWritingSequence, help = $('#wStageHelp');
+  if (!sequence || !help) return;
+  must('#wStageHelpText', help).textContent = t('write.unlockStep', {
+    previous: STAGE_LABELS.slice(sequence.completed, index).map((label) => t(label)).join(' ' + t('write.stepThen') + ' '),
+    next: t(STAGE_LABELS[index]),
+  });
+  help.showPopover();
+  const r = button.getBoundingClientRect(), box = help.getBoundingClientRect();
+  help.style.left = Math.max(16, Math.min(innerWidth - box.width - 16, r.x + r.width / 2 - box.width / 2)) + 'px';
+  help.style.top = (r.bottom + box.height + 16 < innerHeight ? r.bottom + 8 : Math.max(16, r.top - box.height - 8)) + 'px';
+}
+function refreshWritingStages() {
+  const sequence = ui.lessonWrite ? ui.lessonWritingSequence : null;
+  if (!sequence) return;
+  $$('#wStages [data-writing-stage]').forEach((button) => {
+    const index = Number(button.dataset.writingStage), locked = index > sequence.completed;
+    button.setAttribute('aria-disabled', String(locked));
+    if (index === sequence.index) button.setAttribute('aria-current', 'step');
+    else button.removeAttribute('aria-current');
+    button.setAttribute('aria-label', t('write.passProgress', { i: index + 1, n: WRITING_PASSES.length, label: t(WRITING_PASSES[index].label) }) +
+      (locked ? '. ' + t('write.lockedStep') : index < sequence.completed ? '. ' + t('cl.done') : ''));
+    const lock = $('.wstage-lock', button);
+    if (lock) lock.hidden = !locked;
+  });
+}
 /** @param {string} k */
 function cleanText(k) {
   return t('clean', { p: wsOf(k).p });
@@ -158,6 +191,8 @@ function finishWrite() {
   const sequence = ui.lessonWrite ? ui.lessonWritingSequence : null;
   if (sequence) {
     passWritingStage(sequence, !wq.miss);
+    closeWritingHelp();
+    refreshWritingStages();
   }
   if (!wq.miss) {
     setMark(true);
@@ -241,6 +276,7 @@ const tool = (id, icon, label, cls) =>
   '</span></button>';
 /** @param {boolean} [play] start the stroke-order demo straight away */
 export function renderWrite(play) {
+  closeWritingHelp();
   const root = must('#tab-write');
   const g = WGROUPS.find((x) => x.id === ui.writeGroup) || WGROUPS[0];
   if (!g.kana.includes(ui.writeK)) ui.writeK = g.kana[0];
@@ -248,7 +284,7 @@ export function renderWrite(play) {
     const previous = ui.lessonWritingSequence;
     const studentId = me()?.id || '';
     const active = !previous || previous.k !== ui.writeK || previous.studentId !== studentId || previous.day !== curDay()
-      ? { studentId, day: curDay(), k: ui.writeK, index: 0, passed: false }
+      ? { studentId, day: curDay(), k: ui.writeK, index: 0, passed: false, completed: 0 }
       : previous;
     ui.lessonWritingSequence = active;
     const pass = WRITING_PASSES[active.index];
@@ -295,8 +331,13 @@ export function renderWrite(play) {
     '</div>';
   if (sequence)
     h += '<p class="wpass" id="wPassProgress" role="status">' +
-      t('write.passProgress', { i: sequence.index + 1, n: WRITING_PASSES.length, label: t(WRITING_PASSES[sequence.index].label) }) + '</p>';
-  h += '<fieldset class="wsettings-inline" id="wOptions"' + (sequence ? ' disabled title="' + t('write.autoHelp') + '"' : '') + '><legend>' + t('write.settings') +
+      t('write.passProgress', { i: sequence.index + 1, n: WRITING_PASSES.length, label: t(WRITING_PASSES[sequence.index].label) }) + '</p>' +
+      '<div class="wstages" id="wStages" role="group" aria-label="' + t('write.stages') + '">' +
+      STAGE_LABELS.map((label, index) =>
+        '<button class="btn wstage" type="button" data-writing-stage="' + index + '"><span>' + (index + 1) + '</span><span>' + t(label) +
+        '</span><span class="wstage-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span></button>'
+      ).join('') + '</div><div class="wstage-help" id="wStageHelp" popover="auto" role="status"><span id="wStageHelpText"></span><button type="button" class="wstage-help-close" popovertarget="wStageHelp" popovertargetaction="hide" aria-label="' + t('close') + '">×</button></div>';
+  h += '<fieldset class="wsettings-inline" id="wOptions"' + (sequence ? ' hidden disabled' : '') + '><legend>' + t('write.settings') +
     '</legend><div class="wsettings-options"><label><input type="checkbox" role="switch" id="wGuide" aria-label="' + t('write.guide') + '"' +
     (ui.writeGuide ? ' checked' : '') + '><span class="woption-label">' + ICON.guide + '<span>' + t('write.guideShort') +
     '</span></span></label><label><input type="checkbox" role="switch" id="wNums" aria-label="' + t('write.nums') + '"' +
@@ -366,6 +407,21 @@ export function renderWrite(play) {
   root.innerHTML = h;
   bindSay(root);
   bindPracticeNext(root, 'write');
+  refreshWritingStages();
+  $$('#wStages [data-writing-stage]', root).forEach((button) => {
+    button.onclick = () => {
+      const index = Number(button.dataset.writingStage);
+      if (sequence && index > sequence.completed) {
+        showWritingHelp(button, index);
+        return;
+      }
+      closeWritingHelp();
+      if (sequence && index !== sequence.index && selectWritingStage(sequence, index)) {
+        renderWrite();
+        $('#wStages [data-writing-stage="' + index + '"]')?.focus({ preventScroll: true });
+      }
+    };
+  });
   showDone(false);
   const wsq = must('#wsq', root);
   ui.writeSvg = strokeSVG(ui.writeK, { guide: ui.writeGuide, nums: ui.writeNums, inkHidden: true });

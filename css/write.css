@@ -19,6 +19,16 @@
 .wtips{max-width:420px;margin:6px auto 0}
 .wtips summary{font-size:14px}
 .wpass{margin:10px 0 4px;font-size:16px;font-weight:600;color:var(--jade)}
+.wstages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:420px;margin:8px 0 12px}
+.wstages .wstage{min-width:0;min-height:48px;padding:8px 6px;gap:5px;font-size:14px;line-height:1.25}
+.wstage[aria-current="step"]{background:var(--fill);color:var(--fill-ink)}
+.wstage[aria-disabled="true"]{color:var(--pencil);cursor:pointer}
+.wstage-lock svg{width:15px;height:15px;vertical-align:middle}
+.wstage:focus-visible{outline:3px solid var(--jade);outline-offset:3px}
+.wstage-help{position:fixed;inset:auto;margin:0;width:min(320px,calc(100vw - 32px));box-sizing:border-box;padding:12px 8px 12px 16px;border:1px solid var(--grid);border-radius:18px;background:var(--surface);color:var(--ink);box-shadow:0 8px 28px rgba(0,0,0,.18);font-size:15px;line-height:1.4}
+.wstage-help:popover-open{display:flex;align-items:center;gap:8px}
+.wstage-help::backdrop{background:transparent}
+.wstage-help-close{flex:none;min-width:44px;min-height:44px;border:0;border-radius:50%;background:var(--gray-fill);color:var(--jade);font-size:24px}
 .wsettings-options label:has(input:disabled){cursor:default}
 .wsettings-options input:disabled{cursor:default}
 .wsettings-inline{position:relative;min-width:0;margin:8px 0 12px;padding:0;border:0}
