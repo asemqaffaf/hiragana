@@ -289,7 +289,7 @@ const tool = (id, icon, label, cls) =>
   id +
   '" type="button">' +
   icon +
-  '<span>' +
+  '<span dir="auto">' +
   label +
   '</span></button>';
 /** @param {boolean} [play] start the stroke-order demo straight away */
@@ -325,7 +325,7 @@ export function renderWrite(play) {
   const nextActivityLabel = nextActivity ? t(nextActivity === 'words' ? 'tab.daily' : nextActivity === 'quiz' ? 'tab.drill' : 'tab.read') : '';
   let h = '<h2>' + t('tab.write') + '</h2>';
   h +=
-    '<div class="strip">' +
+    '<div class="strip" dir="ltr">' +
     g.kana
       .map(
         (k) =>
@@ -353,12 +353,12 @@ export function renderWrite(play) {
   if (sequence)
     h += '<p class="wpass" id="wPassProgress" role="status">' +
       t('write.passProgress', { i: sequence.index + 1, n: WRITING_PASSES.length, label: t(WRITING_PASSES[sequence.index].label) }) + '</p>' +
-      '<div class="wstages" id="wStages" role="group" aria-label="' + t('write.stages') + '">' +
+      '<div class="wstages" id="wStages" dir="ltr" role="group" aria-label="' + t('write.stages') + '">' +
       STAGE_LABELS.map((label, index) =>
-        '<button class="btn wstage" type="button" data-writing-stage="' + index + '"><span>' + (index + 1) + '</span><span>' + t(label) +
+        '<button class="btn wstage" type="button" data-writing-stage="' + index + '"><span>' + (index + 1) + '</span><span dir="auto">' + t(label) +
         '</span><span class="wstage-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span></button>'
       ).join('') + '</div><div class="wstage-help" id="wStageHelp" popover="auto" role="status"><span id="wStageHelpText"></span><button type="button" class="wstage-help-close" popovertarget="wStageHelp" popovertargetaction="hide" aria-label="' + t('close') + '">×</button></div>';
-  h += '<fieldset class="wsettings-inline" id="wOptions"' + (sequence ? ' hidden disabled' : '') + '><legend>' + t('write.settings') +
+  h += '<fieldset class="wsettings-inline" id="wOptions" dir="ltr"' + (sequence ? ' hidden disabled' : '') + '><legend>' + t('write.settings') +
     '</legend><div class="wsettings-options"><label><input type="checkbox" role="switch" id="wGuide" aria-label="' + t('write.guide') + '"' +
     (ui.writeGuide ? ' checked' : '') + '><span class="woption-label">' + ICON.guide + '<span>' + t('write.guideShort') +
     '</span></span></label><label><input type="checkbox" role="switch" id="wNums" aria-label="' + t('write.nums') + '"' +
@@ -368,9 +368,9 @@ export function renderWrite(play) {
     '</span></span></label></div></fieldset>';
   h += '<div class="wgrid"><div class="wleft">';
   h +=
-    '<p class="wmeta"><b>' +
+    '<p class="wmeta" dir="ltr"><b>' +
     rom(ui.writeK) +
-    '</b><span class="muted small">' +
+    '</b><span class="muted small" dir="auto">' +
     t('strokes', { n: n ?? 0 }) +
     '</span>' +
     (ui.writeCheck && !sequence
@@ -378,7 +378,7 @@ export function renderWrite(play) {
       : '') +
     '</p>';
   h +=
-    '<div class="sq wsq" id="wsq"><canvas id="wpad" aria-label="' +
+    '<div class="sq wsq" id="wsq" dir="ltr"><canvas id="wpad" aria-label="' +
     t('write.area', { k: ui.writeK }) +
     '"></canvas>' +
     MARK_SVG +
@@ -392,7 +392,7 @@ export function renderWrite(play) {
     (ui.writeCheck ? '' : t('write.free')) +
     '</p>';
   h +=
-    '<div class="tools">' +
+    '<div class="tools" dir="ltr">' +
     tool('wPlay', ICON.play, t('write.play'), 'primary') +
     tool('wSay', SPEAK_SVG, t('write.hear'));
   h += ui.writeCheck
@@ -403,9 +403,9 @@ export function renderWrite(play) {
   h += '</div>';
   const againHtml = '<button class="btn" id="wAgain" type="button" hidden>' + t('write.again') + '</button>';
   h +=
-    '<div class="btnrow wdone actionbar inflow' + (sequence ? ' lesson-actions' : '') + '" id="wDone" hidden>' +
+    '<div class="btnrow wdone actionbar inflow' + (sequence ? ' lesson-actions' : '') + '" id="wDone" dir="ltr" hidden>' +
     (sequence ? '' : againHtml) +
-    '<button class="btn' + (ui.lessonWrite ? ' primary' : '') + '" id="wNext" type="button" disabled aria-disabled="true"><span>' +
+    '<button class="btn' + (ui.lessonWrite ? ' primary' : '') + '" id="wNext" type="button" disabled aria-disabled="true"><span dir="auto">' +
     (sequence && sequence.index < WRITING_PASSES.length - 1
       ? t('write.passNext', { label: t(WRITING_PASSES[sequence.index + 1].label) })
       : sequence ? nextActivity

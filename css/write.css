@@ -13,7 +13,6 @@
 .tool.primary{background:var(--jade);border-color:var(--jade);color:var(--jade-ink);font-weight:700}
 .tool[disabled]{opacity:.4;cursor:not-allowed}
 .tool:active{transform:translateY(1px)}
-[dir="rtl"] .tool .mir{transform:scaleX(-1)}
 .opts{margin-top:8px;gap:4px 14px;font-size:14px}
 .opts label{min-height:36px}
 .wtips{max-width:420px;margin:6px auto 0}
@@ -102,7 +101,6 @@
 .lesson-actions #wNext{flex:none;width:100%;min-height:64px;padding:14px 22px;gap:14px;font-size:18px;line-height:1.35;box-shadow:0 4px 12px var(--jade-soft);transition:transform .16s,box-shadow .16s}
 .lesson-actions #wNext > span{min-width:0}
 .wnext-arrow{width:24px;height:24px;flex:none}
-[dir="rtl"] .wnext-arrow{transform:rotate(180deg)}
 .lesson-actions #wNext:disabled{box-shadow:none}
 .lesson-actions #wNext:active:not(:disabled){transform:scale(.985);box-shadow:none}
 .lesson-actions #wNext:focus-visible{outline:3px solid var(--jade);outline-offset:3px}
