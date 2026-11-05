@@ -621,7 +621,8 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   'daily.intro':
     'اضغط «استمع» في كل بطاقة: ستسمع الكلمة مرتين ثم جملة مثال. ردّدها بصوت عالٍ بعد الصوت.',
   'daily.ex': 'مثال',
-  'daily.done': 'تم: العودة إلى اليوم',
+  'daily.done': 'تم',
+  'daily.continue': 'تم، متابعة إلى {activity}',
   'daily.heard': 'استمعت إلى {n} من {m}',
   'daily.title': 'كلمات يومية',
   'daily.today': 'اليوم {d} من الخطة',

@@ -7,7 +7,8 @@ import { dailyFor } from '../core/daily.js';
 import { ui } from '../core/ui-state.js';
 import { WORDS } from '../data/content.js';
 import { DAILY_ALL, EXTRA, PHRASES } from '../data/daily.js';
-import { completeLessonWords, lesson, recordLessonWord } from '../core/lesson.js';
+import { completeLessonWords, lesson, nextLessonStep, recordLessonWord } from '../core/lesson.js';
+import { runStep } from './lesson.js';
 import { wordCard } from '../ui/word-card.js';
 import { dailyCard } from '../ui/daily-card.js';
 import { bindPracticeNext } from '../ui/practice-next.js';
@@ -33,9 +34,11 @@ export function renderDaily() {
     Math.round((heard / Math.max(1, list.length)) * 100) +
     '%"></i></div></div>';
   h += '<div class="dlist">' + list.map(dailyCard).join('') + '</div>';
+  const next = nextLessonStep('words');
   h +=
-    '<div class="btnrow meetnav actionbar"><button class="btn primary" id="dDone">' +
-    t('daily.done') +
+    '<div class="btnrow meetnav actionbar"><button class="btn primary" id="dDone" type="button"><span>' +
+    (next ? t('daily.continue', { activity: t(next === 'read' ? 'step.read' : 'step.quiz') }) : t('daily.done')) +
+    '</span>' + (next ? '<svg class="wnext-arrow" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>' : '') +
     '</button></div>';
   const root = must('#tab-daily');
   root.innerHTML = h;
@@ -57,7 +60,9 @@ export function renderDaily() {
   });
   must('#dDone', root).onclick = () => {
     completeLessonWords();
-    showTab('plan');
+    const next = nextLessonStep('words');
+    if (next) runStep(next);
+    else showTab('plan');
   };
 }
 export function renderPhrases() {

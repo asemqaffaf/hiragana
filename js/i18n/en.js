@@ -600,7 +600,8 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   'daily.intro':
     'Tap Hear on each card: you hear the word twice, then an example sentence. Say it out loud after the voice.',
   'daily.ex': 'Example',
-  'daily.done': 'Done: back to today',
+  'daily.done': 'Done',
+  'daily.continue': 'Done & continue to {activity}',
   'daily.heard': 'Heard {n} of {m}',
   'daily.title': 'Daily words',
   'daily.today': 'Day {d} (today)',

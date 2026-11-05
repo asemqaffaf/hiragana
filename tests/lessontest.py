@@ -53,8 +53,8 @@ async def main():
                 await pg.wait_for_timeout(50)
             R[lang + '_daily_heard'] = [await pg.text_content('#dHeard'), await pg.locator('#tab-daily .dcard.heard').count()]
             await pg.click('#dDone'); await pg.wait_for_timeout(250)
-            R[lang + '_after_daily'] = [await pg.evaluate('location.hash'), await pg.text_content('#goNext'), await pg.eval_on_selector_all('.steps li', 'e=>e.map(x=>x.className)')]
-            await pg.click('#goNext'); await pg.wait_for_timeout(250)
+            R[lang + '_after_daily'] = [await pg.evaluate('location.hash')]
+            assert R[lang + '_after_daily'][0] == '#drill'
             for i in range(40):
                 if await pg.locator('#rToday').count(): break
                 if await pg.locator('#qNext').count(): await pg.click('#qNext'); continue
