@@ -1,4 +1,8 @@
 /* ---------- motion ---------- */
+/* Off-screen page transitions must not enlarge the mobile viewport, especially in RTL.
+   Clip at the viewport, not the page wrapper, so sticky controls keep their scroll container. */
+html,body{overflow-x:hidden}
+@supports (overflow:clip){html,body{overflow-x:clip}}
 #homeBtn{cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:6px;transition:transform .15s ease}
 #homeBtn:active{transform:scale(.94)}
 #homeBtn:focus-visible{outline:2px solid var(--jade);outline-offset:3px}
