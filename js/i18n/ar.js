@@ -149,6 +149,8 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   'write.free': 'رسم حرّ: لا يتم التحقق من الخطوط.',
   'write.again': 'اكتب مرة أخرى',
   'write.next': 'الحرف التالي:',
+  'write.completeNext': 'أكمل {k} وانتقل للتالي',
+  'write.completeDone': 'أكمل {k} وأنهِ التمرين',
   'write.play': 'عرض',
   'write.hear': 'استمع',
   'write.hint': 'تلميح',

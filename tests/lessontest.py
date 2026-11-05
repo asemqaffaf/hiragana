@@ -38,7 +38,12 @@ async def main():
                     assert await pg.is_checked('#wNums') == (stage < 2)
                     assert await pg.is_disabled('#wNext')
                     await write_clean(pg, cur)
+                    assert await pg.locator('#wCompleteBtn').count() == 0
+                    if stage == 2:
+                        assert cur in await pg.text_content('#wNext')
+                        assert not await pg.evaluate('(k) => !!window.__hira.getState().cl[k]', cur)
                     await pg.click('#wNext'); await pg.wait_for_timeout(150)
+                assert await pg.evaluate('(k) => !!window.__hira.getState().cl[k]', cur)
             R[lang + '_after_write'] = [await pg.evaluate('location.hash'), await pg.text_content('#goNext')]
             await pg.click('#goNext'); await pg.wait_for_timeout(250)
             R[lang + '_daily'] = [await pg.evaluate('location.hash'), await pg.locator('#tab-daily .dcard').count(), await pg.text_content('#dHeard')]

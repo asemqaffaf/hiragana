@@ -142,6 +142,8 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   'write.free': 'Free tracing: strokes are not checked.',
   'write.again': 'Write again',
   'write.next': 'Next letter:',
+  'write.completeNext': 'Mark {k} complete & next',
+  'write.completeDone': 'Mark {k} complete & finish',
   'write.play': 'Play',
   'write.hear': 'Hear',
   'write.hint': 'Hint',

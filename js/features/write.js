@@ -50,9 +50,7 @@ function refreshComplete() {
   const box = $('#wComplete'),
     k = ui.writeK;
   if (!box) return;
-  const sequence = ui.lessonWrite ? ui.lessonWritingSequence : null;
-  const ready = !sequence || writingSequenceComplete(sequence);
-  box.innerHTML = ready ? completeHtml(k) : t('write.sequenceHelp');
+  box.innerHTML = completeHtml(k);
   const u = $('#wUncomplete');
   if (u)
     u.onclick = () => {
@@ -62,7 +60,7 @@ function refreshComplete() {
     };
   const btn = $('#wCompleteBtn');
   if (btn) {
-    btn.hidden = !ready || !canComplete(k);
+    btn.hidden = !canComplete(k);
     btn.textContent = t('cl.btn', { k });
   }
 }
@@ -159,7 +157,6 @@ function finishWrite() {
   const sequence = ui.lessonWrite ? ui.lessonWritingSequence : null;
   if (sequence) {
     passWritingStage(sequence, !wq.miss);
-    if (writingSequenceComplete(sequence)) recordLessonWrite(wq.k);
   }
   if (!wq.miss) {
     setMark(true);
@@ -173,8 +170,8 @@ function finishWrite() {
   if (bar) bar.style.setProperty('--m', String(Math.min(wsOf(wq.k).p, CLEAN_GOAL) / CLEAN_GOAL));
   showDone(true);
   refreshComplete();
-  if ((!sequence || writingSequenceComplete(sequence)) && canComplete(wq.k)) wSay(t('cl.ready', { k: wq.k }), 'good');
-  else if ((!sequence || writingSequenceComplete(sequence)) && !isComplete(wq.k) && !((state.heard[wq.k] ?? 0) > 0) && wsOf(wq.k).p >= CLEAN_GOAL)
+  if (!sequence && canComplete(wq.k)) wSay(t('cl.ready', { k: wq.k }), 'good');
+  else if (!sequence && !isComplete(wq.k) && !((state.heard[wq.k] ?? 0) > 0) && wsOf(wq.k).p >= CLEAN_GOAL)
     wSay(t('cl.listen'), 'good');
 }
 /** @type {import('../../types/app').PadHandler} */
@@ -347,10 +344,13 @@ export function renderWrite(play) {
     '</button><button class="btn' + (ui.lessonWrite ? ' primary' : '') + '" id="wNext" disabled aria-disabled="true">' +
     (sequence && sequence.index < WRITING_PASSES.length - 1
       ? t('write.passNext', { label: t(WRITING_PASSES[sequence.index + 1].label) })
+      : sequence ? t(nx.k ? 'write.completeNext' : 'write.completeDone', { k: ui.writeK })
       : nx.k ? t('write.next') + ' <span class="kana">' + nx.k + '</span>' : t('lesson.back')) +
     '</button></div>';
-  h += '<button class="btn primary" id="wCompleteBtn" hidden></button>';
-  if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
+  if (!sequence) {
+    h += '<button class="btn primary" id="wCompleteBtn" hidden></button>';
+    if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
+  }
   h += '<div class="practice-continue-slot"></div>';
   h += '<div class="wnotes">' + letterNotesHtml(ui.writeK) + '</div>';
   h +=
@@ -415,7 +415,7 @@ export function renderWrite(play) {
     ws.onclick = () => {
       speakFull(ui.writeK);
       refreshComplete();
-      if (ui.wq && ui.wq.done && canComplete(ui.writeK))
+      if (!sequence && ui.wq && ui.wq.done && canComplete(ui.writeK))
         wSay(t('cl.ready', { k: ui.writeK }), 'good');
     };
   const hb = $('#wHint', root);
@@ -471,6 +471,17 @@ export function renderWrite(play) {
     if (sequence && !writingSequenceComplete(sequence)) {
       if (advanceWritingStage(sequence)) renderWrite();
       return;
+    }
+    if (sequence) {
+      // The combined action saves both kinds of completion before moving on.
+      // If introductions were skipped, play the letter to meet the listening requirement.
+      if (!isComplete(ui.writeK) && !((state.heard[ui.writeK] ?? 0) > 0)) speakFull(ui.writeK);
+      completeLetter(ui.writeK, true);
+      if (!isComplete(ui.writeK)) {
+        wSay(t('cl.listen'), 'good');
+        return;
+      }
+      recordLessonWrite(ui.writeK);
     }
     if (!nx.k) {
       ui.lessonWrite = false;
