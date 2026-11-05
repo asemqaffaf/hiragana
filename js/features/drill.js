@@ -415,6 +415,7 @@ function distractors(k, n, pool) {
  * @param {HTMLElement} [btn] the picked choice, in the multiple-choice modes
  */
 function answer(s, ok, given, btn) {
+  if (s !== ui.session || s.done || s.locked) return;
   const item = s.seq[s.i],
     k = item.k,
     root = must('#tab-drill');
@@ -432,7 +433,7 @@ function answer(s, ok, given, btn) {
     mark.setAttribute('class', 'mark ' + (ok ? 'ok' : 'no'));
     if (ok) {
       must('#qflash', root).textContent = rom(k);
-      setTimeout(nextQ, reduceMotion ? 450 : 700);
+      setTimeout(() => nextQ(s, item), reduceMotion ? 450 : 700);
       return;
     }
     must('#qin', root, HTMLInputElement).disabled = true;
@@ -443,7 +444,7 @@ function answer(s, ok, given, btn) {
     if (ok) {
       must('.mark', btn, SVGElement).setAttribute('class', 'mark ok');
       if (s.mode === 'choose') speak(k);
-      setTimeout(nextQ, reduceMotion ? 450 : 750);
+      setTimeout(() => nextQ(s, item), reduceMotion ? 450 : 750);
       return;
     }
     must('.mark', btn, SVGElement).setAttribute('class', 'mark no');
@@ -464,7 +465,7 @@ function answer(s, ok, given, btn) {
   else if (s.mode !== 'read' && given)
     must('#fbGiven', fb).textContent = t('q.picked', { k: given, r: rom(given) });
   must('#qNext', fb).onclick = () => {
-    nextQ();
+    nextQ(s, item);
     const inp = $('#qin');
     if (inp) inp.focus();
   };
@@ -472,9 +473,12 @@ function answer(s, ok, given, btn) {
   nb.focus({ preventScroll: true });
   nb.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
 }
-function nextQ() {
-  const s = ui.session;
-  if (!s || s.done) return;
+/** A delayed answer belongs to exactly one question in one round.
+ * @param {import('../../types/app').DrillSession} s
+ * @param {import('../../types/app').DrillQuestion} item
+ */
+function nextQ(s, item) {
+  if (s !== ui.session || s.done || s.seq[s.i] !== item || !s.locked) return;
   s.i++;
   if (s.i >= s.seq.length) {
     s.done = true;

@@ -35,6 +35,52 @@ async def main():
         await pg.tap('#tab-phrases [data-say]'); await pg.wait_for_timeout(600)
         R['phrase'] = await pg.evaluate("(() => { const a = window.__hira.audioEl(); return [a.src.split('/').pop(), Math.round(a.currentTime*10)/10, a.paused, a.error && a.error.code]; })()")
         R['final_state'] = await pg.evaluate("window.__hira.audioState()")
+        # A pending correct-answer timer must not advance a replacement round.
+        # Exercise End -> Same drill again before the old timer expires.
+        R['listen_restart'] = await pg.evaluate("""async () => {
+            const {ui} = await import('./js/core/ui-state.js');
+            const {showTab} = await import('./js/core/nav.js');
+            const {startDrill} = await import('./js/features/drill.js');
+            ui.drillMode = 'listen'; ui.drillLen = 'all';
+            ui.drillSel = new Set(['row-a', 'row-k']);
+            showTab('drill');
+            startDrill(['あ','い','う','え','お','か','き','く','け','こ']);
+            const k = ui.session.seq[0].k;
+            document.querySelector('[data-pick="' + k + '"]').click();
+            document.querySelector('#qEnd').click();
+            document.querySelector('#rAgain').click();
+            const round = ui.session, first = round.seq[0];
+            await new Promise(resolve => setTimeout(resolve, 850));
+            return {sameRound: ui.session === round, index: round.i, sameQuestion: round.seq[round.i] === first};
+        }""")
+        assert R['listen_restart'] == {'sameRound': True, 'index': 0, 'sameQuestion': True}, R['listen_restart']
+        # Verify the bytes used by both initial playback and cached replay for
+        # every question, then answer through the rendered choice buttons.
+        R['listen_all'] = await pg.evaluate("""async () => {
+            const {ui} = await import('./js/core/ui-state.js');
+            const {htmlAudio} = await import('./js/core/audio.js');
+            const {AUD} = await import('./js/data/audio-manifest.js');
+            const hash = async url => {
+                const data = await (await fetch(url)).arrayBuffer();
+                return [...new Uint8Array(await crypto.subtle.digest('SHA-256', data))].join(',');
+            };
+            const observations = [];
+            while (!ui.session.done) {
+                const round = ui.session, item = round.seq[round.i], k = item.k;
+                const expected = await hash('audio/' + AUD[k]);
+                const initialMatches = await hash(htmlAudio.src) === expected;
+                document.querySelector('#qPlay').click();
+                const replayMatches = await hash(htmlAudio.src) === expected;
+                document.querySelector('[data-pick="' + k + '"]').click();
+                observations.push({k, initialMatches, replayMatches, correct: round.results.at(-1).ok});
+                await new Promise(resolve => setTimeout(resolve, 850));
+            }
+            return observations;
+        }""")
+        assert len(R['listen_all']) == 10, R['listen_all']
+        assert len({q['k'] for q in R['listen_all']}) == 10, R['listen_all']
+        assert all(q['initialMatches'] and q['replayMatches'] and q['correct'] for q in R['listen_all']), R['listen_all']
         R['errors'] = errs
+        assert not errs, errs
         print(json.dumps(R, ensure_ascii=False))
 asyncio.run(main())
