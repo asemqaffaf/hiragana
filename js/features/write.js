@@ -147,8 +147,8 @@ function setMark(on) {
 }
 /* The bar under the writing area. Writing a lesson's letters: it is always there, Next waits (dimmed) until the letter is written.
    Free writing: it appears once the letter is written. */
-/** @param {boolean} on */
-function showDone(on) {
+/** @param {boolean} on @param {boolean} [fresh] Whether this is a newly completed write. */
+function showDone(on, fresh = true) {
   const dn = $('#wDone');
   if (!dn) return;
   dn.hidden = !on && !ui.lessonWrite;
@@ -159,12 +159,12 @@ function showDone(on) {
     const sequence = ui.lessonWrite ? ui.lessonWritingSequence : null;
     nx.disabled = !on || !!(sequence && !sequence.passed);
     nx.setAttribute('aria-disabled', String(nx.disabled));
-    nx.classList.toggle('next-ready', !!sequence && !nx.disabled);
+    nx.classList.toggle('next-ready', fresh && !!sequence && !nx.disabled);
   }
   if (again) again.hidden = !on;
   /* the writing area sits above this bar, so on a short phone it can be off screen when the letter is finished */
-  if (on && !reduceAnim()) dn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  else if (on) dn.scrollIntoView({ block: 'nearest' });
+  if (on && fresh && !reduceAnim()) dn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  else if (on && fresh) dn.scrollIntoView({ block: 'nearest' });
 }
 /** The number of strokes in the letter being written. @param {import('../../types/app').WriteAttempt} wq */
 const strokeTotal = (wq) => (wq.tpl ? wq.tpl.pts.length : 0);
@@ -571,9 +571,9 @@ export function renderWrite(play) {
     ui.wq.recorded = true;
     ui.wq.i = strokeTotal(ui.wq);
     ui.writeSvg?.showUpTo(ui.wq.i);
-    setMark(true);
+    setMark(false);
     wSay(t('write.passDone', { i: sequence.index + 1, n: WRITING_PASSES.length }), 'good');
-    showDone(true);
+    showDone(true, false);
   }
   if (play && ui.writeSvg) {
     ui.demoShown = !!ui.wq;
