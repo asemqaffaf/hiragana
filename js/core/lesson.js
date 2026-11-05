@@ -55,6 +55,13 @@ export function lessonSteps(day = curDay()) {
   return steps.map((step) => ({ ...step, done: step.n >= step.m }));
 }
 
+/** The next unfinished activity after a completed step. @param {import('../../types/app').LessonStepId} id @param {number} [day] @returns {import('../../types/app').LessonStepId | null} */
+export function nextLessonStep(id, day = curDay()) {
+  const steps = lessonSteps(day);
+  const index = steps.findIndex((step) => step.id === id);
+  return index < 0 ? null : steps.slice(index + 1).find((step) => !step.done)?.id ?? null;
+}
+
 /** @param {(lesson: import('../../types/app').LessonProgress) => void} change */
 function updateLesson(change) {
   if (!lessonOn()) return;

@@ -29,8 +29,7 @@ async def main():
             R[lang + '_meet'] = [await pg.text_content('.meettop .small'), await pg.text_content('.meetrom')]
             await pg.screenshot(path=f'shots/meet_{lang}.png')
             for i in range(10): await pg.click('#meetNext'); await pg.wait_for_timeout(60)
-            R[lang + '_after_meet'] = [await pg.evaluate('location.hash'), await pg.text_content('#goNext')]
-            await pg.click('#goNext'); await pg.wait_for_timeout(250)
+            R[lang + '_after_meet'] = [await pg.evaluate('location.hash'), await pg.eval_on_selector('.strip [aria-pressed="true"]', 'e=>e.dataset.wk')]
             R[lang + '_write_first'] = [await pg.evaluate('location.hash'), await pg.eval_on_selector('.strip [aria-pressed="true"]', 'e=>e.dataset.wk'), await pg.eval_on_selector_all('#subnav [data-sub]', 'e=>e.map(x=>x.textContent + (x.getAttribute("aria-selected")==="true"?"*":""))')]
             for i, k in enumerate(['あ','い','う','え','お','か','き','く','け','こ']):
                 cur = await pg.eval_on_selector('.strip [aria-pressed="true"]', 'e=>e.dataset.wk')
@@ -68,7 +67,7 @@ async def main():
             await pg.close()
         for lang in ['en', 'ar']:
             assert R[lang + '_done'][1] == 'day 1 marked done', R[lang + '_done']
-            assert R[lang + '_after_meet'][0] == '#plan'
+            assert R[lang + '_after_meet'][0] == '#write'
             assert R[lang + '_after_write'][0] == '#plan'
             assert R[lang + '_daily'][1] == 12
             assert R[lang + '_quiz'][0] == '10 / 10'

@@ -2,7 +2,7 @@ import { bindSay, cacheClip, exampleHtml, moreExHtml, speakFull } from '../core/
 import { replay } from '../core/motion.js';
 import { showTab } from '../core/nav.js';
 import { curDay, focusKana, todayPool } from '../core/plan.js';
-import { lesson, markLetterMet, writeList } from '../core/lesson.js';
+import { lesson, markLetterMet, nextLessonStep, writeList } from '../core/lesson.js';
 import { ui } from '../core/ui-state.js';
 import { me } from '../core/store.js';
 import { rom } from '../data/letters.js';
@@ -103,7 +103,7 @@ export function renderMeet() {
     '>' +
     t('meet.prev') +
     '</button><button class="btn primary" id="meetNext">' +
-    (last ? t('meet.finish') : t('meet.next')) +
+    (last ? t(nextLessonStep('meet') ? 'meet.finish' : 'meet.done') : t('meet.next')) +
     '</button></div>';
   const root = must('#tab-meet');
   root.innerHTML = '<h2>' + t('tab.meet') + '</h2>' + h;
@@ -121,7 +121,11 @@ export function renderMeet() {
   bindSay(root);
   must('#meetPrev', root).onclick = () => moveMeet(-1);
   must('#meetNext', root).onclick = () => {
-    if (last) showTab('plan');
+    if (last) {
+      const next = nextLessonStep('meet');
+      if (next) runStep(next);
+      else showTab('plan');
+    }
     else {
       moveMeet(1);
       window.scrollTo(0, 0);

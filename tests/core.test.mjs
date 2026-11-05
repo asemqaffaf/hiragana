@@ -46,6 +46,22 @@ function student(pace = 14) {
   );
 }
 
+test('finishing introductions continues to the next unfinished lesson activity', () => {
+  student(21);
+  assert.equal(lessons.nextLessonStep('meet'), 'write');
+  for (const kana of lessons.writeList()) lessons.recordLessonWrite(kana);
+  assert.equal(lessons.nextLessonStep('meet'), 'words', 'completed writing is skipped');
+  lessons.completeLessonWords();
+  assert.equal(lessons.nextLessonStep('meet'), 'quiz');
+  lessons.recordLessonQuiz(95);
+  assert.equal(lessons.nextLessonStep('meet'), null, 'no pending activities returns to Today');
+  assert.equal(lessons.nextLessonStep('quiz'), null);
+  const noWritingDay = Array.from({ length: plan.PLEN() }, (_, i) => i + 1)
+    .find((day) => lessons.writeList(day).length === 0 && plan.focusKana(day).length > 0);
+  assert.ok(noWritingDay);
+  assert.notEqual(lessons.nextLessonStep('meet', noWritingDay), 'write', 'unavailable writing is skipped');
+});
+
 test('answers persist accuracy and confusion together, with one notification', () => {
   const learner = student();
   let notifications = 0;
