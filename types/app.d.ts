@@ -394,6 +394,13 @@ export interface DrillSession {
 }
 
 /* ---------- writing ---------- */
+export interface LessonWritingSequence {
+  studentId: string;
+  day: number;
+  k: Kana;
+  index: number;
+  passed: boolean;
+}
 export interface WriteAttempt {
   k: Kana;
   tpl: StrokeTemplates | null;
@@ -432,6 +439,7 @@ export interface UiState {
   resetArmed: boolean;
   lessonQuiz: boolean;
   lessonWrite: boolean;
+  lessonWritingSequence: LessonWritingSequence | null;
   meetI: number;
   chartView: ChartView;
   pgTab: 'letters' | 'activity' | 'awards';

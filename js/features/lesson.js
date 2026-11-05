@@ -27,6 +27,7 @@ export function runStep(id) {
   } else if (id === 'write') {
     const wl = writeList();
     ui.lessonWrite = true;
+    ui.lessonWritingSequence = null;
     ui.writeK = wl.find((k) => !x.w.includes(k)) || wl[0];
     ui.writeGroup = groupOf(ui.writeK);
     ui.writeCheck = true;

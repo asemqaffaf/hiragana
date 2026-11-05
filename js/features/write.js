@@ -14,6 +14,8 @@ import { ui } from '../core/ui-state.js';
 import { rom } from '../data/letters.js';
 import { WGROUPS, groupOf } from '../data/writing.js';
 import { recordLessonWrite, writeList } from '../core/lesson.js';
+import { curDay } from '../core/plan.js';
+import { WRITING_PASSES, advanceWritingStage, passWritingStage, writingSequenceComplete } from '../core/writing-sequence.js';
 import { t } from '../i18n/core.js';
 import { judgeStroke, strokeCount, strokeMessage, strokeTemplates } from '../strokes/check.js';
 import { strokeSVG } from '../strokes/draw.js';
@@ -48,7 +50,9 @@ function refreshComplete() {
   const box = $('#wComplete'),
     k = ui.writeK;
   if (!box) return;
-  box.innerHTML = completeHtml(k);
+  const sequence = ui.lessonWrite ? ui.lessonWritingSequence : null;
+  const ready = !sequence || writingSequenceComplete(sequence);
+  box.innerHTML = ready ? completeHtml(k) : t('write.sequenceHelp');
   const u = $('#wUncomplete');
   if (u)
     u.onclick = () => {
@@ -58,7 +62,7 @@ function refreshComplete() {
     };
   const btn = $('#wCompleteBtn');
   if (btn) {
-    btn.hidden = !canComplete(k);
+    btn.hidden = !ready || !canComplete(k);
     btn.textContent = t('cl.btn', { k });
   }
 }
@@ -120,8 +124,9 @@ function showDone(on) {
   const nx = $('#wNext', dn, HTMLButtonElement),
     again = $('#wAgain', dn);
   if (nx) {
-    nx.disabled = !on;
-    nx.setAttribute('aria-disabled', String(!on));
+    const sequence = ui.lessonWrite ? ui.lessonWritingSequence : null;
+    nx.disabled = !on || !!(sequence && !sequence.passed);
+    nx.setAttribute('aria-disabled', String(nx.disabled));
   }
   if (again) again.hidden = !on;
   /* the writing area sits above this bar, so on a short phone it can be off screen when the letter is finished */
@@ -151,10 +156,16 @@ function finishWrite() {
     wq.recorded = true;
     recordWrite(wq.k, !wq.miss);
   }
-  if (ui.lessonWrite) recordLessonWrite(wq.k);
+  const sequence = ui.lessonWrite ? ui.lessonWritingSequence : null;
+  if (sequence) {
+    passWritingStage(sequence, !wq.miss);
+    if (writingSequenceComplete(sequence)) recordLessonWrite(wq.k);
+  }
   if (!wq.miss) {
     setMark(true);
-    wSay(t('w.allRight', { n, clean: cleanText(wq.k) }), 'good');
+    wSay(sequence
+      ? t('write.passDone', { i: sequence.index + 1, n: WRITING_PASSES.length })
+      : t('w.allRight', { n, clean: cleanText(wq.k) }), 'good');
   } else wSay(t('w.finished', { m: wq.miss }), 'bad');
   const c = $('#wCount');
   if (c) c.textContent = cleanText(wq.k);
@@ -162,8 +173,8 @@ function finishWrite() {
   if (bar) bar.style.setProperty('--m', String(Math.min(wsOf(wq.k).p, CLEAN_GOAL) / CLEAN_GOAL));
   showDone(true);
   refreshComplete();
-  if (canComplete(wq.k)) wSay(t('cl.ready', { k: wq.k }), 'good');
-  else if (!isComplete(wq.k) && !((state.heard[wq.k] ?? 0) > 0) && wsOf(wq.k).p >= CLEAN_GOAL)
+  if ((!sequence || writingSequenceComplete(sequence)) && canComplete(wq.k)) wSay(t('cl.ready', { k: wq.k }), 'good');
+  else if ((!sequence || writingSequenceComplete(sequence)) && !isComplete(wq.k) && !((state.heard[wq.k] ?? 0) > 0) && wsOf(wq.k).p >= CLEAN_GOAL)
     wSay(t('cl.listen'), 'good');
 }
 /** @type {import('../../types/app').PadHandler} */
@@ -235,6 +246,19 @@ export function renderWrite(play) {
   const root = must('#tab-write');
   const g = WGROUPS.find((x) => x.id === ui.writeGroup) || WGROUPS[0];
   if (!g.kana.includes(ui.writeK)) ui.writeK = g.kana[0];
+  if (ui.lessonWrite) {
+    const previous = ui.lessonWritingSequence;
+    const studentId = me()?.id || '';
+    const active = !previous || previous.k !== ui.writeK || previous.studentId !== studentId || previous.day !== curDay()
+      ? { studentId, day: curDay(), k: ui.writeK, index: 0, passed: false }
+      : previous;
+    ui.lessonWritingSequence = active;
+    const pass = WRITING_PASSES[active.index];
+    ui.writeGuide = pass.guide;
+    ui.writeNums = pass.numbers;
+    ui.writeCheck = true;
+  } else ui.lessonWritingSequence = null;
+  const sequence = ui.lessonWritingSequence;
   const wl = ui.lessonWrite ? writeList() : [],
     li = wl.indexOf(ui.writeK);
   const n = strokeCount(ui.writeK),
@@ -271,7 +295,10 @@ export function renderWrite(play) {
       )
       .join('') +
     '</div>';
-  h += '<fieldset class="wsettings-inline" id="wOptions"><legend>' + t('write.settings') +
+  if (sequence)
+    h += '<p class="wpass" id="wPassProgress" role="status">' +
+      t('write.passProgress', { i: sequence.index + 1, n: WRITING_PASSES.length, label: t(WRITING_PASSES[sequence.index].label) }) + '</p>';
+  h += '<fieldset class="wsettings-inline" id="wOptions"' + (sequence ? ' disabled title="' + t('write.autoHelp') + '"' : '') + '><legend>' + t('write.settings') +
     '</legend><div class="wsettings-options"><label><input type="checkbox" role="switch" id="wGuide" aria-label="' + t('write.guide') + '"' +
     (ui.writeGuide ? ' checked' : '') + '><span class="woption-label">' + ICON.guide + '<span>' + t('write.guideShort') +
     '</span></span></label><label><input type="checkbox" role="switch" id="wNums" aria-label="' + t('write.nums') + '"' +
@@ -286,7 +313,7 @@ export function renderWrite(play) {
     '</b><span class="muted small">' +
     t('strokes', { n: n ?? 0 }) +
     '</span>' +
-    (ui.writeCheck
+    (ui.writeCheck && !sequence
       ? '<span class="muted small" id="wCount">' + cleanText(ui.writeK) + '</span>'
       : '') +
     '</p>';
@@ -318,7 +345,9 @@ export function renderWrite(play) {
     '<div class="btnrow wdone actionbar inflow" id="wDone" hidden><button class="btn" id="wAgain" hidden>' +
     t('write.again') +
     '</button><button class="btn' + (ui.lessonWrite ? ' primary' : '') + '" id="wNext" disabled aria-disabled="true">' +
-    (nx.k ? t('write.next') + ' <span class="kana">' + nx.k + '</span>' : t('lesson.back')) +
+    (sequence && sequence.index < WRITING_PASSES.length - 1
+      ? t('write.passNext', { label: t(WRITING_PASSES[sequence.index + 1].label) })
+      : nx.k ? t('write.next') + ' <span class="kana">' + nx.k + '</span>' : t('lesson.back')) +
     '</button></div>';
   h += '<button class="btn primary" id="wCompleteBtn" hidden></button>';
   if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
@@ -348,7 +377,7 @@ export function renderWrite(play) {
   $$('[data-wk]', root).forEach(
     (b) =>
       (b.onclick = () => {
-        ui.lessonWrite = false;
+        if (ui.lessonWrite && !wl.includes(b.dataset.wk || '')) ui.lessonWrite = false;
         ui.writeK = b.dataset.wk || ui.writeK;
         renderWrite(true);
       }),
@@ -439,6 +468,10 @@ export function renderWrite(play) {
     };
   if (ui.writeCheck) refreshComplete();
   must('#wNext', root).onclick = () => {
+    if (sequence && !writingSequenceComplete(sequence)) {
+      if (advanceWritingStage(sequence)) renderWrite();
+      return;
+    }
     if (!nx.k) {
       ui.lessonWrite = false;
       showTab('plan');
@@ -446,8 +479,9 @@ export function renderWrite(play) {
     }
     ui.writeGroup = nx.g;
     ui.writeK = nx.k;
-    renderWrite(true);
+    renderWrite(!ui.lessonWrite);
   };
+  if (sequence?.passed) showDone(true);
   if (play && ui.writeSvg) {
     ui.demoShown = !!ui.wq;
     if (ui.wq) wSay(t('w.watch', { n: strokeTotal(ui.wq) }));

@@ -18,6 +18,9 @@
 .opts label{min-height:36px}
 .wtips{max-width:420px;margin:6px auto 0}
 .wtips summary{font-size:14px}
+.wpass{margin:10px 0 4px;font-size:16px;font-weight:600;color:var(--jade)}
+.wsettings-options label:has(input:disabled){cursor:default}
+.wsettings-options input:disabled{cursor:default}
 .wsettings-inline{position:relative;min-width:0;margin:8px 0 12px;padding:0;border:0}
 .wsettings-inline legend{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 .wsettings-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:420px}

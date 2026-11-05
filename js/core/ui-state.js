@@ -15,6 +15,7 @@ export const ui = {
   resetArmed: false,
   lessonQuiz: false,
   lessonWrite: false,
+  lessonWritingSequence: null,
   meetI: 0,
   chartView: 'basic',
   pgTab: 'letters',
