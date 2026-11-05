@@ -88,6 +88,18 @@
 .wdone{max-width:380px;margin:2px auto 0}
 .wdone[hidden]{display:none}
 .wdone .kana{font-family:var(--kana);font-size:19px}
+.wdone.actionbar.lesson-actions{flex-direction:column;gap:4px;max-width:420px;margin-top:14px}
+.lesson-actions #wNext{flex:none;width:100%;min-height:64px;padding:14px 22px;gap:14px;font-size:18px;line-height:1.35;box-shadow:0 4px 12px var(--jade-soft);transition:transform .16s,box-shadow .16s}
+.lesson-actions #wNext > span{min-width:0}
+.wnext-arrow{width:24px;height:24px;flex:none}
+[dir="rtl"] .wnext-arrow{transform:rotate(180deg)}
+.lesson-actions #wNext:disabled{box-shadow:none}
+.lesson-actions #wNext:active:not(:disabled){transform:scale(.985);box-shadow:none}
+.lesson-actions #wNext:focus-visible{outline:3px solid var(--jade);outline-offset:3px}
+.lesson-actions #wNext.next-ready{animation:writeNextReady .55s cubic-bezier(.2,.8,.2,1)}
+.lesson-actions #wAgain{flex:none;align-self:center;min-height:44px;padding:8px 20px;background:transparent;box-shadow:none;border:0;font-size:15px}
+@keyframes writeNextReady{from{opacity:.65;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.lesson-actions #wNext,.lesson-actions #wNext.next-ready{animation:none;transition:none}.lesson-actions #wNext:active:not(:disabled){transform:none}}
 .strip .sq .wm{position:absolute;left:7px;right:7px;bottom:5px;height:3px;border-radius:2px;background:var(--line);overflow:hidden;z-index:1}
 .strip .sq .wm::after{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:calc(var(--m,0)*100%);background:var(--jade)}
 svg.strokes .ht path{stroke:var(--red);stroke-width:4.4;opacity:.8}

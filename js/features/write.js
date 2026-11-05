@@ -125,6 +125,7 @@ function showDone(on) {
     const sequence = ui.lessonWrite ? ui.lessonWritingSequence : null;
     nx.disabled = !on || !!(sequence && !sequence.passed);
     nx.setAttribute('aria-disabled', String(nx.disabled));
+    nx.classList.toggle('next-ready', !!sequence && !nx.disabled);
   }
   if (again) again.hidden = !on;
   /* the writing area sits above this bar, so on a short phone it can be off screen when the letter is finished */
@@ -338,15 +339,17 @@ export function renderWrite(play) {
       tool('wClear', ICON.restart, t('write.restart'))
     : tool('wUndo', ICON.undo, t('write.undo')) + tool('wClear', ICON.clear, t('write.clear'));
   h += '</div>';
+  const againHtml = '<button class="btn" id="wAgain" type="button" hidden>' + t('write.again') + '</button>';
   h +=
-    '<div class="btnrow wdone actionbar inflow" id="wDone" hidden><button class="btn" id="wAgain" hidden>' +
-    t('write.again') +
-    '</button><button class="btn' + (ui.lessonWrite ? ' primary' : '') + '" id="wNext" disabled aria-disabled="true">' +
+    '<div class="btnrow wdone actionbar inflow' + (sequence ? ' lesson-actions' : '') + '" id="wDone" hidden>' +
+    (sequence ? '' : againHtml) +
+    '<button class="btn' + (ui.lessonWrite ? ' primary' : '') + '" id="wNext" type="button" disabled aria-disabled="true"><span>' +
     (sequence && sequence.index < WRITING_PASSES.length - 1
       ? t('write.passNext', { label: t(WRITING_PASSES[sequence.index + 1].label) })
       : sequence ? t(nx.k ? 'write.completeNext' : 'write.completeDone', { k: ui.writeK })
       : nx.k ? t('write.next') + ' <span class="kana">' + nx.k + '</span>' : t('lesson.back')) +
-    '</button></div>';
+    '</span>' + (sequence ? '<svg class="wnext-arrow" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>' : '') +
+    '</button>' + (sequence ? againHtml : '') + '</div>';
   if (!sequence) {
     h += '<button class="btn primary" id="wCompleteBtn" hidden></button>';
     if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
