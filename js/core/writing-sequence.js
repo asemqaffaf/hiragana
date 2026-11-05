@@ -1,7 +1,6 @@
 /** @type {readonly {guide: boolean, numbers: boolean, label: import('../../types/app').TextKey}[]} */
 export const WRITING_PASSES = [
-  { guide: true, numbers: false, label: 'write.passGuide' },
-  { guide: false, numbers: false, label: 'write.passNoGuide' },
+  { guide: true, numbers: true, label: 'write.passGuide' },
   { guide: false, numbers: true, label: 'write.passNumbers' },
   { guide: false, numbers: false, label: 'write.passMemory' },
 ];

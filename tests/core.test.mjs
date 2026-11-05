@@ -24,20 +24,20 @@ const remembered = await import('../js/core/remembered-login.js');
 const storage = await import('../js/core/storage.js');
 const writing = await import('../js/core/writing-sequence.js');
 
-test('lesson writing requires guide, no guide, numbers, then memory in order', () => {
+test('lesson writing requires guide with numbers, numbers only, then neither', () => {
   assert.deepEqual(writing.WRITING_PASSES.map(({ guide, numbers }) => [guide, numbers]),
-    [[true, false], [false, false], [false, true], [false, false]]);
+    [[true, true], [false, true], [false, false]]);
   const sequence = { studentId: 'learner', day: 1, k: 'あ', index: 0, passed: false };
-  for (let index = 0; index < 4; index++) {
+  for (let index = 0; index < 3; index++) {
     assert.equal(sequence.index, index);
     assert.equal(writing.writingSequenceComplete(sequence), false);
     writing.passWritingStage(sequence, false);
     assert.equal(writing.advanceWritingStage(sequence), false, 'mistakes require a retry');
     writing.passWritingStage(sequence, true);
-    assert.equal(writing.writingSequenceComplete(sequence), index === 3);
-    assert.equal(writing.advanceWritingStage(sequence), index < 3);
+    assert.equal(writing.writingSequenceComplete(sequence), index === 2);
+    assert.equal(writing.advanceWritingStage(sequence), index < 2);
   }
-  assert.equal(sequence.index, 3);
+  assert.equal(sequence.index, 2);
   assert.equal(writing.writingSequenceComplete(sequence), true);
 });
 

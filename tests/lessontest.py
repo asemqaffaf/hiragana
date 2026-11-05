@@ -33,9 +33,9 @@ async def main():
             R[lang + '_write_first'] = [await pg.evaluate('location.hash'), await pg.eval_on_selector('.strip [aria-pressed="true"]', 'e=>e.dataset.wk'), await pg.eval_on_selector_all('#subnav [data-sub]', 'e=>e.map(x=>x.textContent + (x.getAttribute("aria-selected")==="true"?"*":""))')]
             for i, k in enumerate(['あ','い','う','え','お','か','き','く','け','こ']):
                 cur = await pg.eval_on_selector('.strip [aria-pressed="true"]', 'e=>e.dataset.wk')
-                for stage in range(4):
+                for stage in range(3):
                     assert await pg.is_checked('#wGuide') == (stage == 0)
-                    assert await pg.is_checked('#wNums') == (stage == 2)
+                    assert await pg.is_checked('#wNums') == (stage < 2)
                     assert await pg.is_disabled('#wNext')
                     await write_clean(pg, cur)
                     await pg.click('#wNext'); await pg.wait_for_timeout(150)
