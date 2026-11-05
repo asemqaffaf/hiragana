@@ -2,6 +2,9 @@
 .strip{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;margin-top:10px}
 .strip .sq{flex:0 0 54px}
 .strip .sq .k{font-size:28px}
+.strip .sq[aria-disabled="true"]{color:var(--pencil)}
+.wletter-lock{position:absolute;top:3px;right:3px;z-index:3;color:var(--pencil)}
+.wletter-lock svg{width:13px;height:13px;display:block}
 .strip .sq[aria-pressed="true"]{border-color:var(--red);box-shadow:inset 0 0 0 1.5px var(--red)}
 .wsq{width:min(100%,360px,calc(100svh - 562px - env(safe-area-inset-bottom,0px)));min-width:min(100%,240px);margin:6px auto 0;touch-action:none}
 .wgrid{display:grid;grid-template-columns:1fr;gap:0}

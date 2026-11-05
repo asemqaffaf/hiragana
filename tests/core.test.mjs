@@ -105,6 +105,7 @@ function student(pace = 14) {
 
 test('writing checkpoints survive reload, import, review and student switching', () => {
   const first = student(21), kana = lessons.writeList()[1];
+  lessons.recordLessonWrite(lessons.writeList()[0]);
   const sequence = lessons.lessonWritingSequence(kana);
   writing.passWritingStage(sequence, true);
   writing.advanceWritingStage(sequence);
@@ -126,6 +127,28 @@ test('writing checkpoints survive reload, import, review and student switching',
   progress.setStartDate('2026-01-01');
   lessons.saveLessonWriting(sequence);
   assert.equal(store.state.les[plan.curDay()], undefined, 'a stale lesson day cannot save a checkpoint');
+});
+
+test('a saved future selection cannot skip earlier unfinished letters in either language', () => {
+  for (const lang of ['en', 'ar']) {
+    replaceLang(lang);
+    const learner = student(21), list = lessons.writeList();
+    lessons.recordLessonWrite(list[0]);
+    const future = lessons.lessonWritingSequence(list.at(-1));
+    lessons.saveLessonWriting(future);
+    store.restoreProgress(store.loadProgress(learner.id));
+    assert.equal(lessons.resumeWritingKana(), list[1]);
+    assert.equal(lessons.nextWritingKana(list[2]), list[1], 'Next must repair the earliest gap, not choose a later letter');
+    assert.equal(lessons.canOpenLessonWriting(list[0]), true, 'completed letters remain reviewable');
+    assert.equal(lessons.canOpenLessonWriting(list[1]), true);
+    assert.equal(lessons.canOpenLessonWriting(list.at(-1)), false);
+    for (let i = 1; i < list.length; i++) {
+      assert.equal(lessons.resumeWritingKana(), list[i]);
+      assert.equal(lessons.nextWritingKana(list[i]), list[i + 1] || '');
+      lessons.recordLessonWrite(list[i]);
+    }
+  }
+  replaceLang('en');
 });
 
 test('imported writing checkpoints are bounded and legacy lesson records still load', () => {

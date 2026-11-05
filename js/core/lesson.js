@@ -136,18 +136,21 @@ export function revokeLessonWriting(sequence) {
   });
 }
 
-/** The saved unfinished letter, or the first unfinished one. */
+/** Resume the first unfinished letter; its saved checkpoint restores the writing step. */
 export function resumeWritingKana() {
-  const progress = lesson(), list = writeList(), saved = progress.writingResume;
-  return saved && list.includes(saved) && !progress.w.includes(saved)
-    ? saved : list.find((kana) => !progress.w.includes(kana)) || list[0];
+  const progress = lesson(), list = writeList();
+  return list.find((kana) => !progress.w.includes(kana)) || list[0];
 }
 
-/** Continue unfinished letters before leaving writing, even after reviewing out of order. @param {string} kana */
+/** Completed letters can be reviewed; future unfinished letters cannot be skipped to. @param {string} kana */
+export function canOpenLessonWriting(kana) {
+  return writeList().includes(kana) && (lesson().w.includes(kana) || kana === resumeWritingKana());
+}
+
+/** Always repair the earliest gap before moving forward. @param {string} kana */
 export function nextWritingKana(kana) {
-  const list = writeList(), completed = lesson().w, index = list.indexOf(kana);
-  const pending = list.filter((letter) => letter !== kana && !completed.includes(letter));
-  return pending.find((letter) => list.indexOf(letter) > index) || pending[0] || '';
+  const completed = lesson().w;
+  return writeList().find((letter) => letter !== kana && !completed.includes(letter)) || '';
 }
 
 /** @param {string} kana the word, as written in the daily list */

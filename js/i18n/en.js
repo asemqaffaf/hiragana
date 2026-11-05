@@ -164,6 +164,7 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   'write.stageMemory': 'Memory',
   'write.lockedStep': 'Locked: complete the previous step first.',
   'write.unlockStep': 'Complete {previous} first to unlock {next}.',
+  'write.unlockLetter': 'Complete {k} first to unlock the next letter.',
   'write.stepThen': 'then',
   'write.passGuide': 'Trace with the guide and numbers',
   'write.passNoGuide': 'Write without the guide',

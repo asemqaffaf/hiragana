@@ -171,6 +171,7 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   'write.stageMemory': 'من الذاكرة',
   'write.lockedStep': 'مقفل: أكمل الخطوة السابقة أولًا.',
   'write.unlockStep': 'أكمل خطوة {previous} أولًا لفتح خطوة {next}.',
+  'write.unlockLetter': 'أكمل {k} أولًا لفتح الحرف التالي.',
   'write.stepThen': 'ثم',
   'write.passGuide': 'تتبّع الحرف مع الدليل والأرقام',
   'write.passNoGuide': 'اكتب دون الدليل',

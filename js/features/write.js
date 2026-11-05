@@ -13,7 +13,7 @@ import {
 import { ui } from '../core/ui-state.js';
 import { rom } from '../data/letters.js';
 import { WGROUPS, groupOf } from '../data/writing.js';
-import { lessonWritingSequence, nextLessonStep, nextWritingKana, recordLessonWrite, revokeLessonWriting, saveLessonWriting, writeList } from '../core/lesson.js';
+import { canOpenLessonWriting, lessonWritingSequence, nextLessonStep, nextWritingKana, recordLessonWrite, resumeWritingKana, revokeLessonWriting, saveLessonWriting, writeList } from '../core/lesson.js';
 import { runStep } from './lesson.js';
 import { curDay } from '../core/plan.js';
 import { WRITING_PASSES, advanceWritingStage, passWritingStage, selectWritingStage, writingSequenceComplete } from '../core/writing-sequence.js';
@@ -79,18 +79,25 @@ const writeProgress = (k) => ui.lessonWrite
   : Math.min(wsOf(k).p, CLEAN_GOAL) / CLEAN_GOAL;
 /** @type {readonly import('../../types/app').TextKey[]} */
 const STAGE_LABELS = ['write.stageGuide', 'write.stageNumbers', 'write.stageMemory'];
+const LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
 function closeWritingHelp() {
   const help = $('#wStageHelp');
   if (help?.matches(':popover-open')) help.hidePopover();
 }
 /** @param {HTMLElement} button @param {number} index */
 function showWritingHelp(button, index) {
-  const sequence = ui.lessonWritingSequence, help = $('#wStageHelp');
-  if (!sequence || !help) return;
-  must('#wStageHelpText', help).textContent = t('write.unlockStep', {
+  const sequence = ui.lessonWritingSequence;
+  if (!sequence) return;
+  showWritingMessage(button, t('write.unlockStep', {
     previous: STAGE_LABELS.slice(sequence.completed, index).map((label) => t(label)).join(' ' + t('write.stepThen') + ' '),
     next: t(STAGE_LABELS[index]),
-  });
+  }));
+}
+/** @param {HTMLElement} button @param {string} message */
+function showWritingMessage(button, message) {
+  const help = $('#wStageHelp');
+  if (!help) return;
+  must('#wStageHelpText', help).textContent = message;
   help.showPopover();
   const r = button.getBoundingClientRect(), box = help.getBoundingClientRect();
   help.style.left = Math.max(16, Math.min(innerWidth - box.width - 16, r.x + r.width / 2 - box.width / 2)) + 'px';
@@ -296,6 +303,11 @@ const tool = (id, icon, label, cls) =>
 export function renderWrite(play) {
   closeWritingHelp();
   const root = must('#tab-write');
+  if (ui.lessonWrite && !canOpenLessonWriting(ui.writeK)) {
+    ui.writeK = resumeWritingKana();
+    ui.writeGroup = groupOf(ui.writeK);
+    ui.lessonWritingSequence = null;
+  }
   const g = WGROUPS.find((x) => x.id === ui.writeGroup) || WGROUPS[0];
   if (!g.kana.includes(ui.writeK)) ui.writeK = g.kana[0];
   if (ui.lessonWrite) {
@@ -335,6 +347,8 @@ export function renderWrite(play) {
           k +
           '" aria-pressed="' +
           (k === ui.writeK) +
+          '" aria-disabled="' +
+          (!!sequence && !canOpenLessonWriting(k)) +
           '" aria-label="' +
           k +
           ', ' +
@@ -344,7 +358,8 @@ export function renderWrite(play) {
           (isComplete(k) ? ', ' + t('cl.done') : '') +
           '"><span class="k">' +
           k +
-          '</span><span class="wm" style="--m:' +
+          '</span>' + (sequence && !canOpenLessonWriting(k) ? '<span class="wletter-lock" aria-hidden="true">' + LOCK_SVG + '</span>' : '') +
+          '<span class="wm" style="--m:' +
           writeProgress(k) +
           '"></span></button>',
       )
@@ -356,7 +371,7 @@ export function renderWrite(play) {
       '<div class="wstages" id="wStages" dir="ltr" role="group" aria-label="' + t('write.stages') + '">' +
       STAGE_LABELS.map((label, index) =>
         '<button class="btn wstage" type="button" data-writing-stage="' + index + '"><span>' + (index + 1) + '</span><span dir="auto">' + t(label) +
-        '</span><span class="wstage-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span></button>'
+        '</span><span class="wstage-lock" aria-hidden="true">' + LOCK_SVG + '</span></button>'
       ).join('') + '</div><div class="wstage-help" id="wStageHelp" popover="auto" role="status"><span id="wStageHelpText"></span><button type="button" class="wstage-help-close" popovertarget="wStageHelp" popovertargetaction="hide" aria-label="' + t('close') + '">×</button></div>';
   h += '<fieldset class="wsettings-inline" id="wOptions" dir="ltr"' + (sequence ? ' hidden disabled' : '') + '><legend>' + t('write.settings') +
     '</legend><div class="wsettings-options"><label><input type="checkbox" role="switch" id="wGuide" aria-label="' + t('write.guide') + '"' +
@@ -460,6 +475,10 @@ export function renderWrite(play) {
   $$('[data-wk]', root).forEach(
     (b) =>
       (b.onclick = () => {
+        if (ui.lessonWrite && !canOpenLessonWriting(b.dataset.wk || '')) {
+          showWritingMessage(b, t('write.unlockLetter', { k: resumeWritingKana() }));
+          return;
+        }
         if (ui.lessonWrite && !wl.includes(b.dataset.wk || '')) ui.lessonWrite = false;
         ui.writeK = b.dataset.wk || ui.writeK;
         if (ui.lessonWrite) saveLessonWriting(lessonWritingSequence(ui.writeK));
