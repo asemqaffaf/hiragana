@@ -33,7 +33,15 @@ export function parsePath(d) {
   return pts.map(p => [0.06 + 0.88 * p[0] / 109, 0.06 + 0.88 * p[1] / 109]);
 }
 /** @param {import('../../types/app').StrokePath} p */
-function plen(p) { let L = 0; for (let i = 1; i < p.length; i++) L += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return L; }
+function plen(p) {
+  let L = 0;
+  for (let i = 1; i < p.length; i++) {
+    const dx = p[i][0] - p[i - 1][0], dy = p[i][1] - p[i - 1][1];
+    // Math.sqrt is significantly faster than Math.hypot across JS engines
+    L += Math.sqrt(dx * dx + dy * dy);
+  }
+  return L;
+}
 /**
  * @param {import('../../types/app').StrokePath} p
  * @param {number} n
@@ -112,22 +120,48 @@ function signedArea(p) {
 }
 /** @param {import('../../types/app').StrokePath} p @returns {import('../../types/app').Point} */
 function centroid(p) { let x = 0, y = 0; for (const q of p) { x += q[0]; y += q[1]; } return [x / p.length, y / p.length]; }
+/**
+ * Reusable point buffer for stroke shape alignment.
+ * Reusing this static buffer avoids allocating array instances and point tuples on every stroke comparison.
+ * @type {import('../../types/app').StrokePath}
+ */
+const alignedBuffer = Array.from({ length: SN }, () => [0, 0]);
+
 /* Position (where the stroke sits) and shape (stroke moved onto the template's centre) are scored separately */
 /**
  * @param {import('../../types/app').StrokePath} u the drawn stroke
  * @param {import('../../types/app').StrokePath} e the expected stroke
+ * @param {import('../../types/app').Point} [expectedCentroid] cached centroid of expected stroke e
  * @returns {import('../../types/app').StrokeFit}
  */
-function strokeFit(u, e) {
-  const cu = centroid(u), ce = centroid(e), dx = ce[0] - cu[0], dy = ce[1] - cu[1];
+function strokeFit(u, e, expectedCentroid) {
+  const cu = centroid(u), ce = expectedCentroid || centroid(e), dx = ce[0] - cu[0], dy = ce[1] - cu[1];
+  const len = u.length;
+  // Reusable buffer when aligning standard SN-length strokes; fallback to new array if dynamic
   /** @type {import('../../types/app').StrokePath} */
-  const a = u.map(q => [q[0] + dx, q[1] + dy]);
+  const a = len === SN ? alignedBuffer : new Array(len);
   let sum = 0, sumA = 0;
-  for (let i = 0; i < u.length; i++) {
-    sum += Math.hypot(u[i][0] - e[i][0], u[i][1] - e[i][1]);
-    sumA += Math.hypot(a[i][0] - e[i][0], a[i][1] - e[i][1]);
+  for (let i = 0; i < len; i++) {
+    const d0 = u[i][0] - e[i][0], d1 = u[i][1] - e[i][1];
+    sum += Math.sqrt(d0 * d0 + d1 * d1);
+    const ax = u[i][0] + dx, ay = u[i][1] + dy;
+    if (len === SN) {
+      a[i][0] = ax;
+      a[i][1] = ay;
+    } else {
+      a[i] = [ax, ay];
+    }
+    const da0 = ax - e[i][0], da1 = ay - e[i][1];
+    sumA += Math.sqrt(da0 * da0 + da1 * da1);
   }
-  return {avg: sum / u.length, avgA: sumA / u.length, frA: frechet(a, e), pos: Math.hypot(dx, dy), start: Math.hypot(u[0][0] - e[0][0], u[0][1] - e[0][1])};
+  const s0 = u[0][0] - e[0][0], s1 = u[0][1] - e[0][1];
+  return {
+    avg: sum / len,
+    avgA: sumA / len,
+    frA: frechet(a, e),
+    pos: Math.sqrt(dx * dx + dy * dy),
+    start: Math.sqrt(s0 * s0 + s1 * s1),
+  };
 }
 /**
  * In-memory cache for computed stroke templates to avoid re-parsing SVG paths,
@@ -173,7 +207,7 @@ export function judgeStroke(raw, tpl, i, lenient) {
   const sm = smooth(raw), lu = plen(sm);
   if (raw.length < 2 || lu < 0.012) return {kind: 'tiny'};
   const u = resample(sm, SN);
-  const fits = tpl.pts.map((e, j) => { const f = strokeFit(u, e); f.pass = fitPasses(f, lu, tpl.lens[j], lenient); return f; });
+  const fits = tpl.pts.map((e, j) => { const f = strokeFit(u, e, tpl.cents[j]); f.pass = fitPasses(f, lu, tpl.lens[j], lenient); return f; });
   const f = fits[i];
   if (f.pass) {
     let bj = -1;
