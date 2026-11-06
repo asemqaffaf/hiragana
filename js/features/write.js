@@ -1,6 +1,7 @@
 import { bindSay, hasClip, speakFull } from '../core/audio.js';
 import { reduceAnim } from '../core/motion.js';
 import { showTab } from '../core/nav.js';
+import { nextPracticeStep } from '../core/practice.js';
 import { me, state } from '../core/store.js';
 import {
   CLEAN_GOAL,
@@ -61,8 +62,14 @@ function refreshComplete() {
     };
   const btn = $('#wCompleteBtn');
   if (btn) {
-    btn.hidden = !canComplete(k);
-    btn.textContent = t('cl.btn', { k });
+    const next = $('.practice-continue-slot [data-practice-next]');
+    const activity = nextPracticeStep('write');
+    const ready = canComplete(k);
+    btn.hidden = !ready;
+    btn.textContent = next && activity
+      ? t('write.completeContinue', { k, activity: t(`tab.${activity}`) })
+      : t('cl.btn', { k });
+    if (next) next.hidden = ready;
   }
 }
 /** @param {string} k */
@@ -430,10 +437,11 @@ export function renderWrite(play) {
     '</span>' + (sequence ? '<svg class="wnext-arrow" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>' : '') +
     '</button>' + (sequence ? againHtml : '') + '</div>';
   if (!sequence) {
-    h += '<button class="btn primary" id="wCompleteBtn" hidden></button>';
     if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
   }
-  h += '<div class="practice-continue-slot"></div>';
+  h += '<div class="practice-continue-slot">' +
+    (sequence ? '' : '<button class="btn primary practice-next" id="wCompleteBtn" type="button" hidden></button>') +
+    '</div>';
   h += '<div class="wnotes">' + letterNotesHtml(ui.writeK) + '</div>';
   h +=
     '<details class="more wtips"><summary>' +
@@ -568,6 +576,7 @@ export function renderWrite(play) {
       refreshComplete();
       markStrip(ui.writeK);
       wSay(t('cl.saved', { k: ui.writeK }), 'good');
+      $('.practice-continue-slot [data-practice-next]', root)?.click();
     };
   if (ui.writeCheck) refreshComplete();
   must('#wNext', root).onclick = () => {
