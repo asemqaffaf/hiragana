@@ -106,6 +106,9 @@ html,body{overscroll-behavior-x:none}
 .pathcard b{font-size:1.15rem}
 .pathcard span{color:var(--pencil)}
 .pathcard:active{transform:translateY(1px)}
+.guestbox{max-width:420px;margin:20px 0 8px;padding-top:16px;border-top:1px solid var(--line)}
+.guestbox .btn{width:100%}
+.guestbox p{margin-top:8px}
 .pathcard:hover,.pathcard:focus-visible{border-color:var(--jade)}
 p.swap{margin-top:20px}
 .sform{max-width:420px}

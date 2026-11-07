@@ -315,6 +315,8 @@ export interface Progress {
   badges: Partial<Record<string, ISODate>>;
   les: Partial<Record<string, LessonProgress>>;
   updated: number;
+  /** When progress was last reset (milliseconds), or 0. A reset beats anything saved before it on any device. */
+  reset: number;
 }
 export type LetterLevel = 'new' | 'learning' | 'solid';
 

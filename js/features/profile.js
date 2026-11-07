@@ -1,10 +1,11 @@
-import { restoreCloud, saveCloudNow, syncOn } from '../core/cloud.js';
+import { restoreCloud, syncNow, syncOn } from '../core/cloud.js';
 import { goalOf } from '../core/plan.js';
 import { renderAll } from '../core/render-all.js';
 import {
   MODES,
   TINTS,
   cleanTheme,
+  isGuest,
   me,
   removeStudent,
   state,
@@ -228,7 +229,7 @@ export function renderProfile() {
     '</button></div>';
   h +=
     '<div class="btnrow"><button class="btn red" id="pDelete">' +
-    (pfDelArmed ? t(syncOn ? 'cloud.deleteConfirm' : 'p.deleteConfirm', { name: esc(p.name) }) : t('p.delete')) +
+    (pfDelArmed ? t(syncOn && !isGuest(p.id) ? 'cloud.deleteConfirm' : 'p.deleteConfirm', { name: esc(p.name) }) : t('p.delete')) +
     '</button></div>';
   const root = must('#tab-profile');
   const same = root.dataset.rendered === '1';
@@ -240,7 +241,7 @@ export function renderProfile() {
   const cloudRestore = $('#cloudRestore', root, HTMLButtonElement);
   if (cloudSave) cloudSave.onclick = async () => {
     cloudSave.disabled = true;
-    try { await saveCloudNow(p.id); }
+    try { await syncNow(p.id); }
     finally { cloudSave.disabled = false; }
   };
   if (cloudRestore) {

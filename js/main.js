@@ -4,14 +4,17 @@ import './ui/home-button.js';
 import './ui/drag-select.js';
 import { actx, htmlAudio, htmlFails, htmlOK, playTok } from './core/audio.js';
 import { showTab } from './core/nav.js';
-import { clearCurrentStudent, state, students, subscribeProgress } from './core/store.js';
+import { clearCurrentStudent, me, state, students, subscribeProgress } from './core/store.js';
 import { registerPages } from './core/pages.js';
-import { startCloudSync } from './core/cloud.js';
+import { startCloudSync, subscribeCloudApplied } from './core/cloud.js';
 import { recordLessonReading } from './core/lesson.js';
 import { ui } from './core/ui-state.js';
 import { KVG } from './data/kvg.js';
 import { checkBadges, initTracking } from './features/gamify.js';
-import { restoreLogin, showLogin } from './features/login.js';
+import { renderWho, restoreLogin, showLogin } from './features/login.js';
+import { deviceLang, setLang } from './features/language.js';
+import { applyStudent } from './ui/appearance.js';
+import { renderAll } from './core/render-all.js';
 import { renderChart } from './features/chart.js';
 import { renderDaily, renderPhrases } from './features/daily.js';
 import { renderDrill } from './features/drill.js';
@@ -27,6 +30,16 @@ import { must } from './util.js';
 
 must('#whoBtn').addEventListener('click', () => {
   if (ui.currentTab !== 'profile') showTab('profile');
+});
+/** Show what another device saved, without redrawing a screen someone is working on (pages redraw when opened). */
+subscribeCloudApplied((id) => {
+  const student = me();
+  if (!student || student.id !== id || document.body.classList.contains('signed-out')) return;
+  renderWho();
+  applyStudent();
+  if (ui.session || ui.currentTab === 'write' || ui.currentTab === 'meet') return;
+  setLang(student.lang || deviceLang());
+  renderAll();
 });
 function boot() {
   registerPages({

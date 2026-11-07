@@ -1,4 +1,4 @@
-import { COLORS, me, students } from '../core/store.js';
+import { COLORS, isGuest, me, students } from '../core/store.js';
 import { syncOn } from '../core/cloud.js';
 import { A46 } from '../data/letters.js';
 import { t } from '../i18n/core.js';
@@ -56,5 +56,6 @@ export function swatches(name, chosen) {
 
 export function syncText() {
   const p = me();
+  if (p && isGuest(p.id)) return t('guest.hint');
   return t(syncOn ? 'cloud.hint' : 'sync', { name: p ? esc(p.name) : '' });
 }

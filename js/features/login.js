@@ -6,10 +6,14 @@ import { goalOf } from '../core/plan.js';
 import { renderAll } from '../core/render-all.js';
 import {
   COLORS,
+  GUEST_ID,
   ISO,
   addStudent,
   clearCurrentStudent,
+  isGuest,
+  loadProgress,
   me,
+  removeStudent,
   restoreStudent,
   selectStudent,
   setDeviceLanguage,
@@ -87,6 +91,25 @@ function readExport(d) {
   if (!isObject(student) || typeof student.name !== 'string') return null;
   return { student: { ...student, id: '', name: student.name }, progress: d.progress };
 }
+/** Whether the guest has studied anything worth carrying over to a new profile. */
+function hasGuestProgress() {
+  const saved = loadProgress(GUEST_ID);
+  return students.list.some((p) => p.id === GUEST_ID) && isObject(saved) &&
+    (Object.keys(isObject(saved.stats) ? saved.stats : {}).length > 0 || Object.keys(isObject(saved.les) ? saved.les : {}).length > 0);
+}
+/** Start (or resume) the local-only guest profile: no password, no cloud. */
+function startGuest() {
+  if (!students.list.some((p) => p.id === GUEST_ID))
+    addStudent(
+      {
+        id: GUEST_ID, name: t('guest.name'), color: COLORS[0], created: todayISO(), last: Date.now(), lang: LANG,
+        age: 'adult', jlevel: 'new', native: LANG, rate: 1, goal: { pace: 14, min: 30, reason: 'jlpt' },
+        av: { t: 'initial', k: 'あ', img: '' }, theme: deviceTheme(),
+      },
+      { start: todayISO() },
+    );
+  login(GUEST_ID);
+}
 /** The student picker and new-student form. */
 export function showLogin() {
   closeSheet('silent');
@@ -146,7 +169,7 @@ export function showLogin() {
             '<span class="sn"><b dir="auto">' +
             esc(p.name) +
             '</b><span class="muted small" dir="ltr">' +
-            esc(p.id) +
+            esc(isGuest(p.id) ? t('guest.label') : p.id) +
             '</span></span></button>',
         )
         .join('') +
@@ -193,6 +216,8 @@ export function showLogin() {
     sel('nsMin', minOpts(), 30, t('f.min')) +
     sel('nsReason', reasonOpts(), 'jlpt', t('f.reason'), goalHint('jlpt')) +
     '</div>';
+  if (hasGuestProgress())
+    h += '<label class="remember-login"><input type="checkbox" id="nsGuest" checked><span>' + t('guest.bring') + '</span></label>';
   h += rememberField('ns') + '<p class="fmsg" id="nsMsg" role="alert"></p>';
   h +=
     '<div class="btnrow"><button class="btn primary" type="submit">' +
@@ -206,6 +231,8 @@ export function showLogin() {
     t('login.importHint') +
     '</span></p><p class="fmsg" id="imMsg" role="alert"></p></div></details><input type="file" id="importFile" accept="application/json,.json" hidden>' +
     (mode === 'new' && (syncOn || list.length) ? '<p class="swap"><button type="button" class="link" data-mode="in">' + t('login.toIn') + '</button></p>' : '') + '</div>';
+  h += '<div class="guestbox"><button type="button" class="btn" id="guestBtn">' + t('guest.btn') +
+    '</button><p class="small muted">' + t('guest.sub') + '</p></div>';
   h += '<footer class="credit"><p>' + t('credits') + '</p>' + byline() + '</footer>';
   root.innerHTML = h;
   ui.loginMsg = '';
@@ -216,6 +243,7 @@ export function showLogin() {
       window.scrollTo(0, 0);
     };
   });
+  must('#guestBtn', root).onclick = startGuest;
   must('[data-change-lang]', root).onclick = () => {
     ui.langStep = true;
     showLogin();
@@ -223,7 +251,8 @@ export function showLogin() {
   $$('[data-login]', root).forEach(
     (b) =>
       (b.onclick = () => {
-        if (b.dataset.login) {
+        if (b.dataset.login === GUEST_ID) startGuest();
+        else if (b.dataset.login) {
           selectedLogin = b.dataset.login;
           showLogin();
           must('#siPassword', root, HTMLInputElement).focus();
@@ -325,7 +354,10 @@ export function showLogin() {
     try {
       await setPassword(id, newPassword('ns', root));
       if (!button.isConnected) return;
-      addStudent(p, { start: ISO.test(start) ? start : todayISO() });
+      const bring = $('#nsGuest', root, HTMLInputElement)?.checked;
+      const guest = bring ? loadProgress(GUEST_ID) : null;
+      addStudent(p, { start: ISO.test(start) ? start : todayISO(), ...(isObject(guest) ? guest : {}) });
+      if (bring) removeStudent(GUEST_ID);
       login(id, must('#nsRemember', root, HTMLInputElement).checked);
     } catch (error) {
       msg.textContent = error instanceof Error ? error.message : t('auth.failed');
@@ -375,6 +407,11 @@ export function login(id, remember = false) {
 }
 /** Restore only an explicitly remembered profile, without renewing its expiry. */
 export function restoreLogin() {
+  // The guest has no password to remember: staying signed in until "Switch student" is the whole feature.
+  if (students.current === GUEST_ID && students.list.some((student) => student.id === GUEST_ID) && selectStudent(GUEST_ID)) {
+    enterApp();
+    return true;
+  }
   const id = rememberedStudent();
   if (!id || !students.list.some((student) => student.id === id)) return false;
   if (!selectStudent(id)) return false;

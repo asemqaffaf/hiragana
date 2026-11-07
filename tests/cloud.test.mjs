@@ -156,13 +156,47 @@ test('client passwords, cross-device login, queue isolation, restore, retry and 
   await cloud.flushCloud();
   assert.equal(api.db().first.student.name, 'Latest edit');
 
-  // An older device is rejected even with the correct password.
-  api.post({ ...payload('first', requests.at(-1).secret), student: { id: 'first', name: 'Other device' } });
+  // Another device saved first: this device folds its progress in and still sends its own edit.
+  const secret = requests.at(-1).secret;
+  api.post({ ...payload('first', secret), student: { id: 'first', name: 'Other device' },
+    progress: { v: 1, stats: { う: { b: 1, c: 5, w: 0, t: 0 } } } });
   store.updateStudent('first', { name: 'Stale edit' });
   await cloud.flushCloud();
-  assert.equal(cloud.cloudStatus('first').error, 'conflict');
-  assert.equal(api.db().first.student.name, 'Other device');
-  await cloud.restoreCloud('first');
+  await cloud.flushCloud();
+  assert.equal(cloud.cloudStatus('first').state, 'saved');
+  assert.equal(api.db().first.student.name, 'Stale edit', 'unsent local profile edits win');
+  assert.equal(api.db().first.progress.stats.う.c, 5, 'the other device progress is kept');
+  assert.equal(api.db().first.progress.stats.あ.c, 3, 'this device progress is kept');
+  assert.equal(store.state.stats.う.c, 5, 'and shown here');
+
+  // With nothing waiting to send, a later check pulls the other device's newest data, profile included.
+  api.post({ ...payload('first', secret), student: { id: 'first', name: 'Renamed elsewhere' },
+    progress: { v: 1, stats: { う: { b: 2, c: 9, w: 0, t: 0 }, あ: { b: 1, c: 3, w: 0, t: 0 } } } });
+  const applied = [];
+  cloud.subscribeCloudApplied((id) => applied.push(id));
+  await cloud.pullCloud('first');
+  assert.deepEqual(applied, ['first']);
+  assert.equal(store.me().name, 'Renamed elsewhere');
+  assert.equal(store.state.stats.う.c, 9);
+  assert.equal(cloud.cloudStatus('first').state, 'saved');
+  const before = requests.length;
+  await cloud.syncNow('first');
+  assert.equal(applied.length, 1, 'an unchanged cloud copy is not re-applied');
+  assert.deepEqual(requests.slice(before).map((data) => data.action), ['save', 'read'], 'a sync with nothing new sends this device once and reads once');
+
+  // A reset is not merged back in: it wins over older progress, and the other device adopts it.
+  const { resetProgress } = await load('core/progress.js');
+  resetProgress();
+  await cloud.flushCloud();
+  await cloud.flushCloud();
+  assert.deepEqual(api.db().first.progress.stats, {}, 'the cloud copy is empty after a reset');
+  assert.ok(api.db().first.progress.reset > 0);
+  api.post({ ...payload('first', secret), student: { id: 'first', name: 'Renamed elsewhere' },
+    progress: { v: 1, stats: { う: { b: 2, c: 9, w: 0, t: 0 } }, updated: 1 } });
+  await cloud.pullCloud('first');
+  assert.deepEqual(store.state.stats, {}, 'old progress from another device does not undo the reset');
+  await cloud.flushCloud();
+  assert.deepEqual(api.db().first.progress.stats, {}, 'and the cloud copy is corrected');
 
   navigator.onLine = false;
   store.removeStudent('first');
@@ -174,6 +208,56 @@ test('client passwords, cross-device login, queue isolation, restore, retry and 
   assert.equal(cloud.pendingCloudDeletes(), 0);
   assert.deepEqual(Object.keys(api.db().first).sort(), ['deleted', 'hash']);
   assert.ok(requests.every((data) => !JSON.stringify(data).includes('my-long-test-password')));
+});
+
+test('merging two devices keeps the work of both, in either order', async () => {
+  const { mergeProgress } = await load('core/merge.js');
+  const base = store.normalize(null);
+  const a = store.normalize({ ...base, start: '2026-02-01', updated: 5, done: { 1: '2026-02-02' }, act: { '2026-02-02': 4 },
+    stats: { あ: { b: 2, c: 6, w: 1, t: 900 } }, badges: { first: '2026-02-03' },
+    les: { 1: { m: ['あ'], w: [], q: 60, r: true, d: [], dd: false } } });
+  const b = store.normalize({ ...base, start: '2026-01-15', updated: 9, done: { 2: '2026-02-04' }, act: { '2026-02-02': 7, '2026-02-04': 2 },
+    stats: { あ: { b: 1, c: 2, w: 0, t: 500 }, い: { b: 1, c: 3, w: 0, t: 400 } }, badges: { first: '2026-02-01' },
+    les: { 1: { m: ['い'], w: ['あ'], q: 80, r: false, d: [], dd: true } } });
+  const merged = mergeProgress(a, b);
+  assert.deepEqual(JSON.parse(JSON.stringify(merged)), JSON.parse(JSON.stringify(mergeProgress(b, a))), 'order does not matter');
+  assert.deepEqual(JSON.parse(JSON.stringify(mergeProgress(merged, merged))), JSON.parse(JSON.stringify(merged)), 'merging again changes nothing');
+  assert.equal(merged.start, '2026-01-15');
+  assert.deepEqual(Object.keys(merged.done).sort(), ['1', '2']);
+  assert.deepEqual(merged.act, { '2026-02-02': 7, '2026-02-04': 2 });
+  assert.equal(merged.stats.あ.c, 6, 'the record with more attempts wins');
+  assert.equal(merged.stats.い.c, 3);
+  assert.equal(merged.badges.first, '2026-02-01');
+  assert.deepEqual(merged.les[1].m, ['あ', 'い']);
+  assert.equal(merged.les[1].q, 80);
+  assert.equal(merged.les[1].dd, true);
+  assert.equal(merged.updated, 9);
+  const reset = store.normalize({ reset: 20, updated: 20 });
+  for (const result of [mergeProgress(a, reset), mergeProgress(reset, a), mergeProgress(reset, b)]) {
+    assert.deepEqual(result.stats, {}, 'a reset drops progress saved before it');
+    assert.equal(result.reset, 20);
+  }
+  const after = store.normalize({ reset: 20, stats: { う: { b: 1, c: 1, w: 0, t: 0 } } });
+  assert.equal(mergeProgress(after, reset).stats.う.c, 1, 'work after a reset is kept');
+});
+
+test('a guest stays on this device: nothing is queued, read or sent to the cloud', async () => {
+  const before = requests.length;
+  assert.equal(store.isGuest(store.GUEST_ID), true);
+  store.addStudent({ id: store.GUEST_ID, name: 'Guest' }, { stats: { あ: { c: 1 } } });
+  store.updateProgress((state) => { state.stats.あ.c = 2; });
+  store.updateStudent(store.GUEST_ID, { name: 'Visitor' });
+  await cloud.saveCloudNow(store.GUEST_ID);
+  await cloud.pullCloud(store.GUEST_ID);
+  await cloud.syncNow(store.GUEST_ID);
+  await cloud.flushCloud();
+  assert.equal(requests.length, before, 'no request was made for the guest');
+  assert.equal(cloud.pendingCloudDeletes(), 0);
+  assert.equal(JSON.parse(values.get('hiragana14-sync-queue-v1') || '[]').length, 0);
+  await assert.rejects(cloud.signInCloud(store.GUEST_ID, 'any-password-here'), /credentials/);
+  store.removeStudent(store.GUEST_ID);
+  await cloud.flushCloud();
+  assert.equal(requests.length, before, 'removing the guest sends no deletion');
 });
 
 test('A teacher reset code lets a student set a new password, once, and only before it expires or is guessed', () => {

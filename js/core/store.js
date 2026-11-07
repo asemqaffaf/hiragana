@@ -13,6 +13,10 @@ import {
   deleteProgress,
 } from './storage.js';
 
+/** The one local-only profile that needs no password and never syncs. */
+export const GUEST_ID = 'guest';
+/** @param {string} id */
+export const isGuest = (id) => id === GUEST_ID;
 export const COLORS = ['#2A7361', '#CC3226', '#3C5A99', '#95601A', '#7A4E9C', '#4F6B2E'];
 /** @type {readonly import('../../types/app').Tint[]} */
 export const TINTS = ['slate', 'sand', 'sky', 'rose', 'lilac', 'sage', 'white'];
@@ -118,6 +122,7 @@ export function normalize(input) {
     badges: {},
     les: {},
     updated: 0,
+    reset: 0,
   };
   if (!isObject(input)) return f;
   const s = input;
@@ -189,6 +194,7 @@ export function normalize(input) {
           .slice(-50)
       : [],
     updated: num(s.updated),
+    reset: num(s.reset),
   };
 }
 /**
