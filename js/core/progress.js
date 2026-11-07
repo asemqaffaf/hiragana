@@ -98,7 +98,8 @@ export function setStartDate(date) {
 }
 
 export function resetProgress() {
-  restoreProgress(normalize(null));
+  // The stamp lets other devices tell this is a deliberate reset, not progress they should merge back in.
+  restoreProgress({ ...normalize(null), reset: Date.now() });
   updateProgress(() => {});
 }
 

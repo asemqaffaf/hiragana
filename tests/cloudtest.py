@@ -134,16 +134,16 @@ async def main():
             await save(second)
             assert db()[student_id]['student']['name'] == 'Newer cloud name'
 
-            # The older device cannot overwrite the newer device's saved data.
+            # The older device merges instead of getting stuck: its own unsent edit is kept and sent on the newer version.
             await first.fill('#pfName', 'Stale local name')
             await first.click('#pfForm button[type=submit]')
-            await save(first)
-            assert 'newer data' in await first.locator('[data-cloud-status]').last.inner_text()
-            assert db()[student_id]['student']['name'] == 'Newer cloud name'
+            await first.wait_for_function("document.querySelector('[data-cloud-status]').textContent === 'Saved to cloud.'", timeout=15000)
+            assert db()[student_id]['student']['name'] == 'Stale local name'
+            assert db()[student_id]['progress']['stats']['あ']['c'] == 4
             await first.click('#cloudRestore')
             await first.click('#cloudRestore')
-            await first.wait_for_function("document.querySelector('#pfName').value === 'Newer cloud name'")
-            assert await first.locator('[data-cloud-status]').last.inner_text() == 'Cloud copy restored.'
+            await first.wait_for_function("document.querySelector('[data-cloud-status]').textContent === 'Cloud copy restored.'")
+            assert await first.input_value('#pfName') == 'Stale local name'
             await first.screenshot(path=str(ROOT / 'shots/cloud-profile-en.png'), full_page=True)
 
             # Teacher reset-code flow in the browser: wrong code fails, short new password fails, valid code resets and signs in.
@@ -177,6 +177,17 @@ async def main():
             await second.locator('body:not(.signed-out)').wait_for()
             await open_profile(second)
 
+            # A device with nothing waiting to send picks up the other device's progress without being asked.
+            await second.evaluate("import('./js/core/store.js').then(s => s.updateProgress(p => p.stats['い'] = {b:1,c:5,w:0,t:300}))")
+            await save(second)
+            await first.click('#cloudSave')
+            for _ in range(40):
+                if await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['い'] ? s.state.stats['い'].c : 0)") == 5:
+                    break
+                await first.wait_for_timeout(250)
+            assert await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['い'].c)") == 5
+            assert await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 4
+
             # Arabic fields and live sync status remain readable on a narrow screen.
             await second.select_option('#pfLang', 'ar')
             await second.click('#pfForm button[type=submit]')
@@ -194,13 +205,38 @@ async def main():
             assert jobs[0]['action'] == 'delete'
             assert 'student' in db()[student_id]
             await c2.set_offline(False)
-            await second.wait_for_function("JSON.parse(localStorage.getItem('hiragana14-sync-queue-v1')).length === 0")
+            # Earlier syncs may have used this student's 30-requests-a-minute allowance; the queue retries after 15 seconds.
+            await second.wait_for_function("JSON.parse(localStorage.getItem('hiragana14-sync-queue-v1')).length === 0", timeout=60000)
             assert sorted(db()[student_id]) == ['deleted', 'hash']
             await first.fill('#pfName', 'Too late')
             await first.click('#pfForm button[type=submit]')
             await save(first)
             assert 'No cloud copy' in await first.locator('[data-cloud-status]').last.inner_text()
             assert sorted(db()[student_id]) == ['deleted', 'hash']
+            # A guest needs no account: nothing is sent to the cloud, it survives a reload, and progress can move to a new profile.
+            sent = len(requests)
+            c3, guest = await page_for(browser)
+            await guest.click('#guestBtn')
+            await guest.locator('body:not(.signed-out)').wait_for()
+            assert await guest.evaluate("import('./js/core/store.js').then(s => s.me().id)") == 'guest'
+            await guest.evaluate("import('./js/core/store.js').then(s => s.updateProgress(p => p.stats['あ'] = {b:1,c:2,w:0,t:300}))")
+            await guest.wait_for_timeout(2500)
+            await guest.reload()
+            await guest.locator('body:not(.signed-out)').wait_for()
+            assert await guest.evaluate("import('./js/core/store.js').then(s => s.me().id)") == 'guest'
+            await open_profile(guest)
+            assert await guest.locator('#cloudSave').count() == 0 and await guest.locator('#cloudRestore').count() == 0
+            assert len(requests) == sent, requests[sent:]
+            await guest.click('#pSwitch')
+            await guest.click('#login [data-mode="new"]')
+            await guest.fill('#nsName', 'Former guest')
+            await guest.fill('#nsPassword', PASSWORD)
+            await guest.fill('#nsConfirm', PASSWORD)
+            assert await guest.locator('#nsGuest').is_checked()
+            await guest.click('#newStudent button[type=submit]')
+            await guest.locator('body:not(.signed-out)').wait_for()
+            assert await guest.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 2
+            assert await guest.evaluate("import('./js/core/store.js').then(s => s.students.list.map(p => p.id).includes('guest'))") is False
             assert not errors, errors
             print(json.dumps({'passwords': True, 'cross_device_login': True, 'crud': True, 'conflicts': True,
                               'offline_delete': True, 'requests': len(requests), 'errors': errors}))

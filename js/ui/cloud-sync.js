@@ -1,4 +1,5 @@
 import { cloudStatus, pendingCloudDeletes, subscribeCloud, syncOn } from '../core/cloud.js';
+import { isGuest } from '../core/store.js';
 import { t } from '../i18n/core.js';
 import { esc } from '../util.js';
 
@@ -16,7 +17,7 @@ function statusText(id) {
 }
 /** @param {string} id */
 export function cloudPanel(id) {
-  if (!syncOn) return '';
+  if (!syncOn || isGuest(id)) return '';
   return '<div class="cloudbox"><p class="small" role="status" aria-live="polite" data-cloud-status="' + esc(id) + '">' +
     esc(statusText(id)) + '</p><div class="btnrow"><button class="btn" type="button" id="cloudSave">' +
     t('cloud.save') + '</button><button class="btn" type="button" id="cloudRestore">' +

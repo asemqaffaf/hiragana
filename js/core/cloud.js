@@ -5,21 +5,31 @@ import {
 } from './storage.js';
 import { passwordSecret, rememberPassword } from './passwords.js';
 import {
-  loadProgress, me, normalize, restoreStudent, state, students, subscribeProgress, subscribeStudents,
+  cleanStudent, isGuest, loadProgress, me, normalize, restoreStudent, state, students, subscribeProgress, subscribeStudents,
 } from './store.js';
+import { canon, mergeProgress } from './merge.js';
 import { isObject } from '../util.js';
 
 /** @typedef {{id: string, action: 'save' | 'delete', student?: import('../../types/app').Student, progress?: import('../../types/app').Progress, newSecret?: string, code?: string}} Job */
 /** @typedef {'local' | 'pending' | 'saving' | 'saved' | 'offline' | 'error' | 'restoring' | 'restored'} SyncState */
 /** @typedef {{state: SyncState, error?: string}} SyncStatus */
 export const syncOn = SYNC_URL.startsWith('https://');
-const validId = (/** @type {string} */ id) => /^[A-Za-z0-9_-]{1,64}$/.test(id) && !['__proto__', 'constructor', 'prototype'].includes(id);
+const validId = (/** @type {string} */ id) => /^[A-Za-z0-9_-]{1,64}$/.test(id) && !isGuest(id) &&
+  !['__proto__', 'constructor', 'prototype'].includes(id);
+
+const MAX_CONFLICTS = 3;
 /** @type {Map<string, Job>} */
 const pending = new Map();
 /** @type {Map<string, SyncStatus>} */
 const statuses = new Map();
 /** @type {Set<() => void>} */
 const listeners = new Set();
+/** @type {Set<(id: string) => void>} */
+const appliedListeners = new Set();
+/** Students whose saved password this device was refused: polling again would lock them out. @type {Set<string>} */
+const refused = new Set();
+/** @type {Map<string, number>} */
+const conflicts = new Map();
 /** @type {ReturnType<typeof setTimeout> | undefined} */
 let timer;
 /** @type {Promise<void> | undefined} */
@@ -46,6 +56,11 @@ export const pendingCloudDeletes = () => Array.from(pending.values()).filter((jo
 export function subscribeCloud(listener) {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+/** Called after newer data from another device has replaced or been merged into this student. @param {(id: string) => void} listener */
+export function subscribeCloudApplied(listener) {
+  appliedListeners.add(listener);
+  return () => appliedListeners.delete(listener);
 }
 /** @param {string} id @param {SyncState} state @param {string} [error] */
 function status(id, state, error) {
@@ -151,6 +166,7 @@ export function flushCloud() {
         if (job.action === 'save') {
           if (typeof result.savedAt !== 'string') throw new Error('deployment');
           writeCloudVersion(id, result.savedAt);
+          conflicts.delete(id);
           if (job.newSecret) {
             writeSyncSecret(id, job.newSecret);
             writePendingPassword(id, null);
@@ -165,6 +181,18 @@ export function flushCloud() {
         const message = error instanceof Error ? error.message : 'network';
         // A failed old request must not hide a newer save or deletion.
         if (pending.get(id) !== job) continue;
+        if (message === 'conflict' && job.action === 'save' && (conflicts.get(id) || 0) < MAX_CONFLICTS) {
+          // Another device saved first: fold its progress into this one and send the combined record.
+          conflicts.set(id, (conflicts.get(id) || 0) + 1);
+          try {
+            await pullInto(id);
+            retry = true;
+            continue;
+          } catch (pullError) {
+            status(id, 'error', pullError instanceof Error ? pullError.message : 'network');
+            continue;
+          }
+        }
         status(id, 'error', message);
         if (message === 'network' || message === 'storage' || message === 'busy' || message === 'rate limited') retry = true;
       }
@@ -219,6 +247,69 @@ export async function restoreCloud(id) {
     schedule();
   });
   return running;
+}
+
+/** Reads the cloud copy and combines it with this device's data. Callers hold the request lock.
+ * Progress is merged, so neither device loses work. The profile comes from the cloud unless this device has unsent edits.
+ * @param {string} id
+ */
+async function pullInto(id) {
+  const first = students.list.find((p) => p.id === id);
+  if (!first || pending.get(id)?.action === 'delete') return;
+  let result;
+  try { result = await requestCloud('read', id); }
+  catch (error) {
+    const message = error instanceof Error ? error.message : 'network';
+    if (message === 'not yours' || message === 'locked') refused.add(id);
+    // Nothing is saved in the cloud yet: the next save creates it.
+    if (message === 'not found') return;
+    throw error;
+  }
+  const remote = result.student;
+  if (!isObject(remote) || remote.id !== id || typeof remote.name !== 'string' || !remote.name.trim() ||
+      !isObject(result.progress) || Array.isArray(result.progress) || typeof result.savedAt !== 'string') throw new Error('invalid');
+  // Read local data only now: the learner may have studied while the request was in flight.
+  const local = students.list.find((p) => p.id === id);
+  const job = pending.get(id);
+  if (!local || job?.action === 'delete') return;
+  const localProgress = students.current === id ? state : normalize(loadProgress(id));
+  const remoteProgress = normalize(result.progress);
+  const merged = mergeProgress(localProgress, remoteProgress);
+  const profile = job ? local : cleanStudent({ ...remote, id, name: remote.name });
+  const shape = (/** @type {import('../../types/app').Student} */ student) => canon({ ...student, last: 0, av: { ...student.av, img: '' } });
+  // The saved-at stamp alone is not a difference worth redrawing or re-sending.
+  const content = (/** @type {import('../../types/app').Progress} */ progress) => canon({ ...progress, updated: 0 });
+  const changed = content(merged) !== content(localProgress) || shape(profile) !== shape(local);
+  if (changed) restoreStudent(profile, merged);
+  writeCloudVersion(id, result.savedAt);
+  // If this device holds anything the cloud lacks, send the combined record on the new version.
+  if (job || content(merged) !== content(remoteProgress)) queueCloudSave(id);
+  else status(id, 'saved');
+  if (changed) appliedListeners.forEach((listener) => listener(id));
+}
+
+/** Fetch what other devices saved and fold it into this one. @param {string} [id] */
+export async function pullCloud(id = me()?.id) {
+  if (!syncOn || !id || !validId(id) || !started || refused.has(id)) return;
+  while (running) await running.catch(() => {});
+  conflicts.delete(id);
+  const task = (async () => {
+    try { await pullInto(id); }
+    catch (error) { status(id, 'error', error instanceof Error ? error.message : 'network'); }
+  })();
+  running = task.finally(() => {
+    running = undefined;
+    schedule();
+  });
+  return running;
+}
+
+/** The Sync button: send this device's changes, then bring in what other devices saved. @param {string} id */
+export async function syncNow(id) {
+  refused.delete(id);
+  await saveCloudNow(id);
+  await pullCloud(id);
+  if (pending.has(id)) await flushCloud();
 }
 
 /** Sign in from a new device without saving an unverified credential. @param {string} id @param {string} password */
