@@ -155,8 +155,8 @@ nav.tabs .has-thumb > .thumb,nav.tabs .in > .thumb{border-radius:30px;background
 .has-thumb:has(> button:active) > .thumb{scale:1.03}
 /* the lens (lens.js): clear glass that magnifies what is under it. The flat pill fades out while the lens is up. */
 .lensing > .thumb{opacity:var(--thumb-o,1) !important;transition:transform .5s var(--spring),width .5s var(--spring) !important}
-nav.tabs .in.lensing > button[aria-selected="true"]{color:var(--pencil);font-weight:500}
-nav.tabs .in.lensing > button[aria-selected="true"] svg{color:var(--pencil)}
+nav.tabs .in.lensing > button[aria-selected="true"],.seg.lensing > button[aria-selected="true"],.seg.lensing > button[aria-pressed="true"]{color:var(--pencil);font-weight:500}
+nav.tabs .in.lensing > button[aria-selected="true"] svg,.seg.lensing > button[aria-selected="true"] svg,.seg.lensing > button[aria-pressed="true"] svg{color:var(--pencil)}
 .lens{position:absolute;left:0;top:0;z-index:4;overflow:hidden;border-radius:999px;pointer-events:none;will-change:transform,width,height,opacity;
   background:color-mix(in srgb,var(--surface) 62%,transparent);
   -webkit-backdrop-filter:blur(7px) saturate(1.9) brightness(1.12);backdrop-filter:blur(7px) saturate(1.9) brightness(1.12);
