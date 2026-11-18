@@ -25,7 +25,7 @@ export const toLocal = (c, clientX) => { const r = c.getBoundingClientRect(); re
 export function createLens(c, clientX) {
   const items = /** @type {HTMLButtonElement[]} */ (Array.from(c.querySelectorAll(':scope > button'))).filter(b => !b.disabled && b.offsetWidth);
   if (!items.length) return null;
-  const sel = items.find(b => b.getAttribute('aria-selected') === 'true') || items[0];
+  const sel = items.find(b => b.getAttribute('aria-selected') === 'true' || b.getAttribute('aria-pressed') === 'true') || items[0];
   const itemW = sel.offsetWidth, itemH = sel.offsetHeight, cw = c.offsetWidth, cy = sel.offsetTop + itemH / 2;
   /** @param {HTMLElement} b */
   const centre = b => b.offsetLeft + b.offsetWidth / 2;
