@@ -43,8 +43,9 @@ export function createLens(c, clientX) {
   lens.appendChild(inner); c.appendChild(lens); c.classList.add('lensing');
 
   const S = {x: centre(sel), v: 0, L: 0, vL: 0, tx: centre(sel), Lt: 1, released: false, done: false, on: -1, last: performance.now(), raf: 0};
-  /** @param {number} x */
-  const limit = x => clamp(x, itemW / 2 - 6, cw - itemW / 2 + 6);
+const lo = centre(items[0]), hi = centre(items[items.length - 1]);
+   /** @param {number} x */
+  const limit = x => clamp(x < lo ? lo + (x - lo) * 0.25 : x > hi ? hi + (x - hi) * 0.25 : x, itemW / 2 - 12, cw - itemW / 2 + 12);
 
   /** @param {number} now */
   const frame = now => {
