@@ -33,10 +33,10 @@ document.addEventListener(
     if (kind === 'tab' && e.pointerType === 'touch') e.preventDefault();
     /** @type {DragState} */
     const d = { kind, c, id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, lens: null };
-    if (!reduceAnim()) {
+    if (kind === 'tab' && !reduceAnim()) {
       d.timer = setTimeout(() => {
         if (drag === d && !d.lens) d.lens = createLens(c, d.x);
-      }, kind === 'tab' ? 110 : 140);
+      }, 110);
     }
     drag = d;
   },
@@ -50,7 +50,7 @@ document.addEventListener('pointermove', (e) => {
   if (!d.lens) {
     const dx = Math.abs(e.clientX - d.x0);
     const dy = Math.abs(e.clientY - d.y0);
-    if (d.kind === 'seg' && dy > dx && dy >= 4) { clearTimeout(d.timer);
+    if (d.kind === 'seg' && dy > dx && dy >= 6) {
       drag = null;
       return;
     }
