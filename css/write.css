@@ -5,9 +5,9 @@
 .strip .sq{flex:0 0 54px}
 .strip .sq .k{font-size:28px;transition:filter .18s ease,opacity .18s ease}
 .strip.strip-blur .sq .k{filter:blur(7px);opacity:.55;user-select:none;-webkit-user-select:none}
-.strip-toggle{flex:0 0 auto;width:36px;min-width:36px;height:36px;min-height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:var(--pencil)}
-.strip-toggle[aria-pressed="true"]{color:var(--ink)}
-.strip-toggle svg{width:18px;height:18px;display:block}
+.strip-toggle{flex:0 0 36px;width:36px;height:36px;padding:0;border-radius:999px;border:1px solid var(--grid);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.strip-toggle[aria-pressed="true"]{border-color:var(--jade);color:var(--jade)}
+.strip-toggle svg{width:18px;height:18px;display:block;flex:0 0 18px;stroke:currentColor}
 .strip .sq[aria-disabled="true"]{color:var(--pencil)}
 .wletter-lock{position:absolute;top:3px;inset-inline-end:3px;z-index:3;color:var(--pencil)}
 .wletter-lock svg{width:13px;height:13px;display:block}

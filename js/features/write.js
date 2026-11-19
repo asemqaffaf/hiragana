@@ -381,7 +381,7 @@ export function renderWrite(play) {
       )
       .join('') +
     '</div>' +
-    '<button class="btn strip-toggle" id="wStripToggle" type="button" aria-pressed="' +
+    '<button class="strip-toggle" id="wStripToggle" type="button" aria-pressed="' +
     (stripShown ? 'true' : 'false') +
     '" aria-label="' +
     stripLabel +
