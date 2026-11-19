@@ -87,8 +87,6 @@ const writeProgress = (k) => ui.lessonWrite
 /** @type {readonly import('../../types/app').TextKey[]} */
 const STAGE_LABELS = ['write.stageGuide', 'write.stageNumbers', 'write.stageMemory'];
 const LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
-const EYE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
-const EYE_OFF_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 unction closeWritingHelp() {
   const help = $('#wStageHelp');
   if (help?.matches(':popover-open')) help.hidePopover();
@@ -346,7 +344,7 @@ export function renderWrite(play) {
   const nextActivityLabel = nextActivity ? t(nextActivity === 'words' ? 'tab.daily' : nextActivity === 'quiz' ? 'tab.drill' : 'tab.read') : '';
   let h = '<h2>' + t('tab.write') + '</h2>';
   h +=
-    '<div class="strip-row"><div class="strip' + (ui.writeStripPeek ? '' : ' strip-blur') + '">' +
+    '<div class="strip">' +
     g.kana
       .map(
         (k) =>
@@ -373,7 +371,7 @@ export function renderWrite(play) {
           '"></span></button>',
       )
       .join('') +
-    '</div>' + '<button class="btn strip-toggle" id="wStripToggle" type="button" aria-pressed="' + Boolean(ui.writeStripPeek) + '" aria-label="' + (ui.writeStripPeek ? 'Hide characters' : 'Show characters') + '" title="' + (ui.writeStripPeek ? 'Hide characters' : 'Show characters') + '">' + (ui.writeStripPeek ? EYE_OFF_SVG : EYE_SVG) + '</button></div>';
+    '</div>';
   if (sequence)
     h += '<p class="wpass" id="wPassProgress" role="status">' +
       t('write.passProgress', { i: sequence.index + 1, n: WRITING_PASSES.length, label: t(WRITING_PASSES[sequence.index].label) }) + '</p>' +
@@ -454,7 +452,7 @@ export function renderWrite(play) {
   h += '</div></div>';
   root.innerHTML = h;
   bindSay(root);
-  bindPracticeNext(root, 'write'); const stripToggle = $('#wStripToggle', root); if (stripToggle) { stripToggle.onclick = () => { ui.writeStripPeek = !ui.writeStripPeek; const peek = Boolean(ui.writeStripPeek); const label = peek ? 'Hide characters' : 'Show characters'; $('.strip', root)?.classList.toggle('strip-blur', !peek); stripToggle.setAttribute('aria-pressed', String(peek)); stripToggle.setAttribute('aria-label', label); stripToggle.title = label; stripToggle.innerHTML = peek ? EYE_OFF_SVG : EYE_SVG; }; }
+  bindPracticeNext(root, 'write');
   refreshWritingStages();
   $$('#wStages [data-writing-stage]', root).forEach((button) => {
     button.onclick = () => {
