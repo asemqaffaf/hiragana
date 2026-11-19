@@ -463,7 +463,7 @@ export function renderWrite(play) {
       }
       closeWritingHelp();
       if (sequence && index !== sequence.index && selectWritingStage(sequence, index)) {
-        ui.writeStripPeek = false; saveLessonWriting(sequence);
+        saveLessonWriting(sequence);
         renderWrite();
         $('#wStages [data-writing-stage="' + index + '"]')?.focus({ preventScroll: true });
       }
@@ -488,7 +488,7 @@ export function renderWrite(play) {
           return;
         }
         if (ui.lessonWrite && !wl.includes(b.dataset.wk || '')) ui.lessonWrite = false;
-        ui.writeStripPeek = false; ui.writeK = b.dataset.wk || ui.writeK;
+        ui.writeK = b.dataset.wk || ui.writeK;
         if (ui.lessonWrite) saveLessonWriting(lessonWritingSequence(ui.writeK));
         renderWrite(true);
       }),
