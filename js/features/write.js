@@ -87,7 +87,7 @@ const writeProgress = (k) => ui.lessonWrite
 /** @type {readonly import('../../types/app').TextKey[]} */
 const STAGE_LABELS = ['write.stageGuide', 'write.stageNumbers', 'write.stageMemory'];
 const LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
-unction closeWritingHelp() {
+function closeWritingHelp() {
   const help = $('#wStageHelp');
   if (help?.matches(':popover-open')) help.hidePopover();
 }
@@ -440,7 +440,7 @@ export function renderWrite(play) {
     if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
   }
   h += '<div class="practice-continue-slot">' +
-    (sequence ? '' : '<button class="btn primary practice-next" id="wCompleteBtn" type="button" hidden></button>') + 
+    (sequence ? '' : '<button class="btn primary practice-next" id="wCompleteBtn" type="button" hidden></button>') +
     '</div>';
   h += '<div class="wnotes">' + letterNotesHtml(ui.writeK) + '</div>';
   h +=
