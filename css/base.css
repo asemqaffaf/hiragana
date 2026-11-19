@@ -162,3 +162,5 @@ p{margin:0 0 10px}
 .langchip svg{width:18px;height:18px;color:var(--jade)}
 .byline{margin:14px 0 0;text-align:center;color:var(--pencil);font-size:13px;font-weight:600;letter-spacing:.02em}
 .credit .byline{margin-top:10px}
+html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
