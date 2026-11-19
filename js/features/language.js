@@ -31,6 +31,8 @@ export function setLang(l) {
   html.lang = LANG;
   html.dir = localeFor().direction;
   document.title = t('doc.title');
+  const brand = document.getElementById('appBrand');
+  if (brand) brand.textContent = t('app.brand');
   if (me() && !document.body.classList.contains('signed-out')) applyStudent();
   else must('#appSub').textContent = t('app.sub');
   must('nav.tabs').setAttribute('aria-label', t('nav.label'));

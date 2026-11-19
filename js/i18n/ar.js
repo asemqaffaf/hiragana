@@ -5,7 +5,8 @@ import { DAILY_ALL, EXTRA, PHRASES } from '../data/daily.js';
 import { K, arN, iso } from './format.js';
 
 const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
-  'doc.title': 'الهيراغانا في 14 يوماً',
+  'doc.title': 'كوكب اليابان',
+  'app.brand': 'كوكب اليابان',
   'app.sub': 'اقرأ الهيراغانا كلها في 14 يوماً، 30 دقيقة كل يوم',
   'nav.label': 'الأقسام',
   'tab.plan': 'اليوم',
