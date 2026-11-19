@@ -1,7 +1,7 @@
 /* write */
 .strip{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;margin-top:10px}
 .strip .sq{flex:0 0 54px}
-.strip .sq .k{font-size:28px}
+.strip-row{display:flex;align-items:center;gap:8px;margin-top:10px}.strip-row .strip{flex:1;min-width:0;margin-top:0}.strip .sq .k{font-size:28px;transition:filter .15s ease,opacity .15s ease}.strip.strip-blur .sq .k{filter:blur(7px);opacity:.55;user-select:none;-webkit-user-select:none}.strip-toggle{flex:0 0 auto;width:36px;height:36px;min-height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;color:var(--pencil)}.strip-toggle[aria-pressed="true"]{color:var(--ink)}.strip-toggle svg{width:18px;height:18px;display:block}
 .strip .sq[aria-disabled="true"]{color:var(--pencil)}
 .wletter-lock{position:absolute;top:3px;inset-inline-end:3px;z-index:3;color:var(--pencil)}
 .wletter-lock svg{width:13px;height:13px;display:block}
@@ -52,11 +52,11 @@
   body:not(.signed-out) header.top p{display:none}
   body:not(.signed-out) header.top{padding-top:12px}
   #tab-write > h2{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-  #tab-write .strip{margin-top:2px}
+  #tab-write .strip-row{margin-top:2px}
   .wmeta{margin-top:2px}
 }
 @media (max-height:720px) and (max-width:699px){
-  .strip{padding-bottom:4px;margin-top:6px}
+  .strip-row{margin-top:6px}.strip{padding-bottom:4px}
   .strip .sq{flex-basis:46px}
   .strip .sq .k{font-size:24px}
   .back{min-height:40px}
