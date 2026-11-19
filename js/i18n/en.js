@@ -4,7 +4,8 @@ import { explainEn } from '../data/letters.js';
 
 /** Every interface string. Its keys are the keys `t()` accepts. */
 const strings = /** @satisfies {Record<string, import('../../types/app').LocaleString>} */ ({
-  'doc.title': 'Hiragana in 14 days',
+  'doc.title': 'Kawkab Japan',
+  'app.brand': 'Kawkab Japan',
   'app.sub': 'Read all hiragana in 14 days, 30 minutes a day',
   'nav.label': 'Sections',
   'tab.plan': 'Today',
