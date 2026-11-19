@@ -442,7 +442,7 @@ export function renderWrite(play) {
     if (ui.writeCheck) h += '<p class="wcomp" id="wComplete"></p>';
   }
   h += '<div class="practice-continue-slot">' +
-    (sequence ? '' : '<button class="btn primary practice-next" id="wCompleteBtn" type="button" hidden></button>') + +
+    (sequence ? '' : '<button class="btn primary practice-next" id="wCompleteBtn" type="button" hidden></button>') + 
     '</div>';
   h += '<div class="wnotes">' + letterNotesHtml(ui.writeK) + '</div>';
   h +=
