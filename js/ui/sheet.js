@@ -94,9 +94,11 @@ function openSheet(k) {
     showTab('write', { replace: had });
   };
   $$('[data-close]', root).forEach((b) => (b.onclick = () => closeSheet()));
-  markSheetOpen();
   (pl || must('#shSay', root, HTMLElement)).focus({ preventScroll: true });
-  if (svg) setTimeout(() => svg.play(), 250);
+  // Keep the first frames free for the slide: the history entry waits two frames, the stroke drawing until the sheet has arrived.
+  const sheet = $('.sheet', root);
+  requestAnimationFrame(() => requestAnimationFrame(() => { if (sheet?.isConnected) markSheetOpen(); }));
+  if (svg) setTimeout(() => { if (svg.isConnected) svg.play(); }, replacing ? 120 : 520);
 }
 document.addEventListener('click', (e) => {
   const opener = closest(e, '[data-open]');
