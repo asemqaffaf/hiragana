@@ -21,34 +21,3 @@ export function cleanCode(raw) {
   const upper = text.replace(/[\s-]/g, '').toUpperCase();
   return CODE.test(upper) ? upper : text;
 }
-
-/** A link that signs in on another device without a password. @param {string} code a link code */
-export function linkUrl(code) {
-  return location.origin + location.pathname + '#link=' + encodeURIComponent(code);
-}
-
-/** Read and remove a code from the address (#id=CODE or ?id=CODE). */
-export function takeLinkedCode() {
-  const match = /(?:^#|[#&])id=([^&]*)/.exec(location.hash) || /[?&]id=([^&#]*)/.exec(location.search);
-  if (!match) return '';
-  let code = '';
-  try { code = cleanCode(decodeURIComponent(match[1])); } catch { return ''; }
-  if (!/^[A-Za-z0-9_-]{1,64}$/.test(code)) return '';
-  try {
-    const search = location.search.replace(/([?&])id=[^&]*&?/, '$1').replace(/[?&]$/, '');
-    const hash = location.hash.replace(/(^#|&)id=[^&]*/, '$1').replace(/^#&/, '#').replace(/&$/, '').replace(/^#$/, '');
-    history.replaceState(null, '', location.pathname + search + hash);
-  } catch {}
-  return code;
-}
-
-/** Read and remove a link code (#link=CODE) from the address; it must not stay in the history or the page address. */
-export function takeLinkCode() {
-  const match = /(?:^#|[#&])link=([^&]*)/.exec(location.hash);
-  if (!match) return '';
-  try {
-    const hash = location.hash.replace(/(^#|&)link=[^&]*/, '$1').replace(/^#&/, '#').replace(/&$/, '').replace(/^#$/, '');
-    history.replaceState(null, '', location.pathname + location.search + hash);
-  } catch {}
-  try { return decodeURIComponent(match[1]); } catch { return ''; }
-}

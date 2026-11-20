@@ -343,38 +343,6 @@ export async function signInCloud(id, password) {
   return data;
 }
 
-/** The code that opens this student on another device without a password (the sign-in code and the saved credential).
- * Anyone who has it can open the profile, so it is only ever shown to its owner. @param {string} id
- */
-export function linkCode(id) {
-  const secret = readSyncSecret(id);
-  return validId(id) && typeof secret === 'string' && /^[A-Za-z0-9]{16,256}$/.test(secret) ? id + '.' + secret : '';
-}
-
-/** Split a pasted link code, or a whole link containing one, into its parts. @param {string} raw */
-export function parseLinkCode(raw) {
-  let text = raw.trim();
-  const inLink = /[#?&]link=([^&\s]+)/.exec(text);
-  if (inLink) {
-    try { text = decodeURIComponent(inLink[1]); } catch { return null; }
-  }
-  text = text.replace(/\s+/g, '');
-  const dot = text.indexOf('.');
-  const id = text.slice(0, dot);
-  const secret = text.slice(dot + 1);
-  return dot > 0 && validId(id) && /^[A-Za-z0-9]{16,256}$/.test(secret) ? { id, secret } : null;
-}
-
-/** Sign in with a link code from another device: no password. Returns the student's data. @param {string} raw */
-export async function linkSignIn(raw) {
-  const parsed = syncOn ? parseLinkCode(raw) : null;
-  if (!parsed) throw new Error('invalid');
-  if (pending.has(parsed.id)) throw new Error('pending');
-  const data = await readRecord(parsed.id, parsed.secret);
-  await rememberPassword(parsed.id, parsed.secret);
-  return data;
-}
-
 /** Set a new password with a one-time code from the teacher. Sign in afterwards to load the data.
  * @param {string} id @param {string} code @param {string} password
  */

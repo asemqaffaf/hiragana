@@ -1,4 +1,4 @@
-import { linkCode, restoreCloud, syncNow, syncOn } from '../core/cloud.js';
+import { restoreCloud, saveCloudNow, syncNow, syncOn } from '../core/cloud.js';
 import { goalOf } from '../core/plan.js';
 import { renderAll } from '../core/render-all.js';
 import {
@@ -31,7 +31,8 @@ import {
 } from '../ui/profile-fields.js';
 import { applyStudent, applyTheme } from '../ui/appearance.js';
 import { cloudPanel } from '../ui/cloud-sync.js';
-import { linkUrl, showCode } from '../core/student-code.js';
+import { showCode } from '../core/student-code.js';
+import { codePassword, setPassword, verifyPassword } from '../core/passwords.js';
 import { LANG, t } from '../i18n/core.js';
 import { $, $$, esc, must, todayISO } from '../util.js';
 
@@ -224,9 +225,8 @@ export function renderProfile() {
     h += '<div class="codebox"><span class="small muted">' + t('auth.id') + '</span><b class="code" dir="ltr" id="pCode">' + esc(showCode(p.id)) +
       '</b><div class="btnrow"><button class="btn" type="button" id="pCopy">' + t('code.copy') + '</button></div>' +
       '<p class="small muted">' + t('code.hint') + '</p>' +
-      (linkCode(p.id) ? '<h4>' + t('code.linkTitle') + '</h4><div class="btnrow"><button class="btn" type="button" id="pLinkCopy">' + t('code.linkCopy') + '</button>' +
-        '<button class="btn" type="button" id="pShare">' + t('code.share') + '</button></div>' +
-        '<p class="small muted">' + t('code.linkHint') + '</p>' : '') + '</div>';
+      '<div id="pNoPw" hidden><p class="small muted">' + t('code.hasPassword') + '</p><div class="btnrow"><button class="btn" type="button" id="pNoPwBtn">' +
+      t('code.removePassword') + '</button></div></div></div>';
   }
   h += cloudPanel(p.id);
   h +=
@@ -246,7 +246,6 @@ export function renderProfile() {
   const modeSeg = $('.modeseg', root);
   moveThumb(modeSeg, 'mode', !same);
   const copyButton = $('#pCopy', root, HTMLButtonElement);
-  const shareButton = $('#pShare', root, HTMLButtonElement);
   /** @param {HTMLButtonElement} button @param {string} text @param {string} done */
   const copyText = async (button, text, done) => {
     let ok = false;
@@ -266,18 +265,24 @@ export function renderProfile() {
     setTimeout(() => { button.textContent = label; }, 2000);
   };
   if (copyButton) copyButton.onclick = () => copyText(copyButton, showCode(p.id), t('code.copied'));
-  const linkCopy = $('#pLinkCopy', root, HTMLButtonElement);
-  if (linkCopy) linkCopy.onclick = () => copyText(linkCopy, linkCode(p.id), t('code.copied'));
-  if (shareButton) shareButton.onclick = async () => {
-    const code = linkCode(p.id);
-    if (!code) return;
-    const link = linkUrl(code);
-    if (typeof navigator.share === 'function') {
-      try { await navigator.share({ title: t('app.brand'), text: t('code.shareText'), url: link }); return; }
-      catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return; }
-    }
-    await copyText(shareButton, link, t('code.linkCopied'));
-  };
+  // A profile made before passwords were dropped still has one: offer to switch it to code-only sign-in.
+  const noPw = $('#pNoPw', root);
+  if (noPw) {
+    const profileId = p.id;
+    void verifyPassword(profileId, codePassword(profileId)).then((codeOnly) => {
+      if (!codeOnly && noPw.isConnected) noPw.hidden = false;
+    }, () => {});
+    const noPwBtn = must('#pNoPwBtn', noPw, HTMLButtonElement);
+    noPwBtn.onclick = async () => {
+      noPwBtn.disabled = true;
+      try {
+        await setPassword(profileId, codePassword(profileId));
+        await saveCloudNow(profileId);
+        must('p', noPw).textContent = t('code.passwordRemoved');
+        noPwBtn.hidden = true;
+      } catch (error) { noPwBtn.disabled = false; }
+    };
+  }
   const cloudSave = $('#cloudSave', root, HTMLButtonElement);
   const cloudRestore = $('#cloudRestore', root, HTMLButtonElement);
   if (cloudSave) cloudSave.onclick = async () => {

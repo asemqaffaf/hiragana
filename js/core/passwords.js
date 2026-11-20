@@ -55,3 +55,8 @@ export async function setPassword(id, password) {
     if (!writePendingPassword(id, secret)) throw new Error('local storage');
   } else if (!writeSyncSecret(id, secret)) throw new Error('local storage');
 }
+
+/** No password to remember: the sign-in code itself is the credential, mixed with a fixed prefix so it is long enough.
+ * Profiles made before this keep their own password until they choose "Sign in with the code only". @param {string} id
+ */
+export const codePassword = (id) => 'kj1-' + id;

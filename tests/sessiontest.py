@@ -30,59 +30,34 @@ async def main():
                     await page.goto(BASE + '#test')
                     return context, page
 
-                async def sign_in(page, remember):
-                    await page.locator('.student').first.click()
-                    await page.fill('#siPassword', PASSWORD)
-                    await page.locator('#siRemember').set_checked(remember)
-                    await page.click('#studentSignIn button[type=submit]')
-                    await page.locator('body:not(.signed-out)').wait_for()
-
+                year = 365 * 24 * 3600 * 1000
+                key_expiry = '(key) => JSON.parse(localStorage.getItem(key)).expiresAt'
                 context, page = await open_browser()
                 await page.click(f'[data-lang="{lang}"]')
-                assert await page.is_checked('#nsRemember'), 'staying signed in is the default'
+                # No password anywhere: a name is enough.
+                assert await page.locator('#nsPassword').count() == 0 and await page.locator('#nsConfirm').count() == 0
                 await page.fill('#nsName', 'Learner')
-                await submit_student(page, remember=True)
+                await submit_student(page)
                 await page.locator('body:not(.signed-out)').wait_for()
                 await page.evaluate("import('./js/core/store.js').then(s => s.updateProgress(p => p.stats['あ'] = {b:1,c:3,w:0,t:600}))")
                 await page.reload()
                 await page.locator('body:not(.signed-out)').wait_for()
                 assert await page.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 3
-                year = 365 * 24 * 3600 * 1000
-                expiry = await page.evaluate('(key) => JSON.parse(localStorage.getItem(key)).expiresAt', KEY)
+                expiry = await page.evaluate(key_expiry, KEY)
                 assert expiry - await page.evaluate('Date.now()') > year - 60000, 'remembered for a year, not 30 days'
                 # An old 30-day style entry is renewed by opening the app, so regular use never signs you out.
-                await page.evaluate('''(key) => {
+                await page.evaluate("""(key) => {
                   const login = JSON.parse(localStorage.getItem(key));
                   login.expiresAt = Date.now() + 5 * 24 * 3600 * 1000;
                   localStorage.setItem(key, JSON.stringify(login));
-                }''', KEY)
+                }""", KEY)
                 await page.reload()
                 await page.locator('body:not(.signed-out)').wait_for()
-                renewed = await page.evaluate('(key) => JSON.parse(localStorage.getItem(key)).expiresAt', KEY)
+                renewed = await page.evaluate(key_expiry, KEY)
                 assert renewed - await page.evaluate('Date.now()') > year - 60000, 'launch must renew the remembered login'
-                expiry = renewed
                 await page.reload()
                 await page.locator('body:not(.signed-out)').wait_for()
-                assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key)).expiresAt', KEY) == expiry
-
-                # Signing out forgets the login; a wrong password with the box ticked saves nothing.
-                await open_profile(page)
-                await page.click('#pSwitch')
-                await page.reload()
-                await page.locator('.student').wait_for()
-                assert await page.locator('#whoBtn').is_hidden()
-                await page.locator('.student').first.click()
-                assert await page.is_checked('#siRemember')
-                await page.fill('#siPassword', 'incorrect-password')
-                await page.click('#studentSignIn button[type=submit]')
-                await page.wait_for_function("document.querySelector('#siMsg').textContent.length > 0")
-                assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', KEY) is None
-                assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth')
-                await page.screenshot(path=str(SHOTS / f'remember-login-{lang}.png'), full_page=True)
-                await page.fill('#siPassword', PASSWORD)
-                await page.click('#studentSignIn button[type=submit]')
-                await page.locator('body:not(.signed-out)').wait_for()
-                expiry = await page.evaluate('(key) => JSON.parse(localStorage.getItem(key)).expiresAt', KEY)
+                assert await page.evaluate(key_expiry, KEY) == renewed
                 await context.close()
 
                 # A fresh browser process reuses only the on-disk profile.
@@ -90,31 +65,33 @@ async def main():
                 await page.locator('body:not(.signed-out)').wait_for()
                 assert await page.locator('html').get_attribute('lang') == lang
                 assert await page.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 3
-                assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key)).expiresAt', KEY) == expiry
+
+                # Switching student signs out; a tap on the name signs back in with no password.
                 await open_profile(page)
                 await page.click('#pSwitch')
                 await page.reload()
                 await page.locator('.student').wait_for()
                 assert await page.locator('#whoBtn').is_hidden()
                 assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', KEY) is None
-                await sign_in(page, False)
-                await page.reload()
-                await page.locator('.student').wait_for()
-                assert await page.locator('#whoBtn').is_hidden(), 'unchecked sign-in must not persist'
+                assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+                await page.screenshot(path=str(SHOTS / f'remember-login-{lang}.png'), full_page=True)
+                await page.locator('.student').first.click()
+                await page.locator('body:not(.signed-out)').wait_for()
+                assert await page.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 3
+                assert await page.evaluate(key_expiry, KEY) > 0
 
-                await sign_in(page, True)
-                await page.evaluate('''(key) => {
+                # An expired entry asks to sign in again (a tap), and nothing else is lost.
+                await page.evaluate("""(key) => {
                   const login = JSON.parse(localStorage.getItem(key));
                   login.expiresAt = Date.now() - 1;
                   localStorage.setItem(key, JSON.stringify(login));
-                }''', KEY)
+                }""", KEY)
                 await page.reload()
                 await page.locator('.student').wait_for()
-                assert await page.locator('#whoBtn').is_hidden(), 'expired login must ask for a password'
+                assert await page.locator('#whoBtn').is_hidden(), 'expired login must show the sign-in screen'
 
-                # Import and profile creation expose the same opt-in choice.
+                # Importing a profile needs no password either.
                 await prepare_import(page)
-                await page.check('#imRemember')
                 exported = {'app': 'hiragana14', 'student': {'name': 'Imported', 'lang': lang}, 'progress': {'stats': {}}}
                 await page.set_input_files('#importFile', {'name': 'student.json', 'mimeType': 'application/json', 'buffer': json.dumps(exported).encode()})
                 await page.locator('body:not(.signed-out)').wait_for()
@@ -126,19 +103,17 @@ async def main():
                 await page.click('#pDelete')
                 assert await page.evaluate('(key) => JSON.parse(localStorage.getItem(key))', KEY) is None
                 await page.click('#login [data-mode="new"]')
-                await page.fill('#nsName', 'Remembered new learner')
-                await page.check('#nsRemember')
-                await submit_student(page, remember=True)
+                await page.fill('#nsName', 'New learner')
+                await submit_student(page)
                 await page.locator('body:not(.signed-out)').wait_for()
                 await page.reload()
                 await page.locator('body:not(.signed-out)').wait_for()
-                assert 'Remembered new learner' in await page.locator('#whoBtn').text_content()
+                assert 'New learner' in await page.locator('#whoBtn').text_content()
                 await context.close()
 
-        assert not errors, errors
-        print(json.dumps({'browser': BROWSER, 'languages': ['en', 'ar'], 'browser_restart': True,
-                          'opt_in_expiry_sign_out_import_delete': True, 'errors': errors}))
+    assert not errors, errors
+    print(json.dumps({'browser': BROWSER, 'languages': ['en', 'ar'], 'browser_restart': True,
+                      'no_password_sign_in_year_expiry_import_delete': True, 'errors': errors}))
 
 
-if __name__ == '__main__':
-    asyncio.run(main())
+asyncio.run(main())

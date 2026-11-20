@@ -63,14 +63,7 @@ async def main():
             await first.click('#login [data-mode="new"]')
             await first.fill('#nsName', 'Cloud learner')
             assert await first.locator('#nsId').count() == 0  # no long ID to copy while creating a profile
-            await first.locator('#nsRemember').set_checked(False)  # these steps reload and expect the sign-in screen
-            await first.fill('#nsPassword', 'short')
-            assert await first.locator('#nsConfirm').count() == 0  # one password field, with a Show button
-            await first.click('#newStudent button[type=submit]')
-            await first.wait_for_function("document.querySelector('#nsMsg').textContent.includes('10')")
-            await first.click('[data-show="nsPassword"]')
-            assert await first.get_attribute('#nsPassword', 'type') == 'text'
-            await first.fill('#nsPassword', PASSWORD)
+            assert await first.locator('#nsPassword').count() == 0  # no password: a name is enough
             await first.click('#newStudent button[type=submit]')
             await first.locator('body:not(.signed-out)').wait_for()
             await open_profile(first)
@@ -80,25 +73,19 @@ async def main():
             student_id = code_text.replace('-', '')
             await first.click('#pCopy')
             await first.wait_for_function("document.querySelector('#pCopy').textContent === 'Copied' || document.querySelector('#pCopy').textContent === 'Could not copy'")
+            assert await first.locator('#pShare').count() == 0  # the code is the only thing to share
             await save(first)
             assert await first.locator('[data-cloud-status]').last.inner_text() == 'Saved to cloud.'
-            assert await first.locator('#cloudSummary').count() == 0  # nothing about saving sits under the header on every page
+            assert await first.locator('#cloudSummary').count() == 0
             await first.evaluate("import('./js/core/store.js').then(s => s.updateProgress(p => p.stats['あ'] = {b:2,c:4,w:1,t:600}))")
             await save(first)
             assert db()[student_id]['progress']['stats']['あ']['c'] == 4
-            assert PASSWORD not in await first.evaluate('JSON.stringify(localStorage)')
 
-            # Reload prompts for the password; a wrong one cannot open the profile.
+            # Signing out and tapping the name signs back in: nothing to type.
+            await first.click('#pSwitch')
             await first.reload()
             assert await first.locator('#whoBtn').is_hidden()
             await first.locator('.student').click()
-            await first.fill('#siPassword', 'incorrect-password')
-            await first.click('#studentSignIn button[type=submit]')
-            await first.wait_for_function("document.querySelector('#siMsg').textContent.length > 0")
-            assert await first.locator('#whoBtn').is_hidden()
-            await first.locator('#siRemember').set_checked(False)
-            await first.fill('#siPassword', PASSWORD)
-            await first.click('#studentSignIn button[type=submit]')
             await first.locator('body:not(.signed-out)').wait_for()
             await open_profile(first)
             await save(first)
@@ -109,7 +96,7 @@ async def main():
             assert await second.evaluate('document.documentElement.scrollWidth <= innerWidth')
             await second.screenshot(path=str(ROOT / 'shots/ar_welcome.png'), full_page=True)
             await second.click('#login [data-mode="new"]')
-            await second.locator('#imPassword').evaluate("el => el.closest('details').open = true")
+            await second.locator('#importBtn').evaluate("el => el.closest('details').open = true")
             assert await second.evaluate('document.documentElement.scrollWidth <= innerWidth')
             await second.screenshot(path=str(ROOT / 'shots/ar_new.png'), full_page=True)
             await second.click('#login [data-mode="in"]')
@@ -119,14 +106,12 @@ async def main():
             await second.click('[data-change-lang]')
             await second.click('[data-lang="en"]')
 
-            # A fresh browser can read the same record using only ID and password.
-            await second.fill('#csId', ' ' + student_id[:4].lower() + '-' + student_id[4:].lower() + ' ')
-            await second.fill('#csPassword', 'incorrect-password')
+            # A fresh browser opens the same record with only the code (any case, dash or spaces); a wrong code fails.
+            await second.fill('#csId', 'ZZZZ-ZZZZ')
             await second.click('#cloudSignIn button[type=submit]')
             await second.wait_for_function("document.querySelector('#csMsg').textContent.length > 0")
             assert await second.locator('#whoBtn').is_hidden()
-            await second.fill('#csPassword', PASSWORD)
-            await second.check('#csRemember')
+            await second.fill('#csId', ' ' + student_id[:4].lower() + '-' + student_id[4:].lower() + ' ')
             await second.click('#cloudSignIn button[type=submit]')
             await second.locator('body:not(.signed-out)').wait_for()
             assert await second.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 4
@@ -159,71 +144,14 @@ async def main():
             await first.screenshot(path=str(ROOT / 'shots/cloud-profile-en.png'), full_page=True)
 
             await fresh_minute()
-            # A sign-in link opens the sign-in form with the code filled in and the address cleaned up.
-            c3, third = await page_for(browser)
-            third = await c3.new_page()
-            third.on('pageerror', lambda error: errors.append(str(error)))
-            await third.goto(BASE + '#test&id=' + student_id)
-            await third.wait_for_function("document.querySelector('#csId')")
-            assert await third.input_value('#csId') == student_id
-            assert 'id=' not in await third.evaluate('location.hash + location.search')
-            assert await third.evaluate("document.activeElement && document.activeElement.id") in ('csPassword', 'body', '')
-            await c3.close()
-
-            # A link code signs in on another phone with no password, pasted or from a shared link.
-            link = await first.evaluate("(id) => import('./js/core/cloud.js').then((c) => c.linkCode(id))", student_id)
-            assert link.startswith(student_id + '.') and PASSWORD not in link
-            c4, fourth = await page_for(browser)
-            await fourth.click('#login [data-mode="in"]') if await fourth.locator('#login [data-mode="in"]').count() else None
-            await fourth.locator('#lkCode').evaluate("el => el.closest('details').open = true")
-            await fourth.fill('#lkCode', 'not a code')
-            await fourth.click('#linkSignIn button[type=submit]')
-            await fourth.wait_for_function("document.querySelector('#lkMsg').textContent.length > 0")
-            assert await fourth.locator('#whoBtn').is_hidden()
-            await fourth.fill('#lkCode', '  ' + link[:20] + '\n' + link[20:] + ' ')
-            await fourth.click('#linkSignIn button[type=submit]')
-            await fourth.locator('body:not(.signed-out)').wait_for()
-            assert await fourth.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 9
-            await fourth.reload()
-            await fourth.locator('body:not(.signed-out)').wait_for()  # stays signed in
-            await c4.close()
-            c5, fifth = await page_for(browser)
-            fifth = await c5.new_page()
-            fifth.on('pageerror', lambda error: errors.append(str(error)))
-            await fifth.goto(BASE + '#test&link=' + link)
-            await fifth.locator('body:not(.signed-out)').wait_for(timeout=20000)
-            assert 'link=' not in await fifth.evaluate('location.href')
-            assert await fifth.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 9
-            await c5.close()
-
-            # Teacher reset-code flow in the browser: wrong code fails, short new password fails, valid code resets and signs in.
             await first.click('#pSwitch')
-            code = reset_code(student_id)
-            await first.locator('#cloudSignIn').evaluate("el => el.closest('details').open = true")
-            await first.locator('#csCode').evaluate("el => el.closest('details').open = true")
-            await first.fill('#csId', student_id)
-            await first.fill('#csPassword', RESET_PASSWORD)
-            await first.fill('#csCode', 'wrong-code')
-            await first.click('#cloudSignIn button[type=submit]')
-            await first.wait_for_function("document.querySelector('#csMsg').textContent.includes('reset code')")
-            await first.fill('#csPassword', 'short')
-            await first.fill('#csCode', code)
-            await first.click('#cloudSignIn button[type=submit]')
-            await first.wait_for_function("document.querySelector('#csMsg').textContent.includes('10')")
-            await first.fill('#csPassword', RESET_PASSWORD)
-            await first.fill('#csCode', code)
-            await first.click('#cloudSignIn button[type=submit]')
+            await first.locator('.student').click()
             await first.locator('body:not(.signed-out)').wait_for()
             assert await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 9
             await open_profile(first)
             await save(first)
-
-            # The other device can sign in with the newly reset password too.
             await second.click('#pSwitch')
-            await second.locator('#cloudSignIn').evaluate("el => el.closest('details').open = true")
-            await second.fill('#csId', student_id)
-            await second.fill('#csPassword', RESET_PASSWORD)
-            await second.click('#cloudSignIn button[type=submit]')
+            await second.locator('.student').click()
             await second.locator('body:not(.signed-out)').wait_for()
             await open_profile(second)
 
@@ -259,6 +187,7 @@ async def main():
             # Earlier syncs may have used this student's 30-requests-a-minute allowance; the queue retries after 15 seconds.
             await second.wait_for_function("JSON.parse(localStorage.getItem('hiragana14-sync-queue-v1')).length === 0", timeout=60000)
             assert sorted(db()[student_id]) == ['deleted', 'hash']
+            await fresh_minute()
             await first.fill('#pfName', 'Too late')
             await first.click('#pfForm button[type=submit]')
             await save(first)
@@ -281,7 +210,6 @@ async def main():
             await guest.click('#pSwitch')
             await guest.click('#login [data-mode="new"]')
             await guest.fill('#nsName', 'Former guest')
-            await guest.fill('#nsPassword', PASSWORD)
             assert await guest.locator('#nsGuest').is_checked()
             await guest.click('#newStudent button[type=submit]')
             await guest.locator('body:not(.signed-out)').wait_for()
