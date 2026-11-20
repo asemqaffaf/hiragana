@@ -63,6 +63,12 @@ function boot() {
   }
 }
 boot();
+// Tell the safety net in index.html that the app started, and tidy the address after a fresh-copy retry.
+/** @type {any} */ (window).__booted = true;
+try {
+  sessionStorage.removeItem('hira-retry');
+  if (/[?&]r=\d+/.test(location.search)) history.replaceState(null, '', location.pathname + location.hash);
+} catch (e) {}
 /* The loading screen (index.html) stays until the first screen is drawn, the stylesheets and theme are applied and the fonts
    are loaded, so nothing shows in a fallback font or the wrong colours. It shows for at least 700 ms (no flash) and never
    longer than 6 s (a slow or blocked font must not trap the app). */

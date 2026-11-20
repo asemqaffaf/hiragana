@@ -17,6 +17,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <script>try{var __t=JSON.parse(localStorage.getItem('hiragana14-theme')||'null');if(__t){var __r=document.documentElement;if(__t.mode==='light'||__t.mode==='dark')__r.setAttribute('data-theme',__t.mode);if(/^(sand|sky|rose|lilac|sage|white)$/.test(__t.tint))__r.setAttribute('data-tint',__t.tint)}}catch(e){}</script>
 <script>if(/Android/i.test(navigator.userAgent))document.documentElement.classList.add("android")</script>
+<script>/* If the app has not started after a few seconds (for example a half-updated cache after a new version), retry once with a fresh copy, then offer a reload button. */
+(function(){var done=false;function fail(){if(done||window.__booted)return;done=true;try{if(!sessionStorage.getItem("hira-retry")){sessionStorage.setItem("hira-retry","1");location.replace(location.pathname+"?r="+Date.now()+location.hash);return}}catch(e){}
+var s=document.getElementById("splash");if(!s)return;var b=document.createElement("button");b.type="button";b.textContent="Tap to reload \u00b7 \u0627\u0636\u063a\u0637 \u0644\u0625\u0639\u0627\u062f\u0629 \u0627\u0644\u062a\u062d\u0645\u064a\u0644";b.style.cssText="font:600 16px system-ui,sans-serif;padding:12px 20px;border-radius:999px;border:0;background:#2A7361;color:#fff";b.onclick=function(){try{sessionStorage.removeItem("hira-retry")}catch(e){}location.replace(location.pathname+"?r="+Date.now()+location.hash)};s.appendChild(b)}
+addEventListener("error",function(){setTimeout(fail,1500)});setTimeout(fail,10000)})()</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&family=Klee+One:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">

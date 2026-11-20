@@ -47,6 +47,11 @@ jobs:
             echo "SYNC_URL is not set: the site is published with cloud sync switched off." >&2
           fi
 
+      - name: Version every file address
+        # Each deploy gets its own address for every script and stylesheet (main.js?v=abc1234567), so a phone can never mix files
+        # from two different deploys out of its cache and fail to start.
+        run: bash scripts/version-assets.sh _site "${GITHUB_SHA::10}"
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
