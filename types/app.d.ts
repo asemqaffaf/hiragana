@@ -450,6 +450,8 @@ export interface UiState {
   meetI: number;
   chartView: ChartView;
   pgTab: 'letters' | 'activity' | 'awards';
+  /** The Write page's character strip is blurred until the eye button is pressed. */
+  writeStripPeek: boolean;
   lastFocus: Element | null;
   drillSel: Set<string>;
   drillMode: DrillMode;

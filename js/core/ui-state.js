@@ -19,6 +19,7 @@ export const ui = {
   meetI: 0,
   chartView: 'basic',
   pgTab: 'letters',
+  writeStripPeek: false,
   lastFocus: null,
   drillSel: new Set(['today']),
   drillMode: 'read',

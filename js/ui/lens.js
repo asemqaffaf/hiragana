@@ -2,7 +2,7 @@
    spring, stretches with its speed like a drop of water, and magnifies the icons under it. On release it settles onto the
    nearest tab. The magnifier is a clipped window onto a second, scaled copy of the bar, so it needs no SVG filter and looks
    the same in Safari. Pure DOM and transforms; the physics is a damped spring run once per frame. */
-const MAG = 1.24;                /* magnification inside the lens */
+const MAG = 1.3;                /* magnification inside the lens */
 const K = 380, C = 26;           /* position spring: slightly underdamped, so it overshoots and settles */
 const KL = 300, CL = 21;         /* lift spring: the lens grows out of the pill with a small pop */
 
@@ -52,18 +52,18 @@ export function createLens(c, clientX) {
     S.v += (-K * (S.x - S.tx) - C * S.v) * dt; S.x += S.v * dt;
     S.vL += (-KL * (S.L - S.Lt) - CL * S.vL) * dt; S.L += S.vL * dt;
     const l = clamp(S.L, 0, 1.12), l1 = Math.min(l, 1), speed = Math.abs(S.v);
-    const w = itemW * (1 + .12 * l) + Math.min(speed / 10, 56) * l1;           /* faster: longer ... */
-    const h = itemH * (1 + .2 * l) - Math.min(speed / 110, 7) * l1;           /* ... and flatter */
+    const w = itemW * (1 + .3 * l) + Math.min(speed / 10, 56) * l1;           /* faster: longer ... */
+    const h = itemH * (1 + .4 * l) - Math.min(speed / 110, 7) * l1;           /* ... and flatter */
     const cx = clamp(S.x, w / 2 - 12, cw - w / 2 + 12), lx = cx - w / 2, ly = cy - h / 2, M = 1 + (MAG - 1) * l;
     const a = Math.min(1, l * 1.7);
     lens.style.cssText = 'width:' + w + 'px;height:' + h + 'px;opacity:' + a + ';transform:translate3d(' + lx + 'px,' + ly + 'px,0)';
     inner.style.transform = 'translate(' + (-lx + cx - M * cx) + 'px,' + (-ly + cy - M * cy) + 'px) scale(' + M + ')';
     c.style.setProperty('--thumb-o', String(1 - a));
-    const i = items.indexOf(nearest(cx)); if (i !== S.on) { S.on = i; copies.forEach((b, j) => b.classList.toggle('on', j === i)); }
+    const i = items.indexOf(nearest(cx)); if (i !== S.on) { S.on = i; copies.forEach((b, j) => b.classList.toggle('on', j === i)); items.forEach((b, j) => b.classList.toggle('lensunder', j === i)); }
     if (S.released && S.L < 0.015 && Math.abs(S.x - S.tx) < 0.35 && Math.abs(S.v) < 8 && Math.abs(S.vL) < 0.05) return end();
     S.raf = requestAnimationFrame(frame);
   };
-  const end = () => { S.done = true; cancelAnimationFrame(S.raf); lens.remove(); c.classList.remove('lensing'); c.style.removeProperty('--thumb-o'); };
+  const end = () => { S.done = true; items.forEach(b => b.classList.remove('lensunder')); cancelAnimationFrame(S.raf); lens.remove(); c.classList.remove('lensing'); c.style.removeProperty('--thumb-o'); };
   S.raf = requestAnimationFrame(frame);
   S.tx = limit(toLocal(c, clientX));
 
