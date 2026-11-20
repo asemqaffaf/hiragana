@@ -30,7 +30,7 @@ async def main():
         await pg.emulate_media(reduced_motion='reduce')
         await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(300)
         await pg.click('[data-lang="en"]')
-        await pg.fill('#nsName', 'Kid'); await pg.select_option('#nsAge', 'child'); await pg.select_option('#nsPace', '7'); await pg.select_option('#nsMin', '20'); await pg.select_option('#nsReason', 'travel')
+        await pg.fill('#nsName', 'Kid'); await pg.evaluate("document.querySelector('#nsMore').open = true"); await pg.select_option('#nsAge', 'child'); await pg.select_option('#nsPace', '7'); await pg.select_option('#nsMin', '20'); await pg.select_option('#nsReason', 'travel')
         await submit_student(pg); await pg.wait_for_timeout(250)
         R['kid'] = [await pg.evaluate("document.body.classList.contains('kid')"), await pg.text_content('#appSub'), await pg.text_content('#tab-plan h2'), await pg.text_content('#tab-plan .dtitle')]
         R['task_minutes'] = await pg.eval_on_selector_all('#tab-plan .today ol.tasks li', 'e=>e.map(x=>x.textContent.match(/\\(.*\\)$/)[0])')

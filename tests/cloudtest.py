@@ -65,14 +65,12 @@ async def main():
             assert await first.locator('#nsId').count() == 0  # no long ID to copy while creating a profile
             await first.locator('#nsRemember').set_checked(False)  # these steps reload and expect the sign-in screen
             await first.fill('#nsPassword', 'short')
-            await first.fill('#nsConfirm', 'short')
+            assert await first.locator('#nsConfirm').count() == 0  # one password field, with a Show button
             await first.click('#newStudent button[type=submit]')
             await first.wait_for_function("document.querySelector('#nsMsg').textContent.includes('10')")
+            await first.click('[data-show="nsPassword"]')
+            assert await first.get_attribute('#nsPassword', 'type') == 'text'
             await first.fill('#nsPassword', PASSWORD)
-            await first.fill('#nsConfirm', 'not-the-same-password')
-            await first.click('#newStudent button[type=submit]')
-            await first.wait_for_function("document.querySelector('#nsMsg').textContent.includes('match')")
-            await first.fill('#nsConfirm', PASSWORD)
             await first.click('#newStudent button[type=submit]')
             await first.locator('body:not(.signed-out)').wait_for()
             await open_profile(first)
@@ -172,6 +170,32 @@ async def main():
             assert await third.evaluate("document.activeElement && document.activeElement.id") in ('csPassword', 'body', '')
             await c3.close()
 
+            # A link code signs in on another phone with no password, pasted or from a shared link.
+            link = await first.evaluate("(id) => import('./js/core/cloud.js').then((c) => c.linkCode(id))", student_id)
+            assert link.startswith(student_id + '.') and PASSWORD not in link
+            c4, fourth = await page_for(browser)
+            await fourth.click('#login [data-mode="in"]') if await fourth.locator('#login [data-mode="in"]').count() else None
+            await fourth.locator('#lkCode').evaluate("el => el.closest('details').open = true")
+            await fourth.fill('#lkCode', 'not a code')
+            await fourth.click('#linkSignIn button[type=submit]')
+            await fourth.wait_for_function("document.querySelector('#lkMsg').textContent.length > 0")
+            assert await fourth.locator('#whoBtn').is_hidden()
+            await fourth.fill('#lkCode', '  ' + link[:20] + '\n' + link[20:] + ' ')
+            await fourth.click('#linkSignIn button[type=submit]')
+            await fourth.locator('body:not(.signed-out)').wait_for()
+            assert await fourth.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 9
+            await fourth.reload()
+            await fourth.locator('body:not(.signed-out)').wait_for()  # stays signed in
+            await c4.close()
+            c5, fifth = await page_for(browser)
+            fifth = await c5.new_page()
+            fifth.on('pageerror', lambda error: errors.append(str(error)))
+            await fifth.goto(BASE + '#test&link=' + link)
+            await fifth.locator('body:not(.signed-out)').wait_for(timeout=20000)
+            assert 'link=' not in await fifth.evaluate('location.href')
+            assert await fifth.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 9
+            await c5.close()
+
             # Teacher reset-code flow in the browser: wrong code fails, short new password fails, valid code resets and signs in.
             await first.click('#pSwitch')
             code = reset_code(student_id)
@@ -222,6 +246,7 @@ async def main():
             assert await second.evaluate('document.documentElement.scrollWidth <= innerWidth')
             await second.screenshot(path=str(ROOT / 'shots/cloud-profile-ar.png'), full_page=True)
 
+            await fresh_minute()
             # Offline deletion persists, then completes on reconnect.
             await c2.set_offline(True)
             await second.click('#pDelete')
@@ -257,7 +282,6 @@ async def main():
             await guest.click('#login [data-mode="new"]')
             await guest.fill('#nsName', 'Former guest')
             await guest.fill('#nsPassword', PASSWORD)
-            await guest.fill('#nsConfirm', PASSWORD)
             assert await guest.locator('#nsGuest').is_checked()
             await guest.click('#newStudent button[type=submit]')
             await guest.locator('body:not(.signed-out)').wait_for()

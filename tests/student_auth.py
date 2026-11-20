@@ -10,12 +10,14 @@ async def disable_cloud(page):
 async def submit_student(page, pace='14', remember=False):
     # the app now defaults to 21 days; most suites were written against the 14-day plan
     if pace and await page.locator('#nsPace').count():
+        await page.evaluate("document.querySelector('#nsMore').open = true")  # colour, level and plan sit under an optional section
         await page.select_option('#nsPace', pace)
     # staying signed in is now the default; suites that reload expecting the sign-in screen opt out
     if await page.locator('#nsRemember').count():
         await page.locator('#nsRemember').set_checked(remember)
     await page.fill('#nsPassword', PASSWORD)
-    await page.fill('#nsConfirm', PASSWORD)
+    if await page.locator('#nsConfirm').count():
+        await page.fill('#nsConfirm', PASSWORD)
     await page.click('#newStudent button[type=submit]')
     await page.wait_for_function("!document.querySelector('#newStudent button[type=submit]')?.disabled")
 
@@ -45,4 +47,5 @@ async def prepare_import(page):
         await page.click('#login [data-mode="new"]')
     await page.locator('#imPassword').evaluate("el => el.closest('details').open = true")
     await page.fill('#imPassword', PASSWORD)
-    await page.fill('#imConfirm', PASSWORD)
+    if await page.locator('#imConfirm').count():
+        await page.fill('#imConfirm', PASSWORD)

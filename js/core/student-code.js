@@ -22,9 +22,9 @@ export function cleanCode(raw) {
   return CODE.test(upper) ? upper : text;
 }
 
-/** A sign-in link that fills the code in on another device. @param {string} id */
-export function signInLink(id) {
-  return location.origin + location.pathname + '#id=' + encodeURIComponent(id);
+/** A link that signs in on another device without a password. @param {string} code a link code */
+export function linkUrl(code) {
+  return location.origin + location.pathname + '#link=' + encodeURIComponent(code);
 }
 
 /** Read and remove a code from the address (#id=CODE or ?id=CODE). */
@@ -40,4 +40,15 @@ export function takeLinkedCode() {
     history.replaceState(null, '', location.pathname + search + hash);
   } catch {}
   return code;
+}
+
+/** Read and remove a link code (#link=CODE) from the address; it must not stay in the history or the page address. */
+export function takeLinkCode() {
+  const match = /(?:^#|[#&])link=([^&]*)/.exec(location.hash);
+  if (!match) return '';
+  try {
+    const hash = location.hash.replace(/(^#|&)link=[^&]*/, '$1').replace(/^#&/, '#').replace(/&$/, '').replace(/^#$/, '');
+    history.replaceState(null, '', location.pathname + location.search + hash);
+  } catch {}
+  try { return decodeURIComponent(match[1]); } catch { return ''; }
 }

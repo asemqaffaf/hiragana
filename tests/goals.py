@@ -11,6 +11,7 @@ async def main():
             ctx = await b.new_context(**p.devices['iPhone 13']); pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
             await disable_cloud(pg); await pg.goto(BASE + '#test'); await pg.wait_for_timeout(400)
             await pg.tap(f'[data-lang="{lang}"]')
+            await pg.evaluate("document.querySelector('#nsMore').open = true")
             R[lang + '_new_options'] = await pg.eval_on_selector_all('#nsReason option', 'e=>e.map(x=>x.value)')
             R[lang + '_new_hint'] = await pg.text_content('#nsReasonHint')
             await pg.select_option('#nsReason', 'all'); R[lang + '_new_hint_all'] = await pg.text_content('#nsReasonHint')

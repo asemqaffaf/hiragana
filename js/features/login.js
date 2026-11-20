@@ -1,5 +1,5 @@
 import { showTab } from '../core/nav.js';
-import { cloudSessionStarted, recoverCloud, signInCloud, syncOn } from '../core/cloud.js';
+import { cloudSessionStarted, linkSignIn, recoverCloud, signInCloud, syncOn } from '../core/cloud.js';
 import { hasPassword, setPassword, verifyPassword } from '../core/passwords.js';
 import { forgetLogin, rememberedStudent, rememberLogin } from '../core/remembered-login.js';
 import { goalOf } from '../core/plan.js';
@@ -20,7 +20,7 @@ import {
   students,
 } from '../core/store.js';
 import { canStore } from '../core/storage.js';
-import { cleanCode, newCode, takeLinkedCode } from '../core/student-code.js';
+import { cleanCode, newCode, takeLinkCode, takeLinkedCode } from '../core/student-code.js';
 import { lesson, reconcileLessonCompletion, writeList } from '../core/lesson.js';
 import { prepareLessonWrite } from './lesson.js';
 import { ui } from '../core/ui-state.js';
@@ -45,17 +45,18 @@ import { $, $$, esc, isObject, must, todayISO } from '../util.js';
 /* ---------- student sign-in and profile creation ---------- */
 /** A code from a sign-in link (#id=CODE), used once to fill the sign-in form. */
 let linkedCode = takeLinkedCode();
+/** A link code from a shared link (#link=...), used once to sign in without a password. */
+let linkedSecret = takeLinkCode();
 /** @type {string | null} */
 let selectedLogin = null;
 /** Which screen is showing: the first choice, signing in, or creating a profile. @type {'choose' | 'in' | 'new' | null} */
 let loginMode = null;
-/** @param {string} prefix @param {boolean} create */
+/** One password field with a Show button; no second "confirm" box. @param {string} prefix @param {boolean} create */
 function passwordFields(prefix, create) {
   return '<label class="field"><span class="small muted">' + t(create ? 'auth.newPassword' : 'auth.password') +
-    '</span><input type="password" id="' + prefix + 'Password" maxlength="256" autocomplete="' +
-    (create ? 'new-password' : 'current-password') + '" required></label>' +
-    (create ? '<label class="field"><span class="small muted">' + t('auth.confirm') +
-    '</span><input type="password" id="' + prefix + 'Confirm" maxlength="256" autocomplete="new-password" required></label>' : '');
+    '</span><span class="pwrow"><input type="password" id="' + prefix + 'Password" maxlength="256" autocomplete="' +
+    (create ? 'new-password' : 'current-password') + '" required><button type="button" class="pwshow" data-show="' + prefix +
+    'Password" aria-label="' + t('auth.show') + '">' + t('auth.show') + '</button></span></label>';
 }
 /** @param {string} prefix */
 function rememberField(prefix) {
@@ -68,7 +69,6 @@ function rememberField(prefix) {
 function newPassword(prefix, root) {
   const password = must('#' + prefix + 'Password', root, HTMLInputElement).value;
   if (password.length < 10 || password.length > 256) throw new Error(t('auth.length'));
-  if (password !== must('#' + prefix + 'Confirm', root, HTMLInputElement).value) throw new Error(t('auth.mismatch'));
   return password;
 }
 /** @returns {string} */
@@ -141,7 +141,7 @@ export function showLogin() {
   }
   const list = students.list.slice().sort((x, y) => (y.last || 0) - (x.last || 0));
   let h = langChip(LANG);
-  const mode = loginMode || (syncOn && linkedCode ? 'in' : list.length ? 'in' : syncOn ? 'choose' : 'new');
+  const mode = loginMode || (syncOn && (linkedCode || linkedSecret) ? 'in' : list.length ? 'in' : syncOn ? 'choose' : 'new');
   h += '<h2>' + t(mode === 'choose' ? 'login.welcome' : mode === 'new' ? 'login.create' : list.length ? 'login.who' : 'auth.signIn') + '</h2>';
   h += '<p class="muted">' + t(mode === 'choose' ? 'login.chooseHint' : mode === 'new' ? 'login.addName' : list.length ? 'login.tapName' : 'login.idHint') + '</p>';
   if (!canStore) h += '<p class="note warn">' + t('login.blocked') + '</p>';
@@ -180,8 +180,11 @@ export function showLogin() {
       passwordFields('si', create) + rememberField('si') + '<p class="fmsg" id="siMsg" role="alert"></p><div class="btnrow">' +
       '<button class="btn primary" type="submit">' + t(create ? 'auth.set' : 'auth.signIn') + '</button></div></form>';
   }
-  if (syncOn) h += '<details class="more"' + (list.length && !linkedCode ? '' : ' open') + '><summary>' + t('auth.otherDevice') +
-    '</summary><form id="cloudSignIn" class="sform" novalidate><label class="field"><span class="small muted">' +
+  if (syncOn) h += '<details class="more"' + (list.length && !linkedCode && !linkedSecret ? '' : ' open') + '><summary>' + t('auth.otherDevice') +
+    '</summary><form id="linkSignIn" class="sform" novalidate><label class="field"><span class="small muted">' + t('login.linkField') +
+    '</span><textarea id="lkCode" rows="2" dir="ltr" autocomplete="off" autocapitalize="none" spellcheck="false"></textarea></label>' +
+    '<p class="fmsg" id="lkMsg" role="alert"></p><div class="btnrow"><button class="btn primary" type="submit">' + t('login.linkBtn') +
+    '</button></div></form><p class="small muted linkor">' + t('login.linkOr') + '</p><form id="cloudSignIn" class="sform" novalidate><label class="field"><span class="small muted">' +
     t('auth.id') + '</span><input id="csId" dir="ltr" maxlength="64" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="K7M2-QX9R" value="' + esc(linkedCode) + '"></label>' +
     passwordFields('cs', false) + '<details class="more"><summary>' + t('auth.forgot') +
     '</summary><label class="field"><span class="small muted">' + t('auth.resetCode') +
@@ -197,6 +200,10 @@ export function showLogin() {
     t('f.name') +
     '</span><input id="nsName" maxlength="24" dir="auto" autocapitalize="words" spellcheck="false"></label>';
   h += passwordFields('ns', true);
+  h += rememberField('ns');
+  if (hasGuestProgress())
+    h += '<label class="remember-login"><input type="checkbox" id="nsGuest" checked><span>' + t('guest.bring') + '</span></label>';
+  h += '<details class="more" id="nsMore"><summary>' + t('login.customize') + '</summary>';
   h += swatches('nsColor', COLORS[list.length % COLORS.length]);
   h +=
     '<label class="field"><span class="small muted">' +
@@ -211,10 +218,8 @@ export function showLogin() {
     sel('nsPace', paceOpts(), 21, t('f.pace')) +
     sel('nsMin', minOpts(), 30, t('f.min')) +
     sel('nsReason', reasonOpts(), 'jlpt', t('f.reason'), goalHint('jlpt')) +
-    '</div>';
-  if (hasGuestProgress())
-    h += '<label class="remember-login"><input type="checkbox" id="nsGuest" checked><span>' + t('guest.bring') + '</span></label>';
-  h += rememberField('ns') + '<p class="fmsg" id="nsMsg" role="alert"></p>';
+    '</div></details>';
+  h += '<p class="fmsg" id="nsMsg" role="alert"></p>';
   h +=
     '<div class="btnrow"><button class="btn primary" type="submit">' +
     t('login.createBtn') +
@@ -272,6 +277,44 @@ export function showLogin() {
       must('#siMsg', signIn).textContent = error instanceof Error ? error.message : t('auth.failed');
     } finally { button.disabled = false; }
   };
+  const linkForm = $('#linkSignIn', root, HTMLFormElement);
+  /** Sign in with a link code from another phone: no password. @param {string} raw */
+  const runLink = async (raw) => {
+    const msg = $('#lkMsg', root);
+    const button = linkForm ? $('button[type=submit]', linkForm, HTMLButtonElement) : null;
+    if (msg) msg.textContent = t('login.linking');
+    if (button) button.disabled = true;
+    try {
+      const data = await linkSignIn(raw);
+      if (!root.isConnected || !$('#linkSignIn', root)) return;
+      const id = data.student.id;
+      if (students.list.some((p) => p.id === id)) restoreStudent(data.student, data.progress);
+      else addStudent(data.student, data.progress);
+      login(id, true);
+    } catch (error) {
+      const code = error instanceof Error ? error.message : '';
+      if (msg) msg.textContent = t(code === 'network' ? 'cloud.error.network' : code === 'deployment' ? 'cloud.error.deployment' :
+        code === 'pending' ? 'auth.pending' : code === 'invalid' ? 'login.linkBad' : code === 'busy' || code === 'locked' ? 'auth.busy' : 'login.linkWrong');
+    } finally { if (button) button.disabled = false; }
+  };
+  if (linkForm) linkForm.onsubmit = (e) => {
+    e.preventDefault();
+    void runLink(must('#lkCode', linkForm, HTMLTextAreaElement).value);
+  };
+  if (linkedSecret && linkForm) {
+    const raw = linkedSecret;
+    linkedSecret = '';
+    must('#lkCode', linkForm, HTMLTextAreaElement).value = raw;
+    void runLink(raw);
+  }
+  $$('[data-show]', root).forEach((b) => {
+    b.onclick = () => {
+      const input = must('#' + b.dataset.show, root, HTMLInputElement);
+      const hidden = input.type === 'password';
+      input.type = hidden ? 'text' : 'password';
+      b.textContent = t(hidden ? 'auth.hide' : 'auth.show');
+    };
+  });
   const cloudSignIn = $('#cloudSignIn', root, HTMLFormElement);
   if (cloudSignIn) cloudSignIn.onsubmit = async (e) => {
     e.preventDefault();

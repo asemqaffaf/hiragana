@@ -1,4 +1,4 @@
-import { restoreCloud, syncNow, syncOn } from '../core/cloud.js';
+import { linkCode, restoreCloud, syncNow, syncOn } from '../core/cloud.js';
 import { goalOf } from '../core/plan.js';
 import { renderAll } from '../core/render-all.js';
 import {
@@ -31,7 +31,7 @@ import {
 } from '../ui/profile-fields.js';
 import { applyStudent, applyTheme } from '../ui/appearance.js';
 import { cloudPanel } from '../ui/cloud-sync.js';
-import { showCode, signInLink } from '../core/student-code.js';
+import { linkUrl, showCode } from '../core/student-code.js';
 import { LANG, t } from '../i18n/core.js';
 import { $, $$, esc, must, todayISO } from '../util.js';
 
@@ -222,9 +222,11 @@ export function renderProfile() {
   h += '<h3>' + t('pf.data') + '</h3><p class="small muted">' + syncText() + '</p>';
   if (syncOn && !isGuest(p.id)) {
     h += '<div class="codebox"><span class="small muted">' + t('auth.id') + '</span><b class="code" dir="ltr" id="pCode">' + esc(showCode(p.id)) +
-      '</b><div class="btnrow"><button class="btn" type="button" id="pCopy">' + t('code.copy') + '</button>' +
-      '<button class="btn" type="button" id="pShare">' + t('code.share') + '</button></div>' +
-      '<p class="small muted">' + t('code.hint') + '</p></div>';
+      '</b><div class="btnrow"><button class="btn" type="button" id="pCopy">' + t('code.copy') + '</button></div>' +
+      '<p class="small muted">' + t('code.hint') + '</p>' +
+      (linkCode(p.id) ? '<h4>' + t('code.linkTitle') + '</h4><div class="btnrow"><button class="btn" type="button" id="pLinkCopy">' + t('code.linkCopy') + '</button>' +
+        '<button class="btn" type="button" id="pShare">' + t('code.share') + '</button></div>' +
+        '<p class="small muted">' + t('code.linkHint') + '</p>' : '') + '</div>';
   }
   h += cloudPanel(p.id);
   h +=
@@ -264,8 +266,12 @@ export function renderProfile() {
     setTimeout(() => { button.textContent = label; }, 2000);
   };
   if (copyButton) copyButton.onclick = () => copyText(copyButton, showCode(p.id), t('code.copied'));
+  const linkCopy = $('#pLinkCopy', root, HTMLButtonElement);
+  if (linkCopy) linkCopy.onclick = () => copyText(linkCopy, linkCode(p.id), t('code.copied'));
   if (shareButton) shareButton.onclick = async () => {
-    const link = signInLink(p.id);
+    const code = linkCode(p.id);
+    if (!code) return;
+    const link = linkUrl(code);
     if (typeof navigator.share === 'function') {
       try { await navigator.share({ title: t('app.brand'), text: t('code.shareText'), url: link }); return; }
       catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return; }
