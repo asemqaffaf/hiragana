@@ -47,6 +47,11 @@ async def main():
         await page.click(f'[data-lang="{lang}"]')
         return context, page
 
+    async def fresh_minute():
+        # The Apps Script allows 30 requests per student per clock minute; background syncing makes this test busier than before.
+        import time
+        await asyncio.sleep(61 - time.time() % 60)
+
     async def save(page):
         await page.click('#cloudSave')
         await page.wait_for_function("document.querySelector('#cloudSave') && !document.querySelector('#cloudSave').disabled")
@@ -57,13 +62,8 @@ async def main():
             c1, first = await page_for(browser)
             await first.click('#login [data-mode="new"]')
             await first.fill('#nsName', 'Cloud learner')
-            assert await first.locator('#nsId').get_attribute('readonly') is not None
-            student_id = await first.input_value('#nsId')
-            assert len(student_id) >= 8
-            await first.locator('#nsId').evaluate("el => { el.value = 'tampered'; el.setAttribute('value', 'tampered'); el.removeAttribute('readonly'); }")
-            assert await first.input_value('#nsId') == student_id
-            assert await first.locator('#nsId').get_attribute('value') == student_id
-            assert await first.locator('#nsId').get_attribute('readonly') is not None
+            assert await first.locator('#nsId').count() == 0  # no long ID to copy while creating a profile
+            await first.locator('#nsRemember').set_checked(False)  # these steps reload and expect the sign-in screen
             await first.fill('#nsPassword', 'short')
             await first.fill('#nsConfirm', 'short')
             await first.click('#newStudent button[type=submit]')
@@ -76,6 +76,12 @@ async def main():
             await first.click('#newStudent button[type=submit]')
             await first.locator('body:not(.signed-out)').wait_for()
             await open_profile(first)
+            code_text = await first.locator('#pCode').inner_text()
+            import re as _re
+            assert _re.fullmatch(r'[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}', code_text), code_text
+            student_id = code_text.replace('-', '')
+            await first.click('#pCopy')
+            await first.wait_for_function("document.querySelector('#pCopy').textContent === 'Copied' || document.querySelector('#pCopy').textContent === 'Could not copy'")
             await save(first)
             assert await first.locator('[data-cloud-status]').last.inner_text() == 'Saved to cloud.'
             assert await first.locator('#cloudSummary').count() == 0  # nothing about saving sits under the header on every page
@@ -92,6 +98,7 @@ async def main():
             await first.click('#studentSignIn button[type=submit]')
             await first.wait_for_function("document.querySelector('#siMsg').textContent.length > 0")
             assert await first.locator('#whoBtn').is_hidden()
+            await first.locator('#siRemember').set_checked(False)
             await first.fill('#siPassword', PASSWORD)
             await first.click('#studentSignIn button[type=submit]')
             await first.locator('body:not(.signed-out)').wait_for()
@@ -115,7 +122,7 @@ async def main():
             await second.click('[data-lang="en"]')
 
             # A fresh browser can read the same record using only ID and password.
-            await second.fill('#csId', student_id)
+            await second.fill('#csId', ' ' + student_id[:4].lower() + '-' + student_id[4:].lower() + ' ')
             await second.fill('#csPassword', 'incorrect-password')
             await second.click('#cloudSignIn button[type=submit]')
             await second.wait_for_function("document.querySelector('#csMsg').textContent.length > 0")
@@ -140,11 +147,30 @@ async def main():
             await first.wait_for_function("document.querySelector('[data-cloud-status]').textContent === 'Saved to cloud.'", timeout=15000)
             assert db()[student_id]['student']['name'] == 'Stale local name'
             assert db()[student_id]['progress']['stats']['あ']['c'] == 4
+            # Another device's progress arrives on its own when this one comes back online, without pressing Sync.
+            await second.evaluate("import('./js/core/store.js').then(s => s.updateProgress(p => p.stats['あ'] = {b:2,c:9,w:1,t:900}))")
+            await save(second)
+            assert db()[student_id]['progress']['stats']['あ']['c'] == 9
+            await first.evaluate("window.dispatchEvent(new Event('online'))")
+            await first.wait_for_function("import('./js/core/store.js').then(s => s.state.stats['あ'].c === 9)", timeout=15000)
+
             await first.click('#cloudRestore')
             await first.click('#cloudRestore')
             await first.wait_for_function("document.querySelector('[data-cloud-status]').textContent === 'Cloud copy restored.'")
-            assert await first.input_value('#pfName') == 'Stale local name'
+            assert await first.input_value('#pfName') == 'Newer cloud name'  # the second device saved last, and the first one pulled it
             await first.screenshot(path=str(ROOT / 'shots/cloud-profile-en.png'), full_page=True)
+
+            await fresh_minute()
+            # A sign-in link opens the sign-in form with the code filled in and the address cleaned up.
+            c3, third = await page_for(browser)
+            third = await c3.new_page()
+            third.on('pageerror', lambda error: errors.append(str(error)))
+            await third.goto(BASE + '#test&id=' + student_id)
+            await third.wait_for_function("document.querySelector('#csId')")
+            assert await third.input_value('#csId') == student_id
+            assert 'id=' not in await third.evaluate('location.hash + location.search')
+            assert await third.evaluate("document.activeElement && document.activeElement.id") in ('csPassword', 'body', '')
+            await c3.close()
 
             # Teacher reset-code flow in the browser: wrong code fails, short new password fails, valid code resets and signs in.
             await first.click('#pSwitch')
@@ -164,7 +190,7 @@ async def main():
             await first.fill('#csCode', code)
             await first.click('#cloudSignIn button[type=submit]')
             await first.locator('body:not(.signed-out)').wait_for()
-            assert await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 4
+            assert await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 9
             await open_profile(first)
             await save(first)
 
@@ -186,7 +212,7 @@ async def main():
                     break
                 await first.wait_for_timeout(250)
             assert await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['い'].c)") == 5
-            assert await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 4
+            assert await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 9
 
             # Arabic fields and live sync status remain readable on a narrow screen.
             await second.select_option('#pfLang', 'ar')

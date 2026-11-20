@@ -35,6 +35,12 @@ let timer;
 /** @type {Promise<void> | undefined} */
 let running;
 let started = false;
+/** Failed sends in a row: the wait before the next try grows from 15 seconds to 5 minutes. */
+let failures = 0;
+let lastPull = 0;
+/** Errors that retrying cannot fix: the password, a missing or oversized record, or broken storage. */
+const NO_RETRY = new Set(['not yours', 'locked', 'not found', 'deleted', 'too large', 'local storage', 'invalid', 'changed', 'length']);
+const retryDelay = () => Math.min(300000, 15000 * 2 ** Math.min(failures - 1, 5));
 
 const savedQueue = readSyncQueue();
 if (Array.isArray(savedQueue)) {
@@ -177,6 +183,7 @@ export function flushCloud() {
           persist();
           status(id, 'saved');
         }
+        failures = 0;
       } catch (error) {
         const message = error instanceof Error ? error.message : 'network';
         // A failed old request must not hide a newer save or deletion.
@@ -194,12 +201,15 @@ export function flushCloud() {
           }
         }
         status(id, 'error', message);
-        if (message === 'network' || message === 'storage' || message === 'busy' || message === 'rate limited') retry = true;
+        if (!NO_RETRY.has(message)) retry = true;
       }
     }
     return retry;
   })().then((retry) => {
-    if (retry) schedule(15000);
+    if (retry) {
+      failures++;
+      schedule(retryDelay());
+    }
     else if (Array.from(pending.keys()).some((id) => cloudStatus(id).state === 'pending')) schedule();
   }).finally(() => { running = undefined; });
   return running;
@@ -336,6 +346,29 @@ export async function recoverCloud(id, code, password) {
   await requestCloud('recover', id, { code: code.trim() }, await passwordSecret(id, password));
 }
 
+/** Send anything waiting, then bring in what other devices saved. Skipped while hidden or offline, and at most every 20 seconds unless forced.
+ * @param {boolean} [force]
+ */
+export function pullSoon(force = false) {
+  const student = me();
+  if (!started || !syncOn || !student || !validId(student.id)) return;
+  if (document.visibilityState === 'hidden' || navigator.onLine === false) return;
+  if (!force && Date.now() - lastPull < 20000) return;
+  lastPull = Date.now();
+  void (async () => {
+    await flushCloud();
+    await pullCloud(student.id);
+  })();
+}
+
+/** Called when a student is signed in or restored: look for their latest cloud copy right away. */
+export function cloudSessionStarted() {
+  const student = me();
+  if (student) refused.delete(student.id);
+  failures = 0;
+  pullSoon(true);
+}
+
 /** Subscribe once. Existing local data is queued when login selects the student. */
 export function startCloudSync() {
   if (!syncOn || started) return;
@@ -348,9 +381,15 @@ export function startCloudSync() {
     if (action === 'delete') queueDelete(id);
     else queueCloudSave(id);
   });
-  window.addEventListener('online', () => { void flushCloud(); });
+  // Unsent saves and deletions go out even when no student is signed in (a deleted student has none).
+  window.addEventListener('online', () => { failures = 0; void flushCloud(); pullSoon(true); });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') void flushCloud();
+    else { void flushCloud(); pullSoon(); }
   });
+  window.addEventListener('pagehide', () => { void flushCloud(); });
+  window.addEventListener('pageshow', () => pullSoon());
+  // While the app is open and in view, look for changes from other devices every minute.
+  setInterval(() => pullSoon(), 60000);
   schedule();
 }

@@ -1,5 +1,5 @@
 import { cloudStatus, pendingCloudDeletes, subscribeCloud, syncOn } from '../core/cloud.js';
-import { isGuest } from '../core/store.js';
+import { isGuest, me } from '../core/store.js';
 import { t } from '../i18n/core.js';
 import { esc } from '../util.js';
 
@@ -28,7 +28,16 @@ export function cloudDeleteNote() {
   return '<p class="small note" role="status" data-cloud-deletes' + (pendingCloudDeletes() ? '' : ' hidden') + '>' +
     t('cloud.deletes') + '</p>';
 }
+/** A small red dot on the student's name pill while this student's sync is failing, so a problem is not hidden in Profile. */
+function markPill() {
+  const pill = document.getElementById('whoBtn');
+  const student = me();
+  if (!pill) return;
+  const failing = !!student && syncOn && !isGuest(student.id) && cloudStatus(student.id).state === 'error';
+  pill.classList.toggle('sync-error', failing);
+}
 subscribeCloud(() => {
+  markPill();
   for (const element of document.querySelectorAll('[data-cloud-status]')) {
     element.textContent = statusText(element.getAttribute('data-cloud-status') || '');
   }

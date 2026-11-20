@@ -70,7 +70,9 @@ Progress is saved in the browser's `localStorage`. Cloud sync is disabled by def
 
 ## Remember your sign-in
 
-Select **Remember me on this device for 30 days** when creating a profile, signing in, or importing a profile to reopen the app without entering your password again. It is off by default; use it only on a trusted device. Reloading or reopening the browser does not extend the 30-day expiry. Without this option, the app asks for your password again after a reload or browser restart.
+**Keep me signed in on this device** is on by default when you create a profile, sign in, or import a profile, so reopening the app does not ask for your password again. Every time you open the app the sign-in is renewed for another year; it ends only if you tap Switch student, untick the option, or do not open the app for a year. Untick it on a shared device. Without it, the app asks for your password after a reload or browser restart.
+
+To use the same profile on another phone, open **Profile** and copy the sign-in code (for example `K7M2-QX9R`) or tap **Share sign-in link**. On the other phone choose **Sign in on another device**, enter the code and your password. The app also checks for changes from other devices when you open it, when you come back to it, when the connection returns and every minute while it is open, and it retries failed syncs automatically. A red dot on your name shows a sync problem.
 
 Choose **Switch student** in your profile to sign out and clear the remembered login. Deleting the profile, changing its password on this device, clearing browser storage, or reaching the expiry also ends it. Remembered sign-in is unavailable when browser storage is blocked; private browsing may discard it when the private session ends.
 

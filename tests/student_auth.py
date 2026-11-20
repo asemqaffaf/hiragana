@@ -7,10 +7,13 @@ async def disable_cloud(page):
         body="export const SYNC_URL = '';", content_type='text/javascript'))
 
 
-async def submit_student(page, pace='14'):
+async def submit_student(page, pace='14', remember=False):
     # the app now defaults to 21 days; most suites were written against the 14-day plan
     if pace and await page.locator('#nsPace').count():
         await page.select_option('#nsPace', pace)
+    # staying signed in is now the default; suites that reload expecting the sign-in screen opt out
+    if await page.locator('#nsRemember').count():
+        await page.locator('#nsRemember').set_checked(remember)
     await page.fill('#nsPassword', PASSWORD)
     await page.fill('#nsConfirm', PASSWORD)
     await page.click('#newStudent button[type=submit]')
@@ -25,6 +28,8 @@ async def unlock_student(page, name=None):
     await page.fill('#siPassword', PASSWORD)
     if await page.locator('#siConfirm').count():
         await page.fill('#siConfirm', PASSWORD)
+    if await page.locator('#siRemember').count():
+        await page.locator('#siRemember').set_checked(False)
     await page.click('#studentSignIn button[type=submit]')
     await page.locator('body:not(.signed-out)').wait_for()
 

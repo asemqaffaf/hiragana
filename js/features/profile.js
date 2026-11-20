@@ -31,6 +31,7 @@ import {
 } from '../ui/profile-fields.js';
 import { applyStudent, applyTheme } from '../ui/appearance.js';
 import { cloudPanel } from '../ui/cloud-sync.js';
+import { showCode, signInLink } from '../core/student-code.js';
 import { LANG, t } from '../i18n/core.js';
 import { $, $$, esc, must, todayISO } from '../util.js';
 
@@ -219,7 +220,12 @@ export function renderProfile() {
     '</button></div></form>';
   /* data */
   h += '<h3>' + t('pf.data') + '</h3><p class="small muted">' + syncText() + '</p>';
-  h += '<p class="small">' + t('auth.id') + ': <b dir="ltr">' + esc(p.id) + '</b></p>';
+  if (syncOn && !isGuest(p.id)) {
+    h += '<div class="codebox"><span class="small muted">' + t('auth.id') + '</span><b class="code" dir="ltr" id="pCode">' + esc(showCode(p.id)) +
+      '</b><div class="btnrow"><button class="btn" type="button" id="pCopy">' + t('code.copy') + '</button>' +
+      '<button class="btn" type="button" id="pShare">' + t('code.share') + '</button></div>' +
+      '<p class="small muted">' + t('code.hint') + '</p></div>';
+  }
   h += cloudPanel(p.id);
   h +=
     '<div class="btnrow"><button class="btn" id="pExport">' +
@@ -237,6 +243,35 @@ export function renderProfile() {
   root.dataset.rendered = '1';
   const modeSeg = $('.modeseg', root);
   moveThumb(modeSeg, 'mode', !same);
+  const copyButton = $('#pCopy', root, HTMLButtonElement);
+  const shareButton = $('#pShare', root, HTMLButtonElement);
+  /** @param {HTMLButtonElement} button @param {string} text @param {string} done */
+  const copyText = async (button, text, done) => {
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; }
+    catch {
+      const box = document.createElement('textarea');
+      box.value = text;
+      box.setAttribute('readonly', '');
+      box.style.cssText = 'position:fixed;opacity:0;top:0';
+      document.body.appendChild(box);
+      box.select();
+      try { ok = document.execCommand('copy'); } catch {}
+      box.remove();
+    }
+    const label = button.textContent;
+    button.textContent = ok ? done : t('code.copyFail');
+    setTimeout(() => { button.textContent = label; }, 2000);
+  };
+  if (copyButton) copyButton.onclick = () => copyText(copyButton, showCode(p.id), t('code.copied'));
+  if (shareButton) shareButton.onclick = async () => {
+    const link = signInLink(p.id);
+    if (typeof navigator.share === 'function') {
+      try { await navigator.share({ title: t('app.brand'), text: t('code.shareText'), url: link }); return; }
+      catch (error) { if (error instanceof DOMException && error.name === 'AbortError') return; }
+    }
+    await copyText(shareButton, link, t('code.linkCopied'));
+  };
   const cloudSave = $('#cloudSave', root, HTMLButtonElement);
   const cloudRestore = $('#cloudRestore', root, HTMLButtonElement);
   if (cloudSave) cloudSave.onclick = async () => {

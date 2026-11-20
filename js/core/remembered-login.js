@@ -2,7 +2,8 @@ import {
   readPasswordVerifier, readRememberedLogin, readSyncSecret, writeRememberedLogin,
 } from './storage.js';
 
-export const REMEMBER_LOGIN_MS = 30 * 24 * 60 * 60 * 1000;
+/** A remembered login lasts a year after the last time the app was opened, and every launch renews it. */
+export const REMEMBER_LOGIN_MS = 365 * 24 * 60 * 60 * 1000;
 
 /** Device-local convenience only; cloud requests still need the existing bearer credential.
  * @param {string} id
@@ -22,7 +23,7 @@ export function forgetLogin(id) {
   }
 }
 
-/** Validate expiry and the current local credentials without extending the lifetime. */
+/** Validate expiry and the current local credentials, then slide the expiry forward: only a year without opening the app forgets you. */
 export function rememberedStudent() {
   const login = readRememberedLogin();
   const now = Date.now();
@@ -33,7 +34,13 @@ export function rememberedStudent() {
       'verifier' in login && typeof login.verifier === 'string' && login.verifier &&
       login.verifier === readPasswordVerifier(login.id)) {
     const secret = readSyncSecret(login.id);
-    if (typeof secret === 'string' && secret) return login.id;
+    if (typeof secret === 'string' && secret) {
+      // Renew at most once a day, so a launch does not rewrite storage every time.
+      if (login.expiresAt - now < REMEMBER_LOGIN_MS - 24 * 60 * 60 * 1000) {
+        writeRememberedLogin({ id: login.id, verifier: login.verifier, expiresAt: now + REMEMBER_LOGIN_MS });
+      }
+      return login.id;
+    }
   }
   forgetLogin();
   return null;

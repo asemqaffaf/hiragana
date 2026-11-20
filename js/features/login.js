@@ -1,5 +1,5 @@
 import { showTab } from '../core/nav.js';
-import { recoverCloud, signInCloud, syncOn } from '../core/cloud.js';
+import { cloudSessionStarted, recoverCloud, signInCloud, syncOn } from '../core/cloud.js';
 import { hasPassword, setPassword, verifyPassword } from '../core/passwords.js';
 import { forgetLogin, rememberedStudent, rememberLogin } from '../core/remembered-login.js';
 import { goalOf } from '../core/plan.js';
@@ -20,6 +20,7 @@ import {
   students,
 } from '../core/store.js';
 import { canStore } from '../core/storage.js';
+import { cleanCode, newCode, takeLinkedCode } from '../core/student-code.js';
 import { lesson, reconcileLessonCompletion, writeList } from '../core/lesson.js';
 import { prepareLessonWrite } from './lesson.js';
 import { ui } from '../core/ui-state.js';
@@ -42,6 +43,8 @@ import { closeSheet } from '../ui/sheet-state.js';
 import { $, $$, esc, isObject, must, todayISO } from '../util.js';
 
 /* ---------- student sign-in and profile creation ---------- */
+/** A code from a sign-in link (#id=CODE), used once to fill the sign-in form. */
+let linkedCode = takeLinkedCode();
 /** @type {string | null} */
 let selectedLogin = null;
 /** Which screen is showing: the first choice, signing in, or creating a profile. @type {'choose' | 'in' | 'new' | null} */
@@ -57,7 +60,7 @@ function passwordFields(prefix, create) {
 /** @param {string} prefix */
 function rememberField(prefix) {
   return '<label class="remember-login"><input type="checkbox" id="' + prefix + 'Remember"' +
-    (canStore ? '' : ' disabled') + ' aria-describedby="' + prefix + 'RememberHint"><span>' +
+    (canStore ? ' checked' : ' disabled') + ' aria-describedby="' + prefix + 'RememberHint"><span>' +
     t('auth.remember') + '</span></label><p class="small muted" id="' + prefix + 'RememberHint">' +
     t('auth.rememberHint') + '</p>';
 }
@@ -71,12 +74,7 @@ function newPassword(prefix, root) {
 /** @returns {string} */
 function newId() {
   for (;;) {
-    let id = '';
-    try {
-      if (window.crypto && crypto.randomUUID)
-        id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
-    } catch (e) {}
-    if (!id) id = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    const id = newCode();
     if (!students.list.some((p) => p.id === id)) return id;
   }
 }
@@ -143,7 +141,7 @@ export function showLogin() {
   }
   const list = students.list.slice().sort((x, y) => (y.last || 0) - (x.last || 0));
   let h = langChip(LANG);
-  const mode = loginMode || (list.length ? 'in' : syncOn ? 'choose' : 'new');
+  const mode = loginMode || (syncOn && linkedCode ? 'in' : list.length ? 'in' : syncOn ? 'choose' : 'new');
   h += '<h2>' + t(mode === 'choose' ? 'login.welcome' : mode === 'new' ? 'login.create' : list.length ? 'login.who' : 'auth.signIn') + '</h2>';
   h += '<p class="muted">' + t(mode === 'choose' ? 'login.chooseHint' : mode === 'new' ? 'login.addName' : list.length ? 'login.tapName' : 'login.idHint') + '</p>';
   if (!canStore) h += '<p class="note warn">' + t('login.blocked') + '</p>';
@@ -182,9 +180,9 @@ export function showLogin() {
       passwordFields('si', create) + rememberField('si') + '<p class="fmsg" id="siMsg" role="alert"></p><div class="btnrow">' +
       '<button class="btn primary" type="submit">' + t(create ? 'auth.set' : 'auth.signIn') + '</button></div></form>';
   }
-  if (syncOn) h += '<details class="more"' + (list.length ? '' : ' open') + '><summary>' + t('auth.otherDevice') +
+  if (syncOn) h += '<details class="more"' + (list.length && !linkedCode ? '' : ' open') + '><summary>' + t('auth.otherDevice') +
     '</summary><form id="cloudSignIn" class="sform" novalidate><label class="field"><span class="small muted">' +
-    t('auth.id') + '</span><input id="csId" dir="ltr" maxlength="64" autocomplete="username" autocapitalize="none" spellcheck="false"></label>' +
+    t('auth.id') + '</span><input id="csId" dir="ltr" maxlength="64" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="K7M2-QX9R" value="' + esc(linkedCode) + '"></label>' +
     passwordFields('cs', false) + '<details class="more"><summary>' + t('auth.forgot') +
     '</summary><label class="field"><span class="small muted">' + t('auth.resetCode') +
     '</span><input id="csCode" dir="ltr" maxlength="64" autocomplete="off" autocapitalize="none" spellcheck="false"></label></details>' +
@@ -198,9 +196,7 @@ export function showLogin() {
     '<label class="field"><span class="small muted">' +
     t('f.name') +
     '</span><input id="nsName" maxlength="24" dir="auto" autocapitalize="words" spellcheck="false"></label>';
-  h += '<label class="field"><span class="small muted">' + t('auth.id') +
-    '</span><input id="nsId" dir="ltr" maxlength="64" autocomplete="username" autocapitalize="none" spellcheck="false" readonly value="' + nextId +
-    '"><span class="small muted">' + t('auth.idHint') + '</span></label>' + passwordFields('ns', true);
+  h += passwordFields('ns', true);
   h += swatches('nsColor', COLORS[list.length % COLORS.length]);
   h +=
     '<label class="field"><span class="small muted">' +
@@ -260,12 +256,6 @@ export function showLogin() {
       }),
   );
   const nameInput = must('#nsName', root, HTMLInputElement);
-  const idInput = must('#nsId', root, HTMLInputElement);
-  Object.defineProperty(idInput, 'value', { get: () => nextId, set: () => {} });
-  new MutationObserver(() => {
-    if (idInput.getAttribute('value') !== nextId) idInput.setAttribute('value', nextId);
-    if (!idInput.hasAttribute('readonly')) idInput.setAttribute('readonly', '');
-  }).observe(idInput, { attributes: true, attributeFilter: ['value', 'readonly'] });
   const levelSelect = must('#nsJl', root, HTMLSelectElement);
   const paceSelect = must('#nsPace', root, HTMLSelectElement);
   const signIn = $('#studentSignIn', root, HTMLFormElement);
@@ -288,7 +278,7 @@ export function showLogin() {
     const button = must('button[type=submit]', cloudSignIn, HTMLButtonElement);
     button.disabled = true;
     try {
-      const id = must('#csId', cloudSignIn, HTMLInputElement).value.trim();
+      const id = cleanCode(must('#csId', cloudSignIn, HTMLInputElement).value);
       const password = must('#csPassword', cloudSignIn, HTMLInputElement).value;
       const local = students.list.find((p) => p.id === id);
       const resetCode = must('#csCode', cloudSignIn, HTMLInputElement).value.trim();
@@ -394,11 +384,12 @@ export function showLogin() {
       showLogin();
     }
   };
-  const first = mode === 'new' ? nameInput : mode === 'in' ? $('[data-login]', root) || $('#csId', root, HTMLInputElement) : $('[data-mode]', root);
+  const first = mode === 'new' ? nameInput : mode === 'in' && linkedCode ? $('#csPassword', root, HTMLInputElement) : mode === 'in' ? $('[data-login]', root) || $('#csId', root, HTMLInputElement) : $('[data-mode]', root);
   if (first && !matchMedia('(pointer: coarse)').matches) first.focus();
 }
 /** @param {string} id @param {boolean} [remember] */
 export function login(id, remember = false) {
+  linkedCode = '';
   const p = selectStudent(id);
   if (!p) return showLogin();
   forgetLogin();
@@ -423,6 +414,7 @@ export function renderWho() {
     b = must('#whoBtn');
   if (!p) {
     b.hidden = true;
+    b.classList.remove('sync-error');
     return;
   }
   b.innerHTML = avatar(p) + '<span class="nm" dir="auto">' + esc(p.name) + '</span>';
@@ -459,6 +451,7 @@ function enterApp() {
   renderAll();
   if (location.hash === '#write' && lesson().writingResume && writeList().includes(lesson().writingResume || '')) prepareLessonWrite();
   showTab(location.hash.slice(1), { initial: true });
+  cloudSessionStarted();
 }
 export function switchStudent() {
   selectedLogin = null;
