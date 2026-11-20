@@ -63,14 +63,25 @@ function boot() {
   }
 }
 boot();
-/* the loading screen (index.html) fades out once the app has drawn its first screen */
+/* The loading screen (index.html) stays until the first screen is drawn, the stylesheets and theme are applied and the fonts
+   are loaded, so nothing shows in a fallback font or the wrong colours. It shows for at least 700 ms (no flash) and never
+   longer than 6 s (a slow or blocked font must not trap the app). */
 const splash = document.getElementById('splash');
 if (splash) {
-  const hide = () => {
+  const started = performance.now();
+  const wait = (/** @type {number} */ ms) => new Promise((r) => setTimeout(r, ms));
+  const pageLoaded = document.readyState === 'complete' ? Promise.resolve() : new Promise((r) => addEventListener('load', () => r(undefined), { once: true }));
+  const fonts = Promise.all(
+    ['400 16px "Zen Kaku Gothic New"', '700 16px "Zen Kaku Gothic New"', '400 16px "Klee One"', '400 16px "IBM Plex Sans Arabic"', '700 16px "IBM Plex Sans Arabic"'].map((f) =>
+      document.fonts.load(f, 'あアAa').catch(() => []),
+    ),
+  ).then(() => document.fonts.ready);
+  const nextFrame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(undefined))));
+  Promise.race([Promise.all([pageLoaded, fonts, nextFrame()]), wait(6000)]).then(async () => {
+    await wait(Math.max(0, 700 - (performance.now() - started)));
     splash.classList.add('gone');
     setTimeout(() => splash.remove(), 450);
-  };
-  requestAnimationFrame(() => requestAnimationFrame(hide));
+  });
 }
 if (/[#&]test\b/.test(location.hash))
   window.__hira = {
