@@ -13,7 +13,7 @@ export function dayNumber() {
 let planCache = null;
 /** The student's goal with defaults for anything missing. @param {import('../../types/app').Student | null} [p] @returns {import('../../types/app').Goal} */
 export const goalOf = (p) =>
-  Object.assign({ pace: 14, min: 30, reason: 'jlpt' }, (p || me())?.goal);
+  Object.assign({ pace: 21, min: 30, reason: 'jlpt' }, (p || me())?.goal);
 /** @param {import('../../types/app').Task | string} task @param {number} factor @param {string} language */
 function formatTask(task, factor, language) {
   if (typeof task === 'string') return task;

@@ -243,3 +243,7 @@ html[dir="rtl"] .toggles input[type="checkbox"]:checked::after{transform:transla
 @media (prefers-reduced-motion:reduce){.toggles input[type="checkbox"],.toggles input[type="checkbox"]::after{transition:none}}
 .toggles.opts{font-size:16px}
 .toggles.opts label{min-height:48px}
+
+/* Android: the gesture handle sits right under the screen edge and browsers report no safe area, so lift the tab bar clear of it */
+html.android{--gap0:28px}
+html.android nav.tabs{--gap:28px}

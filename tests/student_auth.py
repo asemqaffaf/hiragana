@@ -7,7 +7,10 @@ async def disable_cloud(page):
         body="export const SYNC_URL = '';", content_type='text/javascript'))
 
 
-async def submit_student(page):
+async def submit_student(page, pace='14'):
+    # the app now defaults to 21 days; most suites were written against the 14-day plan
+    if pace and await page.locator('#nsPace').count():
+        await page.select_option('#nsPace', pace)
     await page.fill('#nsPassword', PASSWORD)
     await page.fill('#nsConfirm', PASSWORD)
     await page.click('#newStudent button[type=submit]')

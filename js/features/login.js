@@ -103,7 +103,7 @@ function startGuest() {
     addStudent(
       {
         id: GUEST_ID, name: t('guest.name'), color: COLORS[0], created: todayISO(), last: Date.now(), lang: LANG,
-        age: 'adult', jlevel: 'new', native: LANG, rate: 1, goal: { pace: 14, min: 30, reason: 'jlpt' },
+        age: 'adult', jlevel: 'new', native: LANG, rate: 1, goal: { pace: 21, min: 30, reason: 'jlpt' },
         av: { t: 'initial', k: 'あ', img: '' }, theme: deviceTheme(),
       },
       { start: todayISO() },
@@ -212,7 +212,7 @@ export function showLogin() {
     '<div class="fgrid">' +
     sel('nsAge', ageOpts(), 'adult', t('f.age')) +
     sel('nsJl', jlOpts(), 'new', t('f.jlevel')) +
-    sel('nsPace', paceOpts(), 14, t('f.pace')) +
+    sel('nsPace', paceOpts(), 21, t('f.pace')) +
     sel('nsMin', minOpts(), 30, t('f.min')) +
     sel('nsReason', reasonOpts(), 'jlpt', t('f.reason'), goalHint('jlpt')) +
     '</div>';

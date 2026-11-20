@@ -218,7 +218,7 @@ export function cleanStudent(p) {
     rate: p.rate === 0.75 ? 0.75 : 1,
     theme: cleanTheme(p.theme),
     goal: {
-      pace: oneOf(PACES, goal.pace, 14),
+      pace: oneOf(PACES, goal.pace, 21),
       min: oneOf(MINUTES, goal.min, 30),
       reason: oneOf(REASONS, goal.reason, 'jlpt'),
     },

@@ -63,6 +63,15 @@ function boot() {
   }
 }
 boot();
+/* the loading screen (index.html) fades out once the app has drawn its first screen */
+const splash = document.getElementById('splash');
+if (splash) {
+  const hide = () => {
+    splash.classList.add('gone');
+    setTimeout(() => splash.remove(), 450);
+  };
+  requestAnimationFrame(() => requestAnimationFrame(hide));
+}
 if (/[#&]test\b/.test(location.hash))
   window.__hira = {
     STR,
