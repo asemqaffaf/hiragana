@@ -1,0 +1,41 @@
+/* Press and hold to repeat (js/ui/repeat.js). The glass look of the menu, the pill and the hint is in ios.css (Liquid Glass). */
+[data-rep],[data-say],.kb,[data-word],.dcard,.mx{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+/* the pressed item sinks a little while the hold builds, then stays lifted while the menu is open */
+.rep-arming{transform:scale(.965);transition:transform .38s var(--spring)}
+.rep-held{transform:scale(.95);box-shadow:0 0 0 3px color-mix(in srgb,var(--jade) 45%,transparent) !important;transition:transform .3s var(--spring),box-shadow .2s}
+
+.rep-scrim{position:fixed;inset:0;z-index:70;background:rgba(10,20,16,.16);-webkit-tap-highlight-color:transparent;animation:repFade .2s ease-out}
+.rep-pop{position:fixed;z-index:71;width:min(292px,calc(100vw - 20px));padding:14px 14px 14px;border-radius:30px;color:var(--ink);animation:repPop .36s var(--spring)}
+.rep-head{display:flex;align-items:center;gap:12px;margin:0 4px 12px}
+.rep-k{font-family:var(--kana);font-size:30px;line-height:1.1;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rep-title{font-size:15px;font-weight:600;color:var(--pencil)}
+.rep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rep-n{display:flex;align-items:center;justify-content:center;gap:2px;min-height:56px;padding:0;border:0;border-radius:20px;background:var(--gray-fill);color:var(--ink);box-shadow:var(--lg-btn);font-variant-numeric:tabular-nums;transition:transform .45s var(--spring),background-color .2s}
+.rep-n b{font-size:24px;font-weight:700;line-height:1}
+.rep-n span{font-size:14px;font-weight:600;color:var(--pencil)}
+.rep-n.last{background:var(--jade-soft);color:var(--jade);box-shadow:inset 0 0 0 1.5px var(--jade)}
+.rep-n.last span{color:inherit}
+.rep-n:active{transform:scale(.92);transition-duration:.1s}
+
+/* what is playing: above the tab bar */
+.rep-now{position:fixed;z-index:45;left:50%;bottom:calc(var(--dock,72px) + 14px);display:flex;align-items:center;gap:12px;width:min(340px,calc(100vw - 32px));padding:6px 6px 6px 18px;border-radius:999px;color:var(--ink);transform:translateX(-50%);animation:repRise .45s var(--spring)}
+.rep-now.out{opacity:0;transform:translate(-50%,12px) scale(.96);transition:opacity .22s,transform .22s}
+.rep-now-k{font-family:var(--kana);font-size:22px;line-height:1.1;max-width:34%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rep-now-c{font-size:13px;font-weight:600;color:var(--pencil);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rep-bar{flex:1;min-width:20px;height:5px;border-radius:3px;background:var(--gray-fill);overflow:hidden}
+.rep-bar i{display:block;height:100%;width:calc(var(--p,0) * 100%);border-radius:inherit;background:var(--jade);transition:width .5s linear}
+.rep-stop{flex:none;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:var(--gray-fill);color:var(--ink);box-shadow:var(--lg-btn);transition:transform .4s var(--spring)}
+.rep-stop:active{transform:scale(.9)}
+[dir="rtl"] .rep-now{padding:6px 18px 6px 6px}
+
+.rep-hint{position:fixed;z-index:45;left:50%;bottom:calc(var(--dock,72px) + 14px);max-width:calc(100vw - 40px);padding:12px 20px;border-radius:999px;font-size:14px;font-weight:600;color:var(--ink);text-align:center;transform:translateX(-50%);animation:repRise .45s var(--spring)}
+.rep-hint.out{opacity:0;transform:translate(-50%,10px);transition:opacity .3s,transform .3s}
+
+@keyframes repFade{from{opacity:0}}
+@keyframes repPop{from{opacity:0;transform:scale(.6)}}
+@keyframes repRise{from{opacity:0;transform:translate(-50%,16px) scale(.94)}}
+@media (prefers-reduced-motion:reduce){
+  .rep-scrim,.rep-pop,.rep-now,.rep-hint{animation:none}
+  .rep-arming,.rep-held,.rep-n,.rep-stop{transition:none}
+}
+@media (prefers-reduced-transparency:reduce){.rep-scrim{background:rgba(10,20,16,.32)}}

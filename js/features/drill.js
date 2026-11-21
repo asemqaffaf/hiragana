@@ -334,7 +334,7 @@ function renderQuestion(root, s) {
   if (s.mode === 'choose') h += '<div class="prompt">' + rom(k) + '</div>';
   else
     h +=
-      '<button class="bigsay" id="qPlay" aria-label="' +
+      '<button class="bigsay" id="qPlay" data-rep="' + k + '" aria-label="' +
       t('q.again') +
       '">' +
       SPEAK_SVG +

@@ -37,6 +37,7 @@ function mediaEl() {
     htmlAudio.preload = 'auto';
     htmlAudio.setAttribute('playsinline', '');
     htmlAudio.addEventListener('error', onAudioError);
+    htmlAudio.addEventListener('ended', notifyEnd);
   }
   return htmlAudio;
 }
@@ -153,6 +154,9 @@ async function playWA(key) {
     const src = ctx.createBufferSource();
     src.buffer = buf;
     src.connect(ctx.destination);
+    src.onended = () => {
+      if (waSrc === src) notifyEnd();
+    };
     src.start();
     waSrc = src;
   } catch (e) {}
@@ -199,6 +203,8 @@ function playClip(key) {
   }
   playWA(key);
 }
+/** @type {SpeechSynthesisUtterance | null} */
+let curUtterance = null;
 /** @param {string} text */
 function deviceSpeak(text) {
   if (!('speechSynthesis' in window)) return false;
@@ -206,6 +212,11 @@ function deviceSpeak(text) {
     const u = new SpeechSynthesisUtterance(text.replace(/ /g, ''));
     u.lang = 'ja-JP';
     u.rate = 0.9;
+    /* the utterance that cancel() cuts off reports an error too: only the current one may end a repeat */
+    curUtterance = u;
+    u.onend = u.onerror = () => {
+      if (curUtterance === u) notifyEnd();
+    };
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
     return true;
@@ -219,6 +230,7 @@ const audioRate = () => (me()?.rate === 0.75 ? 0.75 : 1);
 /* Hear buttons: the letter twice, then an example word */
 /** @param {string} k */
 export function speakFull(k) {
+  stopRepeat();
   if (AUD[k + '|ex']) {
     recordHeard(k);
     playClip(k + '|ex');
@@ -293,10 +305,110 @@ export function bindSay(root) {
 }
 /** @param {string} text */
 export function speak(text) {
-  recordHeard(text);
+  stopRepeat();
+  return speakOnce(text, true);
+}
+/** @param {string} text @param {boolean} record count it as heard (a repeat counts once, not every time) */
+function speakOnce(text, record) {
+  if (record) recordHeard(text);
   if (AUD[text]) {
     playClip(text);
     return true;
   }
   return deviceSpeak(text);
+}
+
+/* ---- repeat ----
+   Press and hold on a letter, word or phrase offers "play it N times". Each play waits for the previous one to end (the HTML
+   audio 'ended' event, the Web Audio source, or the speech utterance, whichever engine is playing) plus a short pause, with a
+   safety timeout so a lost 'ended' event cannot freeze the loop. Any other sound, or stopRepeat(), ends it at once. */
+/** @type {(() => void) | null} */
+let endNotify = null;
+function notifyEnd() {
+  const f = endNotify;
+  endNotify = null;
+  if (f) f();
+}
+/** Resolves when the clip that just started ends, or after `ms`. @param {number} ms @returns {Promise<void>} */
+function waitEnd(ms) {
+  return new Promise((resolve) => {
+    const t = setTimeout(done, ms);
+    function done() {
+      clearTimeout(t);
+      if (endNotify === done) endNotify = null;
+      resolve();
+    }
+    endNotify = done;
+  });
+}
+/** @type {{ stopped: boolean, timer: ReturnType<typeof setTimeout> | undefined, end: () => void } | null} */
+let repeatJob = null;
+export const isRepeating = () => !!repeatJob;
+/** Stop a running repeat (and the sound with it). */
+export function stopRepeat() {
+  const job = repeatJob;
+  if (!job) return;
+  repeatJob = null;
+  job.stopped = true;
+  clearTimeout(job.timer);
+  const f = endNotify;
+  endNotify = null;
+  if (f) f();
+  playTok++;
+  try {
+    if (htmlAudio) htmlAudio.pause();
+  } catch (e) {}
+  if (waSrc) {
+    try {
+      waSrc.stop();
+    } catch (e) {}
+    waSrc = null;
+  }
+  try {
+    if (curUtterance && 'speechSynthesis' in window) {
+      curUtterance = null;
+      window.speechSynthesis.cancel();
+    }
+  } catch (e) {}
+  job.end();
+}
+/**
+ * Play `text` `count` times in a row.
+ * @param {string} text what speak() accepts: a clip key or plain Japanese
+ * @param {number} count
+ * @param {{ onPlay?: (i: number, n: number) => void, onEnd?: () => void }} [hooks] onPlay runs as each play starts (i from 1);
+ *   onEnd runs once, when it finished or was stopped
+ */
+export function repeatSpeak(text, count, hooks = {}) {
+  stopRepeat();
+  const n = Math.max(1, Math.floor(count));
+  const gap = text.length <= 2 ? 450 : 650; /* a breath between plays, a little longer for words and phrases */
+  /** @type {NonNullable<typeof repeatJob>} */
+  const job = {
+    stopped: false,
+    timer: undefined,
+    end: () => hooks.onEnd && hooks.onEnd(),
+  };
+  repeatJob = job;
+  let i = 0;
+  const next = () => {
+    if (job.stopped) return;
+    if (i >= n) {
+      repeatJob = null;
+      job.end();
+      return;
+    }
+    i++;
+    if (hooks.onPlay) hooks.onPlay(i, n);
+    const wait = waitEnd(20000);
+    if (!speakOnce(text, i === 1)) {
+      /* nothing can play this (no clip and no speech engine): end rather than count silent repeats */
+      if (repeatJob === job) stopRepeat();
+      return;
+    }
+    wait.then(() => {
+      if (!job.stopped) job.timer = setTimeout(next, gap);
+    });
+  };
+  next();
 }

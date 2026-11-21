@@ -213,6 +213,15 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   'read.showRo': 'Show romaji',
   'read.showMean': 'Show meaning',
   'read.hear': 'Hear {w}',
+  'rep.title': 'Repeat',
+  'rep.times': '{n} times',
+  'rep.menu': 'Repeat {w}',
+  'rep.pick': 'Repeat {w} {n} times',
+  'rep.progress': '{i} of {n}',
+  'rep.playing': 'Repeating {w}, {i} of {n}',
+  'rep.stop': 'Stop',
+  'rep.stopped': 'Stopped',
+  'rep.hint': 'Tip: press and hold to repeat',
   'read.rulesTitle': 'Rules for small っ, long vowels and particles (day 10)',
   'read.rules': [
     'Small ' +

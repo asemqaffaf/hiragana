@@ -63,6 +63,8 @@ fieldset{min-inline-size:0;min-width:0;max-width:100%;box-sizing:border-box}
 .tint:has(input:checked){border-color:var(--jade);box-shadow:0 0 0 3px var(--jade-soft);font-weight:700}
 .tint:has(input:focus-visible){outline:3px solid var(--jade);outline-offset:2px}
 *,*::before,*::after{box-sizing:border-box}
+/* phones: no pinch or double-tap zoom, the page only scrolls (js/ui/no-zoom.js covers iPhone Safari's own gesture events) */
+@media (pointer:coarse){html,body{touch-action:pan-x pan-y}}
 html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));background:var(--paper)}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
 button,input,select,textarea{font:inherit;color:inherit}

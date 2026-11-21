@@ -64,7 +64,7 @@ function openSheet(k) {
   h +=
     '<div class="btnrow">' +
     (combo ? '' : '<button class="btn" id="shPlay">' + t('card.play') + '</button>') +
-    '<button class="btn" id="shSay">' +
+    '<button class="btn" id="shSay" data-rep="' + k + '">' +
     SPEAK_SVG.replace('<svg', '<svg width="20" height="20"') +
     ' ' +
     t('card.hear') +

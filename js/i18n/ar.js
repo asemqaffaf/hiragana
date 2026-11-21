@@ -215,6 +215,15 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   'read.showRo': 'أظهر الروماجي',
   'read.showMean': 'أظهر المعنى',
   'read.hear': 'استمع إلى {w}',
+  'rep.title': 'تكرار',
+  'rep.times': '{n} مرات',
+  'rep.menu': 'تكرار {w}',
+  'rep.pick': 'تكرار {w} {n} مرات',
+  'rep.progress': '{i} من {n}',
+  'rep.playing': 'تكرار {w}، {i} من {n}',
+  'rep.stop': 'إيقاف',
+  'rep.stopped': 'تم الإيقاف',
+  'rep.hint': 'نصيحة: اضغط مطولاً للتكرار',
   'read.rulesTitle': 'قواعد っ الصغيرة والحروف الممدودة والأدوات (اليوم 10)',
   'read.rules': [
     K('っ') +

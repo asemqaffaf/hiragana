@@ -96,7 +96,7 @@ export function renderMeet() {
     '</div>';
   h += '<div class="meetrom ltr">' + rom(k) + '</div>';
   h +=
-    '<button class="btn primary bigbtn" id="meetHear">' +
+    '<button class="btn primary bigbtn" id="meetHear" data-rep="' + k + '">' +
     SPEAK_SVG.replace('<svg', '<svg width="24" height="24"') +
     ' ' +
     t('card.hear') +

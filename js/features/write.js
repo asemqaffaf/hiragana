@@ -554,6 +554,7 @@ export function renderWrite(play) {
     if (ui.writeSvg) ui.writeSvg.play();
   };
   const ws = must('#wSay', root, HTMLButtonElement);
+  ws.dataset.rep = ui.writeK;
   if (!hasClip(ui.writeK)) {
     ws.disabled = true;
     ws.title = t('write.silent');
