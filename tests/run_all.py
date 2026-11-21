@@ -21,7 +21,7 @@ SUITES = (
     'phrasetap', 'phfilter', 'wordsfilter', 'goals', 'dragselect', 'barscroll', 'backbar',
     'animtest', 'lessontest', 'ptest', 'pftest', 'artest', 'cltest', 'gregress',
     'phtest', 'themetest', 'ovf', 'uitest2', 'audiotest', 'smalls', 'i18naudit',
-    'audioaudit', 'sheetsall', 'repeattest', 'autosavetest',
+    'audioaudit', 'sheetsall', 'repeattest', 'autosavetest', 'ioshaptictest',
 )
 
 

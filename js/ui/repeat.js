@@ -75,6 +75,34 @@ function haptic() {
   } catch (e) {}
 }
 
+/* iPhone since iOS 26.5: a script can no longer make the switch tick, but a real finger tap on a native switch still does.
+   So on iPhone each button of the repeat menu gets a transparent label with a switch laid over it; the tap lands on the
+   label (a trusted click, so the system plays its tick), and we then run the button's own action. There is no way to buzz
+   at the moment the hold opens the menu: only a real tap can. */
+const iosTicks = () => !navigator.vibrate && matchMedia('(pointer: coarse)').matches;
+/** @param {HTMLButtonElement} btn  @returns {HTMLElement} what to put in the page in place of the button */
+function withTick(btn) {
+  if (!iosTicks()) return btn;
+  const wrap = document.createElement('span');
+  wrap.className = 'rep-tw';
+  const lab = document.createElement('label');
+  lab.className = 'rep-tk';
+  lab.setAttribute('aria-hidden', 'true');
+  const box = document.createElement('input');
+  box.type = 'checkbox';
+  box.setAttribute('switch', '');
+  box.tabIndex = -1;
+  lab.appendChild(box);
+  lab.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (e.target !== box) return; /* a tap on the switch itself, or on the label (which forwards it to the switch) */
+    box.checked = false;
+    btn.click();
+  });
+  wrap.append(btn, lab);
+  return wrap;
+}
+
 /* ---------- the hold ---------- */
 /** @type {{ el: HTMLElement, id: number, x: number, y: number, hold: ReturnType<typeof setTimeout>, arm: ReturnType<typeof setTimeout> } | null} */
 let press = null;
@@ -202,7 +230,7 @@ function openPicker(el) {
       closePicker();
       startRepeat(key, n);
     };
-    grid.appendChild(b);
+    grid.appendChild(withTick(b));
   }
   pop.append(head, grid);
   scrim.appendChild(pop);
@@ -280,6 +308,7 @@ function startRepeat(key, n) {
   stop.setAttribute('aria-label', t('rep.stop'));
   stop.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/></svg>';
   stop.onclick = () => stopRepeat();
+  el.appendChild(withTick(stop));
   /** @type {HTMLElement} */ (el.querySelector('.rep-now-k')).textContent = word;
   document.body.appendChild(el);
   pill = el;
