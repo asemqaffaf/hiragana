@@ -72,8 +72,8 @@ async def main():
         R['6_after_reload_who'] = await pg.text_content('#whoBtn .nm')
         await open_profile(pg); R['6_aya_answers'] = await pg.evaluate("(()=>{const l=JSON.parse(localStorage.getItem('hiragana14-students-v1'));const p=JSON.parse(localStorage.getItem('hiragana14-progress-'+l.current)||'{}');let n=0;Object.values(p.stats||{}).forEach(x=>n+=x.c+x.w);return n})()")
         # rename with duplicate + success
-        await pg.fill('#pfName', 'KEN'); await pg.click('#pfForm button[type=submit]'); R['7_rename_dup'] = await pg.text_content('#pfMsg')
-        await pg.fill('#pfName', 'Aya S.'); await pg.click('#pfForm button[type=submit]'); await pg.wait_for_timeout(100)
+        await pg.fill('#pfName', 'KEN'); await pg.press('#pfName', 'Enter'); R['7_rename_dup'] = await pg.text_content('#pfMsg')
+        await pg.fill('#pfName', 'Aya S.'); await pg.press('#pfName', 'Enter'); await pg.wait_for_timeout(100)
         R['7_renamed'] = [await pg.text_content('#tab-profile h2'), await pg.text_content('#whoBtn .nm')]
         # export
         async with pg.expect_download() as dl: await pg.click('#pExport')

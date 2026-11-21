@@ -78,8 +78,23 @@ function photoToDataUrl(file) {
 const AVATAR_TYPES = ['initial', 'kana', 'photo'];
 let pfMsg = '',
   pfDelArmed = false;
-/** A chosen photo, as a data URL, waiting for Save. @type {string | null} */
+/** A chosen photo, as a data URL, until the next save keeps it. @type {string | null} */
 let pendingPhoto = null;
+/** A brief "Saved." above the tab bar (the same glass pill the repeat tip uses). */
+let savedTimer = 0;
+function savedToast() {
+  document.querySelectorAll('.pf-saved').forEach((n) => n.remove());
+  clearTimeout(savedTimer);
+  const el = document.createElement('div');
+  el.className = 'rep-hint pf-saved';
+  el.setAttribute('role', 'status');
+  el.textContent = t('pf.saved');
+  document.body.appendChild(el);
+  savedTimer = window.setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 320);
+  }, 1500);
+}
 export function renderProfile() {
   const p = me();
   if (!p) return;
@@ -168,7 +183,9 @@ export function renderProfile() {
     t('f.name') +
     '</span><input id="pfName" maxlength="24" dir="auto" value="' +
     esc(p.name) +
-    '"></label>';
+    '"></label><p class="fmsg" id="pfMsg" role="alert">' +
+    esc(pfMsg) +
+    '</p>';
   h +=
     '<fieldset class="avpick"><legend class="small muted">' +
     t('f.avatar') +
@@ -209,16 +226,8 @@ export function renderProfile() {
     sel('pfPace', paceOpts(), g.pace, t('f.pace')) +
     sel('pfMin', minOpts(), g.min, t('f.min')) +
     '</div>';
-  h +=
-    '<p class="small muted">' +
-    t('pace.change') +
-    '</p><p class="fmsg" id="pfMsg" role="alert">' +
-    esc(pfMsg) +
-    '</p>';
-  h +=
-    '<div class="btnrow"><button class="btn primary" type="submit">' +
-    t('pf.save') +
-    '</button></div></form>';
+  /* no Save button: every change is saved as it is made (a hidden submit keeps Enter in the name field working) */
+  h += '<p class="small muted">' + t('pace.change') + '</p><button type="submit" hidden></button></form>';
   /* data */
   h += '<h3>' + t('pf.data') + '</h3><p class="small muted">' + syncText() + '</p>';
   if (syncOn && !isGuest(p.id)) {
@@ -357,29 +366,29 @@ export function renderProfile() {
     try {
       pendingPhoto = await photoToDataUrl(f);
       must('#pfPhotoBtn', root).textContent = t('av.ready');
+      save();
     } catch (err) {
       must('#pfMsg', root).textContent = t('av.bad');
     }
   };
   /** @param {string} id */
   const selectValue = (id) => must('#' + id, root, HTMLSelectElement).value;
-  must('#pfForm', root).onsubmit = (e) => {
-    e.preventDefault();
-    const name = cleanName(must('#pfName', root, HTMLInputElement).value),
-      msg = must('#pfMsg', root);
+  /** Save every field of the form now. Runs after each change; a name that is empty or taken keeps the old name and says why. */
+  const save = () => {
+    const msg = must('#pfMsg', root);
+    let name = cleanName(must('#pfName', root, HTMLInputElement).value);
+    msg.textContent = '';
     if (!name) {
       msg.textContent = t('err.noName');
-      return;
-    }
-    if (nameTaken(name, p.id)) {
+      name = p.name;
+    } else if (nameTaken(name, p.id)) {
       msg.textContent = t('err.taken2', { name });
-      return;
+      name = p.name;
     }
     const avT = checked('pfAv') || 'initial';
-    if (avT === 'photo' && !pendingPhoto && !p.av.img) {
-      msg.textContent = t('av.need');
-      return;
-    }
+    /* "Photo" is chosen but no photo yet: wait, the upload button is right there */
+    if (avT === 'photo' && !pendingPhoto && !p.av.img) return;
+    const y = scrollY;
     updateStudent(p.id, {
       name,
       color: checked('pfColor') || p.color,
@@ -403,14 +412,17 @@ export function renderProfile() {
     setLang(p.lang);
     applyStudent();
     renderWho();
-    renderAll();
-    pfMsg = t('pf.saved');
-    renderProfile();
-    const m2 = $('#pfMsg');
-    if (m2) {
-      m2.classList.add('ok');
-      m2.scrollIntoView({ block: 'center' });
-    }
+    const error = msg.textContent;
+    pfMsg = error || '';
+    renderAll(); /* redraws this page too, so the heading, goal hint and language are current */
+    scrollTo(0, y); /* and the page stays where the person was */
+    if (!error) savedToast();
+  };
+  const form = must('#pfForm', root);
+  form.onchange = save;
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    save();
   };
   must('#pExport', root).onclick = exportStudent;
   must('#pSwitch', root).onclick = () => {

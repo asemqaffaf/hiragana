@@ -55,8 +55,8 @@ async def main():
         await page.click('#whoBtn')
         assert await page.locator('#pfLang option[value="fr"]').count() == 1
         assert await page.locator('#pfNative').input_value() == 'fr'
-        await page.select_option('#pfLang', 'he')
-        await page.click('#pfForm button[type=submit]')
+        await page.select_option('#pfLang', 'he')  # saved as it changes
+        await page.wait_for_timeout(300)
         assert await page.locator('html').get_attribute('dir') == 'rtl'
         await page.reload()
         await unlock_student(page)

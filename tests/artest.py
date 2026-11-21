@@ -87,7 +87,7 @@ async def main():
         await pg.click('#whoBtn'); await pg.wait_for_timeout(200)
         R['ar_profile'] = [await pg.evaluate('location.hash'), await pg.text_content('#tab-profile h2')]
         await pg.screenshot(path='shots/ar_profile.png')
-        await pg.select_option('#pfLang', 'en'); await pg.click('#pfForm button[type=submit]'); await pg.wait_for_timeout(250)
+        await pg.select_option('#pfLang', 'en'); await pg.wait_for_timeout(450)
         R['switched_en'] = [await pg.evaluate("document.documentElement.dir"), await pg.text_content('nav [data-nav="home"] .tl')]
         await go(pg, "plan")
         R['en_plan'] = await pg.text_content('#tab-plan h2')

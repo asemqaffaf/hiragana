@@ -120,13 +120,13 @@ async def main():
             assert await second.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 4
             await open_profile(second)
             await second.fill('#pfName', 'Newer cloud name')
-            await second.click('#pfForm button[type=submit]')
+            await second.press('#pfName', 'Enter')
             await save(second)
             assert db()[student_id]['student']['name'] == 'Newer cloud name'
 
             # The older device merges instead of getting stuck: its own unsent edit is kept and sent on the newer version.
             await first.fill('#pfName', 'Stale local name')
-            await first.click('#pfForm button[type=submit]')
+            await first.press('#pfName', 'Enter')
             await first.wait_for_function("document.querySelector('[data-cloud-status]').textContent === 'Saved to cloud.'", timeout=15000)
             assert db()[student_id]['student']['name'] == 'Stale local name'
             assert db()[student_id]['progress']['stats']['あ']['c'] == 4
@@ -167,8 +167,8 @@ async def main():
             assert await first.evaluate("import('./js/core/store.js').then(s => s.state.stats['あ'].c)") == 9
 
             # Arabic fields and live sync status remain readable on a narrow screen.
-            await second.select_option('#pfLang', 'ar')
-            await second.click('#pfForm button[type=submit]')
+            await second.select_option('#pfLang', 'ar')  # changes save as they are made
+            await second.wait_for_timeout(300)
             await save(second)
             assert await second.locator('html').get_attribute('dir') == 'rtl'
             assert await second.evaluate('document.documentElement.scrollWidth <= innerWidth')
@@ -189,7 +189,7 @@ async def main():
             assert sorted(db()[student_id]) == ['deleted', 'hash']
             await fresh_minute()
             await first.fill('#pfName', 'Too late')
-            await first.click('#pfForm button[type=submit]')
+            await first.press('#pfName', 'Enter')
             await save(first)
             assert 'No cloud copy' in await first.locator('[data-cloud-status]').last.inner_text()
             assert sorted(db()[student_id]) == ['deleted', 'hash']

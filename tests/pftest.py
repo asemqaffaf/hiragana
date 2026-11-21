@@ -76,11 +76,11 @@ async def main():
         await pg.screenshot(path='shots/pf_top.png')
         # change settings: pace 21, adult, Arabic, kana avatar, then photo
         await pg.select_option('#pfPace', '21'); await pg.select_option('#pfAge', 'adult'); await pg.select_option('#pfLang', 'ar'); await pg.check('input[name="pfAv"][value="kana"]'); await pg.select_option('#pfKana', 'ね')
-        await pg.click('#pfForm button[type=submit]'); await pg.wait_for_timeout(250)
+        await pg.wait_for_timeout(450)
         R['after_save'] = [await pg.evaluate("document.documentElement.dir"), await pg.text_content('#appSub'), await pg.evaluate("document.body.classList.contains('kid')"), await pg.text_content('#whoBtn .av'), await pg.text_content('#pfMsg')]
         avatar = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'icon-192.png')
         await pg.check('input[name="pfAv"][value="photo"]'); await pg.set_input_files('#pfPhoto', avatar); await pg.wait_for_timeout(300)
-        await pg.click('#pfForm button[type=submit]'); await pg.wait_for_timeout(250)
+        await pg.wait_for_timeout(450)
         R['photo'] = await pg.evaluate("(document.querySelector('#whoBtn .av img')||{}).src ? document.querySelector('#whoBtn .av img').src.slice(0,30) + ' len=' + document.querySelector('#whoBtn .av img').src.length : null")
         await pg.screenshot(path='shots/pf_ar.png', full_page=True)
         await go(pg, "plan"); await pg.wait_for_timeout(150)
