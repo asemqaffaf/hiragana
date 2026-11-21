@@ -2,7 +2,6 @@ import './ui/sheet.js';
 import './ui/sheet-swipe.js';
 import './ui/home-button.js';
 import './ui/drag-select.js';
-import './ui/glass.js';
 import './ui/no-zoom.js';
 import './ui/repeat.js';
 import { actx, htmlAudio, htmlFails, htmlOK, playTok } from './core/audio.js';
