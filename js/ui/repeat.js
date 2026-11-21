@@ -286,6 +286,7 @@ function startRepeat(key, n) {
   el.setAttribute('aria-label', t('rep.playing', { w: word, i: 1, n }));
   const count = /** @type {HTMLElement} */ (el.querySelector('.rep-now-c'));
   repeatSpeak(key, n, {
+    title: word,
     onPlay(i, total) {
       if (pill !== el) return;
       count.textContent = t('rep.progress', { i, n: total });
@@ -304,9 +305,6 @@ function removePill() {
   el.classList.add('out');
   setTimeout(() => el.remove(), 260);
 }
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) stopRepeat();
-});
 
 /* ---------- a hint, once ---------- */
 let taps = 0;

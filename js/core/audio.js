@@ -125,7 +125,7 @@ document.addEventListener('visibilitychange', () => {
 /** @param {string} key */
 const clipUrl = (key) => 'audio/' + AUD[key];
 /* the callback form of decodeAudioData is the one older Safari versions support */
-/** @param {AudioContext} ctx @param {ArrayBuffer} data @returns {Promise<AudioBuffer>} */
+/** @param {BaseAudioContext} ctx @param {ArrayBuffer} data @returns {Promise<AudioBuffer>} */
 const decode = (ctx, data) =>
   new Promise((resolve, reject) => ctx.decodeAudioData(data, resolve, reject));
 /** @param {string} key */
@@ -341,7 +341,7 @@ function waitEnd(ms) {
     endNotify = done;
   });
 }
-/** @type {{ stopped: boolean, timer: ReturnType<typeof setTimeout> | undefined, end: () => void } | null} */
+/** @type {{ stopped: boolean, timer: ReturnType<typeof setTimeout> | undefined, end: () => void, cleanup?: () => void } | null} */
 let repeatJob = null;
 export const isRepeating = () => !!repeatJob;
 /** Stop a running repeat (and the sound with it). */
@@ -351,6 +351,7 @@ export function stopRepeat() {
   repeatJob = null;
   job.stopped = true;
   clearTimeout(job.timer);
+  if (job.cleanup) job.cleanup();
   const f = endNotify;
   endNotify = null;
   if (f) f();
@@ -372,12 +373,73 @@ export function stopRepeat() {
   } catch (e) {}
   job.end();
 }
+/* One long track instead of many timer-started clips. A phone that is locked, or an app in the background, stops running
+   timers and refuses sound that nothing the person touched started, so a loop of play() calls dies with the screen. A single
+   <audio> element that is already playing keeps going, and the lock screen can show its controls (Media Session). So the
+   clip is decoded once, laid end to end `n` times with the pause between, written as one WAV and played as one file. Plain
+   speech (no recorded clip) cannot do this and uses the timer loop, which needs the screen on. */
+/** @param {Float32Array} samples @param {number} rate */
+function wavBlob(samples, rate) {
+  const n = samples.length,
+    buf = new ArrayBuffer(44 + n * 2),
+    v = new DataView(buf);
+  /** @param {number} o @param {string} str */
+  const tag = (o, str) => {
+    for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i));
+  };
+  tag(0, 'RIFF');
+  v.setUint32(4, 36 + n * 2, true);
+  tag(8, 'WAVE');
+  tag(12, 'fmt ');
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true);
+  v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  tag(36, 'data');
+  v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) {
+    const x = Math.max(-1, Math.min(1, samples[i]));
+    v.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7fff, true);
+  }
+  return new Blob([buf], { type: 'audio/wav' });
+}
+const MAX_TRACK_SAMPLES = 30e6; /* about 10 minutes of mono audio: beyond that use the timer loop */
+/**
+ * @param {string} key a recorded clip
+ * @param {number} n
+ * @param {number} gapSec
+ * @returns {Promise<{ url: string, period: number }>} period: seconds from the start of one play to the next
+ */
+async function buildTrack(key, n, gapSec) {
+  const Offline = window.OfflineAudioContext || /** @type {any} */ (window).webkitOfflineAudioContext;
+  if (!Offline || !window.URL || !URL.createObjectURL) throw new Error('No offline audio');
+  let buf = bufCache.get(key);
+  if (!buf) {
+    const ab = await (await fetch(clipUrl(key))).arrayBuffer();
+    buf = await decode(new Offline(1, 1, 44100), ab);
+    bufCache.set(key, buf);
+  }
+  const rate = buf.sampleRate,
+    frames = buf.length + Math.round(gapSec * rate);
+  if (frames * n > MAX_TRACK_SAMPLES) throw new Error('Too long for one track');
+  const mono = new Float32Array(buf.length);
+  for (let c = 0; c < buf.numberOfChannels; c++) {
+    const d = buf.getChannelData(c);
+    for (let i = 0; i < d.length; i++) mono[i] += d[i] / buf.numberOfChannels;
+  }
+  const all = new Float32Array(frames * n);
+  for (let i = 0; i < n; i++) all.set(mono, i * frames);
+  return { url: URL.createObjectURL(wavBlob(all, rate)), period: frames / rate };
+}
 /**
  * Play `text` `count` times in a row.
  * @param {string} text what speak() accepts: a clip key or plain Japanese
  * @param {number} count
- * @param {{ onPlay?: (i: number, n: number) => void, onEnd?: () => void }} [hooks] onPlay runs as each play starts (i from 1);
- *   onEnd runs once, when it finished or was stopped
+ * @param {{ onPlay?: (i: number, n: number) => void, onEnd?: () => void, title?: string }} [hooks] onPlay runs as each play
+ *   starts (i from 1); onEnd runs once, when it finished or was stopped; title is shown on the lock screen
  */
 export function repeatSpeak(text, count, hooks = {}) {
   stopRepeat();
@@ -390,6 +452,18 @@ export function repeatSpeak(text, count, hooks = {}) {
     end: () => hooks.onEnd && hooks.onEnd(),
   };
   repeatJob = job;
+  const loop = () => {
+    if (!job.stopped) runLoop(job, text, n, gap, hooks);
+  };
+  if (!AUD[text] || n < 2) return loop();
+  buildTrack(text, n, gap / 1000).then(
+    (track) => (job.stopped ? URL.revokeObjectURL(track.url) : playTrack(job, text, n, track, loop, hooks)),
+    loop,
+  );
+}
+/** The timer loop: each play starts when the last one ended. Needs the screen on. */
+/** @param {NonNullable<typeof repeatJob>} job @param {string} text @param {number} n @param {number} gap @param {{ onPlay?: (i: number, n: number) => void }} hooks */
+function runLoop(job, text, n, gap, hooks) {
   let i = 0;
   const next = () => {
     if (job.stopped) return;
@@ -411,4 +485,89 @@ export function repeatSpeak(text, count, hooks = {}) {
     });
   };
   next();
+}
+/** Play the long track on the shared <audio> element, with lock-screen controls. */
+/** @param {NonNullable<typeof repeatJob>} job @param {string} text @param {number} n @param {{ url: string, period: number }} track @param {() => void} fallback @param {{ onPlay?: (i: number, n: number) => void, title?: string }} hooks */
+function playTrack(job, text, n, track, fallback, hooks) {
+  const a = mediaEl();
+  const ms = 'mediaSession' in navigator ? navigator.mediaSession : null;
+  let shown = 0;
+  let failed = false;
+  const onTime = () => {
+    const i = Math.min(n, Math.floor(a.currentTime / track.period) + 1);
+    if (i !== shown && !job.stopped) {
+      shown = i;
+      if (hooks.onPlay) hooks.onPlay(i, n);
+    }
+  };
+  const onEnded = () => {
+    if (job.stopped) return;
+    repeatJob = null;
+    job.cleanup && job.cleanup();
+    job.end();
+  };
+  const onFail = () => {
+    /* the track could not play (an autoplay block, a decoder error): do it with timers instead */
+    if (job.stopped || failed) return;
+    failed = true;
+    job.cleanup && job.cleanup();
+    fallback();
+  };
+  job.cleanup = () => {
+    job.cleanup = undefined;
+    a.removeEventListener('timeupdate', onTime);
+    a.removeEventListener('ended', onEnded);
+    a.removeEventListener('error', onFail);
+    try {
+      a.pause();
+    } catch (e) {}
+    if (a.src === track.url) a.removeAttribute('src');
+    URL.revokeObjectURL(track.url);
+    if (ms) {
+      try {
+        ms.playbackState = 'none';
+        ms.metadata = null;
+        for (const act of /** @type {const} */ (['play', 'pause', 'stop'])) ms.setActionHandler(act, null);
+      } catch (e) {}
+    }
+  };
+  playTok++;
+  lastKey = null; /* the shared error handler must not replace this track with a single clip */
+  if (waSrc) {
+    try {
+      waSrc.stop();
+    } catch (e) {}
+    waSrc = null;
+  }
+  try {
+    a.pause();
+    a.muted = false;
+    a.src = track.url;
+    a.defaultPlaybackRate = a.playbackRate = audioRate();
+    try {
+      a.preservesPitch = true;
+      /** @type {any} */ (a).webkitPreservesPitch = true;
+    } catch (e) {}
+    a.addEventListener('timeupdate', onTime);
+    a.addEventListener('ended', onEnded);
+    a.addEventListener('error', onFail);
+    recordHeard(text);
+    shown = 1;
+    if (hooks.onPlay) hooks.onPlay(1, n);
+    const pr = a.play();
+    if (pr && pr.catch) pr.catch((err) => (err && err.name === 'AbortError' ? undefined : onFail()));
+    if (ms) {
+      ms.metadata = new MediaMetadata({
+        title: hooks.title || text.split('|')[0],
+        artist: 'Kawkab Japan',
+        artwork: [{ src: 'icon-512.png', sizes: '512x512', type: 'image/png' }],
+      });
+      ms.playbackState = 'playing';
+      ms.setActionHandler('play', () => void a.play());
+      ms.setActionHandler('pause', () => a.pause());
+      ms.setActionHandler('stop', () => stopRepeat());
+    }
+  } catch (e) {
+    onFail();
+  }
 }
