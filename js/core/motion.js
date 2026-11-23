@@ -42,7 +42,12 @@ export function enterAnim(name, opts, prevTab, snap) {
   /* give map and calendar cells their wave order */
   $$('.cmap, .cal', el).forEach(g => Array.from(g.children).forEach((c, i) => /** @type {HTMLElement} */ (c).style.setProperty('--i', String(Math.min(i, 40)))));
   el.classList.add('enter'); if (opts.fromHistory) el.classList.add('rev'); if (first || opts.initial) el.classList.add('first');
-  if (snap) el.classList.add('slide', opts.fromHistory ? 'pop' : 'push');
+  if (snap) {
+    el.classList.add('slide', opts.fromHistory ? 'pop' : 'push');
+    /* the old page's copy starts where the new page starts, so it never covers the top bar or the gap under it */
+    const cut = el.getBoundingClientRect().top - parseFloat(snap.style.top || '0');
+    if (cut > 0) snap.style.clipPath = 'inset(' + cut + 'px 0 0 0)';
+  }
   if (name === 'progress') countUp(el);
   clearTimeout(enterTimer);
   enterTimer = setTimeout(() => $$('.tab.enter').forEach(x => x.classList.remove('enter', 'rev', 'first', 'slide', 'push', 'pop')), 1900);

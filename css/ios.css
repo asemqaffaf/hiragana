@@ -120,6 +120,8 @@ html[dir="rtl"]{--pd:-1}
 .tab.slide.pop{z-index:4;animation:pageUnder .52s var(--slide) both}
 .tab.slide.pop::after,.pagesnap.push::after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;background:#000}
 .tab.slide.pop::after{animation:dimOut .52s var(--slide) both}
+/* the top bar stays put while a page slides: the old page's copy must not cover it */
+body:has(.pagesnap) header.top{position:relative;z-index:9;background:var(--paper)}
 .pagesnap{position:fixed;margin:0;overflow:hidden;pointer-events:none;background:var(--paper)}
 .pagesnap *{animation:none !important;transition:none !important}
 .pagesnap.push{z-index:3;animation:snapAway .52s var(--slide) both}

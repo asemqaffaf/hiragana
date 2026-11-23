@@ -109,19 +109,6 @@ function openSettingsSheet() {
     renderAll();
   };
 }
-/** Credits and who made the app: needed, but not worth space on the main screen. */
-function openAboutSheet() {
-  presentSheet(
-    t('plan.about'),
-    '<div class="dsh"><h3 class="dsh-title">' +
-      t('plan.about') +
-      '</h3><p class="small muted dsh-help">' +
-      t('credits') +
-      '</p>' +
-      byline() +
-      '</div>',
-  );
-}
 /** A tappable row of an inset list: label, optional value, chevron. @param {string} id @param {string} label @param {string} [value] */
 const listRow = (id, label, value) =>
   '<li><button class="irow" id="' +
@@ -220,8 +207,8 @@ export function renderPlan() {
     listRow('openDay', t('plan.tasksT')) +
     listRow('openDays', t('plan.allDays', { total: L }), '<bdi>' + doneCount() + ' / ' + L + '</bdi>') +
     listRow('openSettings', t('plan.settingsT')) +
-    listRow('openAbout', t('plan.about')) +
     '</ul>';
+  h += '<footer class="credit"><p>' + t('credits') + '</p>' + byline() + '</footer>';
   const root = must('#tab-plan');
   root.innerHTML = h;
   const gn = $('#goNext', root);
@@ -253,7 +240,6 @@ export function renderPlan() {
   must('#openDay', root).onclick = () => openDaySheet(day);
   must('#openDays', root).onclick = () => showTab('days');
   must('#openSettings', root).onclick = openSettingsSheet;
-  must('#openAbout', root).onclick = openAboutSheet;
 }
 /** The whole plan as one list; a tap opens that day's card. */
 export function renderDays() {
