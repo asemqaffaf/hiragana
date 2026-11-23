@@ -1,5 +1,5 @@
 import { dailyFor } from './daily.js';
-import { PL, PLEN, curDay, dayNumber, focusKana } from './plan.js';
+import { PL, PLEN, curDay, dayNumber, focusKana, setLessonFinishedCheck } from './plan.js';
 import { me, state, updateProgress } from './store.js';
 import { WRITING_PASSES, revokeWritingStage } from './writing-sequence.js';
 import { todayISO } from '../util.js';
@@ -55,6 +55,8 @@ export function lessonSteps(day = curDay()) {
   steps.push({ id: 'quiz', n: progress.q >= 90 ? 1 : 0, m: 1, score: progress.q });
   return steps.map((step) => ({ ...step, done: step.n >= step.m }));
 }
+
+setLessonFinishedCheck((day) => lessonSteps(day).every((step) => step.done));
 
 /** The next unfinished activity after a completed step. @param {import('../../types/app').LessonStepId} id @param {number} [day] @returns {import('../../types/app').LessonStepId | null} */
 export function nextLessonStep(id, day = curDay()) {

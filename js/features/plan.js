@@ -31,6 +31,8 @@ function kanaSquares(list, dense) {
     '</div>'
   );
 }
+/** Set by the mark-done buttons: the screen is redrawn for the new day, but the folds the student opened stay open. */
+let keepFolds = false;
 export function renderPlan() {
   const n = dayNumber(),
     day = curDay(),
@@ -181,7 +183,8 @@ export function renderPlan() {
     '</footer>';
   const root = must('#tab-plan');
   const wasOpen = $$('details', root, HTMLDetailsElement).map((d) => d.open),
-    sameDay = root.dataset.day === String(day);
+    sameDay = keepFolds || root.dataset.day === String(day);
+  keepFolds = false;
   root.innerHTML = h;
   root.dataset.day = String(day);
   if (sameDay)
@@ -215,6 +218,7 @@ export function renderPlan() {
       showTab('drill');
     };
   must('#markDone', root).onclick = () => {
+    keepFolds = true;
     setDayComplete(day, !state.done[day]);
     renderPlan();
   };
@@ -222,6 +226,7 @@ export function renderPlan() {
     (b) =>
       (b.onclick = () => {
         const dn = Number(b.dataset.toggleDay);
+        keepFolds = true;
         setDayComplete(dn, !state.done[dn]);
         renderPlan();
       }),

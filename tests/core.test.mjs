@@ -382,3 +382,51 @@ test('theme defaults to slate (Grey) and TINTS order switches Grey and Sage', ()
   assert.deepEqual(store.cleanTheme({ tint: 'sage' }), { mode: 'system', tint: 'sage' });
   assert.deepEqual(store.cleanTheme({ tint: 'unknown' }), { mode: 'system', tint: 'slate' });
 });
+
+test('today’s lesson moves past days the student marks done by hand', () => {
+  replaceLang('en');
+  student(21);
+  assert.equal(plan.dayNumber(), 1);
+  assert.ok(plan.focusKana(plan.curDay()).includes('あ'));
+  progress.setDayComplete(1, true);
+  assert.equal(plan.curDay(), 2);
+  assert.ok(plan.focusKana(plan.curDay()).includes('か'));
+  progress.setDayComplete(2, true);
+  assert.equal(plan.dayNumber(), 3);
+  assert.ok(plan.focusKana(plan.curDay()).includes('さ'), 'with days 1 and 2 done, today is the さ row');
+  assert.equal(lessons.lessonOn(), true);
+  assert.equal(lessons.lesson().m.length, 0, 'the new day starts with a fresh lesson');
+  progress.setDayComplete(2, false);
+  assert.equal(plan.curDay(), 2, 'undoing a day brings its lesson back');
+  progress.setDayComplete(2, true);
+  progress.setDayComplete(4, true);
+  assert.equal(plan.curDay(), 3, 'a later day marked done does not skip an unfinished one');
+  for (let day = 1; day <= plan.PLEN(); day++) progress.setDayComplete(day, true);
+  assert.ok(plan.dayNumber() > plan.PLEN(), 'every day marked done means the plan is complete');
+  assert.equal(lessons.lessonOn(), false);
+});
+
+test('a lesson finished in the app stays today’s lesson, and later days marked by hand do not hide it', () => {
+  replaceLang('en');
+  student(21);
+  for (const kana of plan.focusKana(plan.curDay())) lessons.markLetterMet(kana);
+  for (const kana of lessons.writeList()) lessons.recordLessonWrite(kana);
+  for (const word of dailyFor(plan.curDay())) lessons.recordLessonWord(word[0]);
+  lessons.recordLessonQuiz(100);
+  assert.ok(store.state.done[1]);
+  assert.equal(plan.curDay(), 1, 'the finished lesson screen stays');
+  progress.setDayComplete(2, true);
+  assert.equal(plan.curDay(), 1);
+  const before = plan.curDay();
+  lessons.lessonSteps();
+  assert.equal(plan.curDay(), before, 'reading lesson steps does not move the day');
+});
+
+test('a day with the quiz passed but other steps open moves on when marked done by hand', () => {
+  replaceLang('en');
+  student(21);
+  lessons.recordLessonQuiz(100);
+  assert.equal(store.state.done[1], undefined);
+  progress.setDayComplete(1, true);
+  assert.equal(plan.curDay(), 2);
+});

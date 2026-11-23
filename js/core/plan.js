@@ -5,9 +5,28 @@ import { LANG, localeFor, translate } from '../i18n/core.js';
 import { isoToUTC, todayISO, uniq } from '../util.js';
 
 /* ---------- plan helpers ---------- */
-/** Which day of the plan today is: 1 on the start date, 0 or less before it. */
-export function dayNumber() {
+/** Which day of the plan the calendar says today is: 1 on the start date, 0 or less before it. */
+export function calendarDay() {
   return Math.floor((isoToUTC(todayISO()) - isoToUTC(state.start)) / 86400000) + 1;
+}
+/** @type {(day: number) => boolean} */
+let lessonFinished = () => false;
+/** The lesson module says whether a day's lesson was finished by doing its activities (it depends on this module, so it registers itself). @param {(day: number) => boolean} check */
+export function setLessonFinishedCheck(check) {
+  lessonFinished = check;
+}
+/**
+ * Which day of the plan today's lesson is. It follows the calendar, but moves past days the
+ * student marked done by hand. A day whose lesson was finished in the app stays as it is, so
+ * its "lesson done" screen still shows. Past the last day means the plan is complete.
+ */
+export function dayNumber() {
+  const calendar = calendarDay();
+  if (calendar < 1) return calendar;
+  const last = PLEN();
+  let day = calendar;
+  while (day <= last && state.done[day] && !lessonFinished(day)) day++;
+  return day;
 }
 /** @type {{key: string, plan: import('../../types/app').PlanDay[]} | null} */
 let planCache = null;
