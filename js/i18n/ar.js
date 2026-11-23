@@ -643,6 +643,7 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
 
   'tab.daily': 'كلمات اليوم',
   'tab.days': 'كل الأيام',
+  'plan.about': 'حول التطبيق والشكر',
   'tab.phrases': 'عبارات',
   'step.words': 'تعلّم كلمات اليوم',
   'step.wordsD': 'كلمات يومية، لكل منها جملة مثال',
