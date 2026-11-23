@@ -12,6 +12,7 @@ export type RowId = string;
 /* ---------- navigation ---------- */
 export type TabName =
   | 'plan'
+  | 'days'
   | 'meet'
   | 'daily'
   | 'progress'

@@ -84,7 +84,9 @@ async def main():
         R['photo'] = await pg.evaluate("(document.querySelector('#whoBtn .av img')||{}).src ? document.querySelector('#whoBtn .av img').src.slice(0,30) + ' len=' + document.querySelector('#whoBtn .av img').src.length : null")
         await pg.screenshot(path='shots/pf_ar.png', full_page=True)
         await go(pg, "plan"); await pg.wait_for_timeout(150)
-        R['plan21'] = [await pg.text_content('#tab-plan h2'), await pg.locator('#tab-plan .days details').count(), await pg.eval_on_selector_all('#tab-plan .days .t', 'e=>e.slice(0,4).map(x=>x.textContent)')]
+        h2 = await pg.text_content('#tab-plan h2'); await pg.click('#openDays'); await pg.wait_for_timeout(150)
+        R['plan21'] = [h2, await pg.locator('#tab-days .drow').count(), await pg.eval_on_selector_all('#tab-days .drow b', 'e=>e.slice(0,4).map(x=>x.textContent)')]
+        await pg.click('#backBtn'); await pg.wait_for_timeout(150)
         await go(pg, "progress"); await pg.wait_for_timeout(150)
         R['road'] = await pg.eval_on_selector_all('.road li', 'e=>e.map(x=>x.querySelector("b").textContent + " | " + (x.querySelector(".rhead .muted")||{}).textContent)')
         # drill these from weakest

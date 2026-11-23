@@ -3,6 +3,7 @@ import { renderPage } from './pages.js';
 
 export function renderAll() {
   renderPage('plan');
+  if (ui.currentTab === 'days') renderPage('days');
   renderPage('chart');
   renderPage('read');
   if (ui.currentTab === 'progress') renderPage('progress');

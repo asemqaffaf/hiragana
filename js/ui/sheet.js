@@ -11,7 +11,7 @@ import { t } from '../i18n/core.js';
 import { letterNotesHtml } from './letter-notes.js';
 import { strokeCount } from '../strokes/check.js';
 import { strokeSVG } from '../strokes/draw.js';
-import { $, $$, SPEAK_SVG, closest, must } from '../util.js';
+import { $, $$, SPEAK_SVG, closest, esc, must } from '../util.js';
 
 /** The card for a letter: stroke order, hook, example words and buttons. @param {string} k */
 function openSheet(k) {
@@ -99,6 +99,30 @@ function openSheet(k) {
   const sheet = $('.sheet', root);
   requestAnimationFrame(() => requestAnimationFrame(() => { if (sheet?.isConnected) markSheetOpen(); }));
   if (svg) setTimeout(() => { if (svg.isConnected) svg.play(); }, replacing ? 120 : 520);
+}
+/**
+ * Opens a bottom sheet with the given content. Any open card is replaced without a slide.
+ * Buttons and the backdrop marked data-close close it.
+ * @param {string} label the accessible name of the sheet
+ * @param {string} inner the content below the grab handle
+ * @returns {HTMLElement} the sheet root, for binding the content
+ */
+export function presentSheet(label, inner) {
+  const root = must('#sheetRoot');
+  const replacing = !!root.innerHTML;
+  closeSheet('replace');
+  if (!replacing) ui.lastFocus = document.activeElement;
+  root.classList.toggle('swap', replacing);
+  root.innerHTML =
+    '<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="' +
+    esc(label) +
+    '"><div class="in"><div class="grab"></div>' +
+    inner +
+    '</div></div>';
+  $$('[data-close]', root).forEach((b) => (b.onclick = () => closeSheet()));
+  const sheet = $('.sheet', root);
+  requestAnimationFrame(() => requestAnimationFrame(() => { if (sheet?.isConnected) markSheetOpen(); }));
+  return root;
 }
 document.addEventListener('click', (e) => {
   const opener = closest(e, '[data-open]');

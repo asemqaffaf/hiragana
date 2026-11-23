@@ -21,7 +21,7 @@ import { renderChart } from './features/chart.js';
 import { renderDaily, renderPhrases } from './features/daily.js';
 import { renderDrill } from './features/drill.js';
 import { enterMeet, renderMeet } from './features/lesson.js';
-import { renderPlan } from './features/plan.js';
+import { renderDays, renderPlan } from './features/plan.js';
 import { renderProfile } from './features/profile.js';
 import { renderProgress } from './features/progress.js';
 import { renderRead } from './features/read.js';
@@ -46,6 +46,7 @@ subscribeCloudApplied((id) => {
 function boot() {
   registerPages({
     plan: { render: renderPlan },
+    days: { render: renderDays },
     meet: { enter: enterMeet, render: renderMeet },
     daily: { render: renderDaily },
     progress: { render: renderProgress },

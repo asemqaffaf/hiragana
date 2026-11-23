@@ -42,11 +42,12 @@ async def main():
                 else: await pg.locator('[data-pick]').first.click(); await pg.wait_for_timeout(450)
             R['drill_' + mode] = await pg.text_content('.result')
         await go(pg, "read"); R['words'] = await pg.locator('#tab-read .words .word').count()
-        await go(pg, "plan"); await pg.evaluate("document.querySelectorAll('#tab-plan details').forEach(d=>d.open=true)"); 
-        await pg.fill('#startDate', (datetime.date.today() - datetime.timedelta(days=8)).isoformat()); await pg.dispatch_event('#startDate', 'change')
+        await go(pg, "plan"); await pg.click('#openSettings'); await pg.wait_for_timeout(150)
+        await pg.fill('#startDate', (datetime.date.today() - datetime.timedelta(days=8)).isoformat()); await pg.dispatch_event('#startDate', 'change'); await pg.keyboard.press('Escape'); await pg.wait_for_timeout(150)
         await go(pg, "write"); await pg.wait_for_timeout(200)
         R['day9_write'] = await pg.eval_on_selector('.strip [aria-pressed="true"]', 'e=>e.dataset.wk')
-        await go(pg, "plan"); await pg.evaluate("document.querySelectorAll('#tab-plan details').forEach(d=>d.open=true)"); R['footer'] = await pg.text_content('#sync')
+        await go(pg, "plan"); R['footer'] = await pg.text_content('#sync')
+        await pg.click('#openSettings'); await pg.wait_for_timeout(150)
         await pg.click('#resetBtn'); R['reset_armed'] = await pg.text_content('#resetBtn'); await pg.click('#resetBtn')
         R['after_reset_still_logged_in'] = await pg.text_content('#whoBtn .nm')
         R['errors'] = errs

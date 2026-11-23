@@ -642,6 +642,7 @@ const strings = /** @satisfies {import('../../types/app').PartialStrings} */ ({
   'plan.settingsT': 'إعدادات الخطة والمساعدة',
 
   'tab.daily': 'كلمات اليوم',
+  'tab.days': 'كل الأيام',
   'tab.phrases': 'عبارات',
   'step.words': 'تعلّم كلمات اليوم',
   'step.wordsD': 'كلمات يومية، لكل منها جملة مثال',

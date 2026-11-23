@@ -13,6 +13,7 @@ import { $, $$, must } from '../util.js';
 /** @type {readonly import('../../types/app').TabName[]} */
 export const TABS = [
   'plan',
+  'days',
   'meet',
   'daily',
   'progress',
@@ -26,6 +27,7 @@ export const TABS = [
 /** @type {Record<import('../../types/app').TabName, import('../../types/app').NavGroup>} */
 const GROUP = {
   plan: 'home',
+  days: 'home',
   meet: 'home',
   daily: 'home',
   phrases: 'practice',

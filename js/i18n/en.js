@@ -621,6 +621,7 @@ const strings = /** @satisfies {Record<string, import('../../types/app').LocaleS
   'plan.settingsT': 'Plan settings and help',
 
   'tab.daily': 'Today’s words',
+  'tab.days': 'All days',
   'tab.phrases': 'Phrases',
   'step.words': 'Learn today’s words',
   'step.wordsD': 'Everyday words, each with an example sentence',

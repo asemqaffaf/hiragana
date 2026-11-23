@@ -8,18 +8,17 @@ import { ui } from '../core/ui-state.js';
 import { isLessonStep, lessonSteps } from '../core/lesson.js';
 import { runStep } from './lesson.js';
 import { kb } from '../ui/letter-button.js';
+import { presentSheet } from '../ui/sheet.js';
+import { closeSheet } from '../ui/sheet-state.js';
 import { syncText } from '../ui/student.js';
 import { byline } from './language.js';
 import { t } from '../i18n/core.js';
 import { fmt } from '../i18n/helpers.js';
 import { $, $$, addDays, esc, must, todayISO } from '../util.js';
 
-/** @param {string | undefined} done the date the day was completed, if it was */
-function circle(done) {
-  return done
-    ? '<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19" transform="rotate(-110 22 22)"/></svg>'
-    : '';
-}
+const CHEVRON = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
+const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
 /** @param {string[]} list @param {boolean} dense */
 function kanaSquares(list, dense) {
   return (
@@ -31,8 +30,100 @@ function kanaSquares(list, dense) {
     '</div>'
   );
 }
-/** Set by the mark-done buttons: the screen is redrawn for the new day, but the folds the student opened stay open. */
-let keepFolds = false;
+/** The card for one plan day: what it teaches, its tasks, and the way to mark it done or not. @param {number} day */
+function openDaySheet(day) {
+  const plan = PL()[day - 1];
+  if (!plan) return;
+  const doneOn = state.done[day],
+    letters = focusKana(day);
+  const root = presentSheet(
+    t('plan.prevDay', { n: day, title: plan.t }),
+    '<div class="dsh"><h3 class="dsh-title">' +
+      t('plan.prevDay', { n: day, title: esc(plan.t) }) +
+      '</h3><p class="dsh-date small muted">' +
+      fmt(addDays(state.start, day - 1)) +
+      (doneOn ? ' · ' + t('plan.prevDone', { date: fmt(doneOn) }) : '') +
+      '</p>' +
+      (letters.length
+        ? '<p class="dsh-letters" aria-hidden="true">' +
+          letters.map((k) => '<span>' + k + '</span>').join('') +
+          '</p>'
+        : '') +
+      '<ol class="tasks">' +
+      plan.tasks.map((x) => '<li>' + x + '</li>').join('') +
+      '</ol><div class="btnrow"><button class="btn ' +
+      (doneOn ? '' : 'primary') +
+      '" id="dayToggle">' +
+      (doneOn ? t('plan.markNotDone') : t('plan.markDone', { d: day })) +
+      '</button></div></div>',
+  );
+  const toggle = must('#dayToggle', root);
+  toggle.onclick = () => {
+    closeSheet();
+    setDayComplete(day, !state.done[day]);
+    renderAll();
+  };
+  toggle.focus({ preventScroll: true });
+}
+/** Start date and reset, away from the main screen. */
+function openSettingsSheet() {
+  const root = presentSheet(
+    t('plan.settingsT'),
+    '<div class="dsh"><h3 class="dsh-title">' +
+      t('plan.settingsT') +
+      '</h3><p class="small muted dsh-help">' +
+      t('plan.how1') +
+      '</p><div class="srow"><label for="startDate">' +
+      t('plan.startDate') +
+      '</label><input type="date" id="startDate" value="' +
+      state.start +
+      '"></div><p class="small muted dsh-help">' +
+      t('plan.missed') +
+      '</p><div class="btnrow"><button class="btn danger" id="resetBtn">' +
+      t('plan.reset') +
+      '</button></div></div>',
+  );
+  const startDate = must('#startDate', root, HTMLInputElement);
+  startDate.onchange = () => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(startDate.value)) {
+      setStartDate(startDate.value);
+      renderAll();
+    }
+  };
+  const reset = must('#resetBtn', root);
+  let armed = false;
+  reset.onclick = () => {
+    if (!armed) {
+      armed = true;
+      reset.classList.add('armed');
+      reset.textContent = t('plan.resetConfirm', { name: (me() || { name: '' }).name });
+      setTimeout(() => {
+        if (!reset.isConnected) return;
+        armed = false;
+        reset.classList.remove('armed');
+        reset.textContent = t('plan.reset');
+      }, 4000);
+      return;
+    }
+    closeSheet();
+    resetProgress();
+    renderAll();
+  };
+}
+/** A tappable row of an inset list: label, optional value, chevron. @param {string} id @param {string} label @param {string} [value] */
+const listRow = (id, label, value) =>
+  '<li><button class="irow" id="' +
+  id +
+  '"><span class="il">' +
+  label +
+  '</span>' +
+  (value ? '<span class="iv">' + value + '</span>' : '') +
+  CHEVRON +
+  '</button></li>';
+function doneCount() {
+  const total = PLEN();
+  return Object.keys(state.done).filter((d) => Number(d) >= 1 && Number(d) <= total).length;
+}
 export function renderPlan() {
   const n = dayNumber(),
     day = curDay(),
@@ -78,7 +169,7 @@ export function renderPlan() {
             '<li class="' +
             st +
             '"><span class="snum" aria-hidden="true">' +
-            (x.done ? '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : i + 1) +
+            (x.done ? CHECK : i + 1) +
             '</span><button class="sbody" data-step="' +
             x.id +
             '"><b>' +
@@ -111,68 +202,13 @@ export function renderPlan() {
     if (focus.length)
       h += '<h3>' + t('plan.letters') + '</h3>' + kanaSquares(focus, focus.length > 12);
   }
+  /* the rest is one tap away: each row opens a card or a page, nothing expands in place */
   h +=
-    '<details class="more fold"><summary>' +
-    t('plan.tasksT') +
-    '</summary><ol class="tasks">' +
-    d.tasks.map((x) => '<li>' + x + '</li>').join('') +
-    '</ol><div class="btnrow"><button class="btn ' +
-    (state.done[day] ? '' : 'red') +
-    '" id="markDone">' +
-    t(state.done[day] ? 'plan.markedUndo' : 'plan.markDone', { d: day }) +
-    '</button></div></details>';
-  h +=
-    '<details class="more fold"><summary>' +
-    t('plan.allDays', { total: L }) +
-    '</summary><div class="days">';
-  PL().forEach((p, i) => {
-    const dn = i + 1,
-      fk = focusKana(dn),
-      isCur = n >= 1 && n <= L && dn === n;
-    h +=
-      '<details' +
-      (isCur ? ' class="cur"' : '') +
-      '><summary><span class="dn">' +
-      circle(state.done[dn]) +
-      dn +
-      '</span><span><span class="t">' +
-      p.t +
-      '</span><br><span class="d">' +
-      fmt(addDays(state.start, i)) +
-      (state.done[dn] ? t('plan.doneSuffix') : '') +
-      '</span></span><span class="kp">' +
-      (fk.length ? fk.slice(0, 10).join('') : '') +
-      '</span></summary><div class="body"><ol class="tasks">' +
-      p.tasks.map((x) => '<li>' + x + '</li>').join('') +
-      '</ol>' +
-      (fk.length ? kanaSquares(fk, true) : '') +
-      '<button class="link" data-toggle-day="' +
-      dn +
-      '">' +
-      t(state.done[dn] ? 'plan.markNotDone' : 'plan.markDoneShort') +
-      '</button></div></details>';
-  });
-  h += '</div></details>';
-  h +=
-    '<details class="more fold"><summary>' +
-    t('plan.settingsT') +
-    '</summary><p>' +
-    t('plan.how1') +
-    '</p><p class="note">' +
-    t('plan.missed') +
-    '</p>';
-  h +=
-    '<div class="field"><label for="startDate" class="small muted">' +
-    t('plan.startDate') +
-    '</label><input type="date" id="startDate" value="' +
-    state.start +
-    '"></div>';
-  h +=
-    '<div class="btnrow"><button class="btn" id="resetBtn">' +
-    (ui.resetArmed
-      ? t('plan.resetConfirm', { name: esc((me() || { name: '' }).name) })
-      : t('plan.reset')) +
-    '</button></div></details>';
+    '<ul class="ilist">' +
+    listRow('openDay', t('plan.tasksT')) +
+    listRow('openDays', t('plan.allDays', { total: L }), '<bdi>' + doneCount() + ' / ' + L + '</bdi>') +
+    listRow('openSettings', t('plan.settingsT')) +
+    '</ul>';
   h +=
     '<footer class="credit"><p id="sync">' +
     syncText() +
@@ -182,15 +218,7 @@ export function renderPlan() {
     byline() +
     '</footer>';
   const root = must('#tab-plan');
-  const wasOpen = $$('details', root, HTMLDetailsElement).map((d) => d.open),
-    sameDay = keepFolds || root.dataset.day === String(day);
-  keepFolds = false;
   root.innerHTML = h;
-  root.dataset.day = String(day);
-  if (sameDay)
-    $$('details', root, HTMLDetailsElement).forEach((d, i) => {
-      if (wasOpen[i]) d.open = true;
-    });
   const gn = $('#goNext', root);
   if (gn)
     gn.onclick = () => {
@@ -217,41 +245,47 @@ export function renderPlan() {
       ui.session = null;
       showTab('drill');
     };
-  must('#markDone', root).onclick = () => {
-    keepFolds = true;
-    setDayComplete(day, !state.done[day]);
-    renderPlan();
-  };
-  $$('[data-toggle-day]', root).forEach(
-    (b) =>
-      (b.onclick = () => {
-        const dn = Number(b.dataset.toggleDay);
-        keepFolds = true;
-        setDayComplete(dn, !state.done[dn]);
-        renderPlan();
-      }),
+  must('#openDay', root).onclick = () => openDaySheet(day);
+  must('#openDays', root).onclick = () => showTab('days');
+  must('#openSettings', root).onclick = openSettingsSheet;
+}
+/** The whole plan as one list; a tap opens that day's card. */
+export function renderDays() {
+  const n = dayNumber(),
+    L = PLEN();
+  let h =
+    '<h2>' +
+    t('plan.allDays', { total: L }) +
+    '</h2><p class="small muted">' +
+    t('pg.lessonsBig', { v: doneCount(), m: L }) +
+    '</p><ol class="ilist days">';
+  PL().forEach((p, i) => {
+    const dn = i + 1,
+      done = state.done[dn],
+      fk = focusKana(dn),
+      status = done ? 'done' : dn === n ? 'now' : dn < n ? 'open' : 'up';
+    h +=
+      '<li><button class="irow drow ' +
+      status +
+      '" data-day="' +
+      dn +
+      '"><span class="ldot" aria-hidden="true">' +
+      (done ? CHECK : dn) +
+      '</span><span class="lt"><b>' +
+      p.t +
+      '</b><span class="small muted">' +
+      fmt(addDays(state.start, i)) +
+      (done ? t('plan.doneSuffix') : '') +
+      '</span></span><span class="kp" aria-hidden="true">' +
+      fk.slice(0, 5).join('') +
+      '</span>' +
+      CHEVRON +
+      '</button></li>';
+  });
+  h += '</ol>';
+  const root = must('#tab-days');
+  root.innerHTML = h;
+  $$('[data-day]', root).forEach(
+    (b) => (b.onclick = () => openDaySheet(Number(b.dataset.day))),
   );
-  const startDate = must('#startDate', root, HTMLInputElement);
-  startDate.onchange = () => {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(startDate.value)) {
-      setStartDate(startDate.value);
-      renderPlan();
-    }
-  };
-  must('#resetBtn', root).onclick = () => {
-    if (!ui.resetArmed) {
-      ui.resetArmed = true;
-      renderPlan();
-      setTimeout(() => {
-        if (ui.resetArmed) {
-          ui.resetArmed = false;
-          if (ui.currentTab === 'plan') renderPlan();
-        }
-      }, 4000);
-      return;
-    }
-    ui.resetArmed = false;
-    resetProgress();
-    renderAll();
-  };
 }
